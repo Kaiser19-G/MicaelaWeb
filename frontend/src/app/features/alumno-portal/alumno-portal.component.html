@@ -1,0 +1,273 @@
+<!-- ============================================================ -->
+<!--  PORTAL DEL ALUMNO – I.E. Micaela Bastidas Puyocahua       -->
+<!--  Inspirado en la interfaz modular por pestañas de la UTP   -->
+<!-- ============================================================ -->
+
+<div class="portal-container">
+
+  <!-- ── Header del Portal ───────────────────────────────────────── -->
+  <header class="portal-header">
+    <div class="portal-header__brand">
+      <div class="portal-header__logo">
+        <span class="logo-icon">🏫</span>
+        <div>
+          <h1 class="portal-header__title">I.E. Micaela Bastidas Puyocahua</h1>
+          <p class="portal-header__subtitle">Portal del Estudiante – La Tinguiña, Ica</p>
+        </div>
+      </div>
+      <div class="portal-header__usuario">
+        <div class="usuario-avatar">
+          <span>{{ usuarioInicial() }}</span>
+        </div>
+        <div class="usuario-info">
+          <span class="usuario-nombre">{{ usuarioNombre() }}</span>
+          <span class="usuario-rol">Estudiante</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Año académico -->
+    <div class="portal-header__anio">
+      <span class="anio-badge">📆 Año Académico {{ anioActual() }}</span>
+    </div>
+  </header>
+
+  <!-- ── Barra de Tabs (estilo UTP) ─────────────────────────────── -->
+  <nav class="tabs-nav" role="tablist" aria-label="Secciones del portal">
+    @for (tab of tabs; track tab.id) {
+      <button
+        class="tab-btn"
+        [class.tab-btn--activa]="esTabActiva(tab.id)"
+        [attr.id]="'tab-' + tab.id"
+        [attr.aria-selected]="esTabActiva(tab.id)"
+        [attr.aria-controls]="'panel-' + tab.id"
+        role="tab"
+        (click)="seleccionarTab(tab.id)">
+        <span class="tab-btn__icon">{{ tab.icon }}</span>
+        <span class="tab-btn__label">{{ tab.label }}</span>
+        @if (esTabActiva(tab.id)) {
+          <span class="tab-btn__indicator"></span>
+        }
+      </button>
+    }
+  </nav>
+
+  <!-- ── Contenido de las Tabs ───────────────────────────────────── -->
+  <main class="tabs-content">
+
+    <!-- Indicador de carga global -->
+    @if (cargando()) {
+      <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Cargando información...</p>
+      </div>
+    }
+
+    <!-- ╔══════════════════════════════════════════════════════════╗ -->
+    <!-- ║  TAB 1 – CALIFICACIONES                                  ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════╝ -->
+    @if (esTabActiva('calificaciones')) {
+      <section
+        id="panel-calificaciones"
+        role="tabpanel"
+        aria-labelledby="tab-calificaciones"
+        class="tab-panel tab-panel--calificaciones">
+
+        <div class="panel-header">
+          <h2 class="panel-title">📚 Cuadro de Notas</h2>
+          <p class="panel-subtitle">
+            Registro de calificaciones por área curricular – {{ anioActual() }}
+          </p>
+        </div>
+
+        <!-- Leyenda de escalas -->
+        <div class="legend-row">
+          <span class="badge badge-ad">AD – Logro Destacado (18–20)</span>
+          <span class="badge badge-a">A – Logro Previsto (14–17)</span>
+          <span class="badge badge-b">B – En Proceso (11–13)</span>
+          <span class="badge badge-c">C – En Inicio (0–10)</span>
+        </div>
+
+        <!-- Tabla de notas responsiva -->
+        <div class="table-wrapper">
+          <table class="notas-table" aria-label="Cuadro de notas del estudiante">
+            <thead>
+              <tr>
+                <th class="col-area">Área Curricular</th>
+                <th class="col-nota">B1</th>
+                <th class="col-nota">B2</th>
+                <th class="col-nota">B3</th>
+                <th class="col-nota">B4</th>
+                <th class="col-promedio">Promedio</th>
+                <th class="col-literal">Nivel</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (nota of notas; track nota.area) {
+                <tr class="notas-row">
+                  <td class="col-area">{{ nota.area }}</td>
+                  <td class="col-nota">{{ nota.b1 ?? '–' }}</td>
+                  <td class="col-nota">{{ nota.b2 ?? '–' }}</td>
+                  <td class="col-nota">{{ nota.b3 ?? '–' }}</td>
+                  <td class="col-nota">{{ nota.b4 ?? '–' }}</td>
+                  <td class="col-promedio promedio-valor">{{ nota.promedio ?? '–' }}</td>
+                  <td class="col-literal">
+                    <span class="badge" [ngClass]="getLiteralClass(nota.literal)">
+                      {{ nota.literal ?? '–' }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <p class="nota-aclaratoria">
+          * Los bimestres sin nota aún muestran "–". Las notas se actualizan al cierre de cada bimestre.
+        </p>
+      </section>
+    }
+
+    <!-- ╔══════════════════════════════════════════════════════════╗ -->
+    <!-- ║  TAB 2 – ASISTENCIA (Calendario de Inasistencias)        ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════╝ -->
+    @if (esTabActiva('asistencia')) {
+      <section
+        id="panel-asistencia"
+        role="tabpanel"
+        aria-labelledby="tab-asistencia"
+        class="tab-panel tab-panel--asistencia">
+
+        <div class="panel-header">
+          <h2 class="panel-title">📅 Control de Asistencia</h2>
+          <p class="panel-subtitle">Registro de asistencias e inasistencias – {{ anioActual() }}</p>
+        </div>
+
+        <!-- Tarjetas de estadísticas -->
+        @if (resumenAsistencia) {
+          <div class="stats-grid">
+            <div class="stat-card stat-card--asistencia">
+              <span class="stat-card__icon">✅</span>
+              <span class="stat-card__value">{{ resumenAsistencia.asistencias }}</span>
+              <span class="stat-card__label">Asistencias</span>
+            </div>
+            <div class="stat-card stat-card--faltas">
+              <span class="stat-card__icon">❌</span>
+              <span class="stat-card__value">{{ resumenAsistencia.faltas }}</span>
+              <span class="stat-card__label">Faltas</span>
+            </div>
+            <div class="stat-card stat-card--tardanzas">
+              <span class="stat-card__icon">⏰</span>
+              <span class="stat-card__value">{{ resumenAsistencia.tardanzas }}</span>
+              <span class="stat-card__label">Tardanzas</span>
+            </div>
+            <div class="stat-card stat-card--porcentaje" [attr.data-nivel]="porcentajeAsistenciaColor()">
+              <span class="stat-card__icon">📊</span>
+              <span class="stat-card__value">{{ resumenAsistencia.porcentajeAsistencia }}%</span>
+              <span class="stat-card__label">% Asistencia</span>
+            </div>
+          </div>
+
+          <!-- Barra de progreso de asistencia -->
+          <div class="asistencia-progress">
+            <div class="progress-label">
+              <span>Porcentaje de asistencia</span>
+              <span class="progress-value" [attr.data-nivel]="porcentajeAsistenciaColor()">
+                {{ resumenAsistencia.porcentajeAsistencia }}%
+              </span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                [attr.data-nivel]="porcentajeAsistenciaColor()"
+                [style.width.%]="resumenAsistencia.porcentajeAsistencia">
+              </div>
+            </div>
+            @if (resumenAsistencia.porcentajeAsistencia < 85) {
+              <p class="asistencia-alerta">
+                ⚠️ Tu porcentaje de asistencia está por debajo del 85% requerido.
+                Por favor comunícate con tu tutor.
+              </p>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <span class="empty-state__icon">📅</span>
+            <p>No hay datos de asistencia disponibles para este período.</p>
+          </div>
+        }
+
+        <!-- Historial de inasistencias -->
+        @if (historialAsistencia.length > 0) {
+          <div class="historial-section">
+            <h3 class="section-subtitle">Registro Detallado</h3>
+            <div class="historial-list">
+              @for (registro of historialAsistencia; track registro.id) {
+                <div class="historial-item" [ngClass]="getEstadoAsistenciaClass(registro.estado)">
+                  <span class="historial-fecha">{{ registro.fecha | date:'dd/MM/yyyy':'UTC' }}</span>
+                  <span class="historial-estado">{{ formatearEstado(registro.estado) }}</span>
+                  @if (registro.aplicadoPermisoAcademia) {
+                    <span class="historial-badge-academia">Academia {{ registro.horaPermisoAcademia }}</span>
+                  }
+                  @if (registro.tieneJustificacion) {
+                    <span class="historial-badge-justificado">Justificado</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ╔══════════════════════════════════════════════════════════╗ -->
+    <!-- ║  TAB 3 – HORARIOS                                         ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════╝ -->
+    @if (esTabActiva('horarios')) {
+      <section
+        id="panel-horarios"
+        role="tabpanel"
+        aria-labelledby="tab-horarios"
+        class="tab-panel tab-panel--horarios">
+
+        <div class="panel-header">
+          <h2 class="panel-title">🕐 Horario de Clases</h2>
+          <p class="panel-subtitle">Distribución semanal de horas por área curricular</p>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="horario-table" aria-label="Horario de clases semanal">
+            <thead>
+              <tr>
+                <th class="col-hora">Hora</th>
+                <th>Lunes</th>
+                <th>Martes</th>
+                <th>Miércoles</th>
+                <th>Jueves</th>
+                <th>Viernes</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (fila of horario; track fila.hora) {
+                <tr [class.horario-recreo]="fila.lunes?.includes('Recreo')">
+                  <td class="col-hora">{{ fila.hora }}</td>
+                  <td [class.celda-recreo]="fila.lunes?.includes('Recreo')">{{ fila.lunes ?? '' }}</td>
+                  <td [class.celda-recreo]="fila.martes?.includes('Recreo')">{{ fila.martes ?? '' }}</td>
+                  <td [class.celda-recreo]="fila.miercoles?.includes('Recreo')">{{ fila.miercoles ?? '' }}</td>
+                  <td [class.celda-recreo]="fila.jueves?.includes('Recreo')">{{ fila.jueves ?? '' }}</td>
+                  <td [class.celda-recreo]="fila.viernes?.includes('Recreo')">{{ fila.viernes ?? '' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <p class="nota-aclaratoria">
+          * El horario puede estar sujeto a modificaciones según las disposiciones de la dirección.
+        </p>
+      </section>
+    }
+
+  </main>
+
+</div>

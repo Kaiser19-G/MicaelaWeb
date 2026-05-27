@@ -1,0 +1,208 @@
+<!-- ============================================================ -->
+<!--  PANEL DEL DIRECTOR – I.E. Micaela Bastidas Puyocahua      -->
+<!-- ============================================================ -->
+<div class="dashboard-wrapper">
+
+  <!-- ── Header ───────────────────────────────────────────────── -->
+  <header class="dash-header">
+    <div class="dash-header__top">
+      <div class="dash-header__brand">
+        <span class="dash-icon">🏫</span>
+        <div>
+          <h1 class="dash-title">Panel del Director</h1>
+          <p class="dash-sub">I.E. Micaela Bastidas Puyocahua – La Tinguiña, Ica</p>
+        </div>
+      </div>
+      <button class="btn-exportar" (click)="exportarInforme()">
+        📥 Exportar SIAGIE
+      </button>
+    </div>
+    <p class="dash-fecha">Año Académico {{ anioActual() }}</p>
+  </header>
+
+  <!-- ── KPIs Strip ────────────────────────────────────────────── -->
+  <div class="kpis-grid">
+    <div class="kpi-card kpi-card--azul">
+      <span class="kpi-card__icon">👨‍🎓</span>
+      <span class="kpi-card__valor">{{ kpis().alumnosActivos }}</span>
+      <span class="kpi-card__label">Alumnos Activos</span>
+      <span class="kpi-card__sub">de {{ kpis().totalAlumnos }} matriculados</span>
+    </div>
+    <div class="kpi-card kpi-card--verde">
+      <span class="kpi-card__icon">✅</span>
+      <span class="kpi-card__valor">{{ kpis().porcentajeAsistencia }}%</span>
+      <span class="kpi-card__label">Asistencia Global</span>
+      <span class="kpi-card__sub">promedio institucional</span>
+    </div>
+    <div class="kpi-card kpi-card--rojo">
+      <span class="kpi-card__icon">⚠️</span>
+      <span class="kpi-card__valor">{{ kpis().alumnosEnRiesgo }}</span>
+      <span class="kpi-card__label">Alumnos en Riesgo</span>
+      <span class="kpi-card__sub">faltas o bajo rendimiento</span>
+    </div>
+    <div class="kpi-card kpi-card--morado">
+      <span class="kpi-card__icon">👨‍🏫</span>
+      <span class="kpi-card__valor">{{ kpis().docentesActivos }}</span>
+      <span class="kpi-card__label">Docentes Activos</span>
+      <span class="kpi-card__sub">de {{ kpis().totalDocentes }} en planilla</span>
+    </div>
+  </div>
+
+  <!-- ── Tabs ──────────────────────────────────────────────────── -->
+  <nav class="dash-tabs" role="tablist">
+    @for (tab of tabs; track tab.id) {
+      <button class="dash-tab" role="tab"
+        [class.dash-tab--activa]="esTabActiva(tab.id)"
+        (click)="seleccionarTab(tab.id)">
+        <span>{{ tab.icon }}</span>
+        <span>{{ tab.label }}</span>
+        @if (tab.id === 'alertas' && alertas.length > 0) {
+          <span class="tab-badge">{{ alertas.length }}</span>
+        }
+      </button>
+    }
+  </nav>
+
+  <!-- ── Contenido ─────────────────────────────────────────────── -->
+  <main class="dash-content">
+
+    <!-- ╔══════════════════════════╗ -->
+    <!-- ║  TAB: RESUMEN GENERAL    ║ -->
+    <!-- ╚══════════════════════════╝ -->
+    @if (esTabActiva('resumen')) {
+      <section class="tab-panel" id="panel-resumen">
+
+        <div class="panel-header">
+          <h2>📊 Resumen Institucional</h2>
+          <p>Estado actual del colegio al día de hoy</p>
+        </div>
+
+        <div class="resumen-cards">
+          <div class="info-card">
+            <h3 class="info-card__title">📋 Notas Pendientes</h3>
+            <div class="info-card__valor info-card__valor--alerta">{{ kpis().notasPendientes }}</div>
+            <p class="info-card__desc">docentes con notas B2 sin registrar</p>
+          </div>
+          <div class="info-card">
+            <h3 class="info-card__title">📸 Evidencias Hoy</h3>
+            <div class="info-card__valor info-card__valor--ok">{{ kpis().evidenciasHoy }}</div>
+            <p class="info-card__desc">fotos de exámenes subidas hoy</p>
+          </div>
+        </div>
+
+        <!-- Barra de asistencia global -->
+        <div class="progress-card">
+          <div class="progress-card__header">
+            <span>Asistencia Global Institucional</span>
+            <span class="progress-card__pct">{{ kpis().porcentajeAsistencia }}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" [style.width.%]="kpis().porcentajeAsistencia"></div>
+          </div>
+          <p class="progress-card__meta">Referencia mínima MINEDU: 85%</p>
+        </div>
+
+      </section>
+    }
+
+    <!-- ╔══════════════════════════╗ -->
+    <!-- ║  TAB: MONITOR DOCENTES   ║ -->
+    <!-- ╚══════════════════════════╝ -->
+    @if (esTabActiva('docentes')) {
+      <section class="tab-panel" id="panel-docentes">
+
+        <div class="panel-header">
+          <h2>👨‍🏫 Monitor Curricular – {{ kpis().totalDocentes }} Docentes</h2>
+          <p>Estado de registro de notas, asistencia y evidencias por docente</p>
+        </div>
+
+        <!-- Buscador -->
+        <div class="buscador-wrapper">
+          <input type="search" class="buscador-input"
+            placeholder="🔍 Buscar docente por nombre, especialidad o aula…"
+            [(ngModel)]="busquedaDocente" />
+        </div>
+
+        <!-- Tabla de docentes -->
+        <div class="tabla-wrapper">
+          <table class="docentes-tabla" aria-label="Monitor curricular de docentes">
+            <thead>
+              <tr>
+                <th>Docente</th>
+                <th>Especialidad</th>
+                <th>Aula</th>
+                <th>% Asist. Alumnos</th>
+                <th>Alertas</th>
+                <th>Notas Reg.</th>
+                <th>Evidencias</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (doc of docentesFiltrados(); track doc.id) {
+                <tr>
+                  <td class="col-nombre">{{ doc.nombre }}</td>
+                  <td><span class="tag-especialidad">{{ doc.especialidad }}</span></td>
+                  <td class="col-aula">{{ doc.aula }}</td>
+                  <td>
+                    <div class="mini-progress" [attr.data-nivel]="getColorAsistencia(doc.asistenciaPromedio)">
+                      <div class="mini-progress__fill" [style.width.%]="doc.asistenciaPromedio"></div>
+                    </div>
+                    <span class="pct-label" [attr.data-nivel]="getColorAsistencia(doc.asistenciaPromedio)">
+                      {{ doc.asistenciaPromedio | number:'1.0-0' }}%
+                    </span>
+                  </td>
+                  <td>
+                    @if (doc.alumnosConAlerta > 0) {
+                      <span class="alerta-badge">⚠ {{ doc.alumnosConAlerta }}</span>
+                    } @else {
+                      <span class="ok-badge">✅ 0</span>
+                    }
+                  </td>
+                  <td class="col-num">{{ doc.notasRegistradas }}</td>
+                  <td class="col-num">{{ doc.evidenciasSubidas }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (docentesFiltrados().length === 0) {
+            <div class="sin-resultados">Sin resultados para "{{ busquedaDocente }}"</div>
+          }
+        </div>
+
+      </section>
+    }
+
+    <!-- ╔══════════════════════════╗ -->
+    <!-- ║  TAB: ALERTAS            ║ -->
+    <!-- ╚══════════════════════════╝ -->
+    @if (esTabActiva('alertas')) {
+      <section class="tab-panel" id="panel-alertas">
+
+        <div class="panel-header">
+          <h2>🚨 Alertas del Sistema</h2>
+          <p>Situaciones que requieren atención inmediata del Director</p>
+        </div>
+
+        <div class="alertas-list">
+          @for (alerta of alertas; track $index) {
+            <div class="alerta-card" [class.alerta-card--riesgo]="alerta.tipo === 'ALUMNOS_EN_RIESGO'"
+                                     [class.alerta-card--pendiente]="alerta.tipo === 'NOTAS_PENDIENTES'">
+              <div class="alerta-card__icono">
+                {{ alerta.tipo === 'ALUMNOS_EN_RIESGO' ? '🔴' : '🟡' }}
+              </div>
+              <div class="alerta-card__info">
+                <p class="alerta-card__msg">{{ alerta.mensaje }}</p>
+                <p class="alerta-card__meta">{{ alerta.aula }}</p>
+              </div>
+              <div class="alerta-card__cantidad">
+                <span>{{ alerta.cantidad }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+      </section>
+    }
+
+  </main>
+</div>

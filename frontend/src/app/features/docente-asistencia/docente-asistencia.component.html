@@ -1,0 +1,169 @@
+<!-- ============================================================ -->
+<!--  DOCENTE – Control de Asistencia (Vista Móvil)              -->
+<!--  I.E. Micaela Bastidas Puyocahua                            -->
+<!-- ============================================================ -->
+
+<div class="asistencia-wrapper">
+
+  <!-- ── Header ───────────────────────────────────────────────── -->
+  <header class="da-header">
+    <div class="da-header__top">
+      <div class="da-header__brand">
+        <span class="da-header__icon">📋</span>
+        <div>
+          <h1 class="da-header__title">Control de Asistencia</h1>
+          <p class="da-header__sub">I.E. Micaela Bastidas Puyocahua</p>
+        </div>
+      </div>
+      @if (modoOffline()) {
+        <div class="offline-badge">
+          <span>📴 Sin conexión</span>
+        </div>
+      } @else {
+        <div class="online-badge">
+          <span>🟢 En línea</span>
+        </div>
+      }
+    </div>
+
+    <!-- Selector de Aula y Fecha -->
+    <div class="da-header__controls">
+      <div class="control-group">
+        <label for="select-aula" class="control-label">Aula</label>
+        <select id="select-aula" class="control-select"
+          [(ngModel)]="aulaSeleccionada" (change)="onAulaChange()">
+          <option [value]="null" disabled>Selecciona un aula…</option>
+          @for (aula of aulas; track aula.id) {
+            <option [value]="aula.id">{{ aula.descripcion }}</option>
+          }
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="input-fecha" class="control-label">Fecha</label>
+        <input id="input-fecha" type="date" class="control-input"
+          [(ngModel)]="fechaSeleccionada" (change)="onAulaChange()" />
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Contenido principal ──────────────────────────────────── -->
+  @if (!aulaSeleccionada) {
+    <!-- Estado vacío -->
+    <div class="empty-prompt">
+      <span class="empty-prompt__icon">🏫</span>
+      <p>Selecciona un aula para comenzar el registro de asistencia</p>
+    </div>
+  }
+
+  @if (aulaSeleccionada && cargando()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando lista de alumnos…</p>
+    </div>
+  }
+
+  @if (aulaSeleccionada && !cargando()) {
+
+    <!-- ── Barra de acciones rápidas ───────────────────────────── -->
+    <div class="acciones-rapidas">
+      <p class="acciones-rapidas__label">Marcar todos como:</p>
+      <div class="acciones-rapidas__btns">
+        <button class="btn-rapido btn-rapido--asistio" (click)="marcarTodos('ASISTIO')">
+          ✅ Todos presentes
+        </button>
+        <button class="btn-rapido btn-rapido--falta" (click)="marcarTodos('FALTA')">
+          ❌ Todos ausentes
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Resumen en tiempo real ───────────────────────────────── -->
+    <div class="resumen-strip">
+      <div class="resumen-item resumen-item--asistio">
+        <span class="resumen-num">{{ totalAsistieron }}</span>
+        <span class="resumen-label">Presentes</span>
+      </div>
+      <div class="resumen-item resumen-item--falta">
+        <span class="resumen-num">{{ totalFaltas }}</span>
+        <span class="resumen-label">Faltas</span>
+      </div>
+      <div class="resumen-item resumen-item--tardanza">
+        <span class="resumen-num">{{ totalTardanzas }}</span>
+        <span class="resumen-label">Tardanzas</span>
+      </div>
+      <div class="resumen-item resumen-item--total">
+        <span class="resumen-num">{{ alumnos.length }}</span>
+        <span class="resumen-label">Total</span>
+      </div>
+    </div>
+
+    <!-- ── Lista de Alumnos ─────────────────────────────────────── -->
+    <div class="alumnos-list">
+      @for (alumno of alumnos; track alumno.id; let i = $index) {
+        <div class="alumno-card" [ngClass]="getClaseEstado(alumno.estado)">
+
+          <!-- Número e info del alumno -->
+          <div class="alumno-card__info">
+            <span class="alumno-card__num">{{ i + 1 }}</span>
+            <div class="alumno-card__datos">
+              <span class="alumno-card__nombre">{{ alumno.nombreCompleto }}</span>
+              <div class="alumno-card__badges">
+                @if (alumno.tienePermisoAcademia) {
+                  <span class="badge-academia" [title]="'Permiso academia: ' + alumno.horaEntradaAcademia">
+                    🎓 Academia {{ alumno.horaEntradaAcademia }}
+                  </span>
+                }
+                <span class="badge-estado">
+                  {{ getEmojiEstado(alumno.estado) }} {{ alumno.estado | titlecase }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de marcado rápido -->
+          <div class="alumno-card__btns">
+            @for (est of estadosRapidos; track est.valor) {
+              <button
+                class="btn-estado"
+                [class.btn-estado--activo]="alumno.estado === est.valor"
+                [attr.aria-label]="est.label"
+                [title]="est.label"
+                (click)="marcarEstado(alumno.id, est.valor)">
+                {{ est.emoji }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- ── Botón de Guardar ─────────────────────────────────────── -->
+    <div class="guardar-section">
+      @if (guardadoExitoso()) {
+        <div class="exito-msg">
+          ✅ {{ modoOffline() ? 'Guardado offline – se sincronizará al conectarse' : 'Asistencia guardada exitosamente' }}
+        </div>
+      }
+      <button
+        id="btn-guardar-asistencia"
+        class="btn-guardar"
+        [disabled]="guardando()"
+        (click)="guardarAsistencia()">
+        @if (guardando()) {
+          <span class="btn-spinner"></span> Guardando…
+        } @else if (modoOffline()) {
+          📴 Guardar Offline
+        } @else {
+          💾 Guardar Asistencia
+        }
+      </button>
+
+      @if (modoOffline()) {
+        <p class="offline-nota">
+          Los registros se guardarán localmente y se sincronizarán automáticamente cuando recuperes la conexión.
+        </p>
+      }
+    </div>
+  }
+
+</div>

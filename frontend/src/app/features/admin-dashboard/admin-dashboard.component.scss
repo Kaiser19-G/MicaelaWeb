@@ -1,0 +1,167 @@
+/* ============================================================ */
+/*  ADMIN DASHBOARD – SCSS                                       */
+/* ============================================================ */
+:host {
+  --azul:    #1a3a6b;  --dorado:  #e8b923;
+  --verde:   #10b981;  --rojo:    #ef4444;
+  --naranja: #f59e0b;  --morado:  #8b5cf6;
+  --bg:      #f0f4f9;  --sup:     #ffffff;
+  --borde:   #e2e8f0;  --texto:   #1e293b;
+  --suave:   #64748b;  --radio:   12px;
+  --sombra:  0 2px 12px rgba(0,0,0,0.07);
+}
+
+.dashboard-wrapper { min-height: 100vh; background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+/* ── Header ───────────────────────────────────────────────── */
+.dash-header {
+  background: linear-gradient(135deg, var(--azul), #0f2549);
+  color: white; padding: 1.5rem 2rem 1rem;
+
+  &__top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+  &__brand { display: flex; align-items: center; gap: 1rem; }
+}
+.dash-icon { font-size: 2.5rem; }
+.dash-title { margin: 0; font-size: 1.3rem; font-weight: 700; }
+.dash-sub   { margin: 0; font-size: 0.78rem; opacity: 0.7; }
+.dash-fecha { margin: 0.75rem 0 0; font-size: 0.78rem; opacity: 0.6; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.6rem; }
+
+.btn-exportar {
+  padding: 0.6rem 1.2rem; background: var(--dorado); color: var(--azul);
+  border: none; border-radius: 8px; font-weight: 700; font-size: 0.875rem;
+  cursor: pointer; transition: all 0.2s;
+  &:hover { filter: brightness(1.1); transform: translateY(-1px); }
+}
+
+/* ── KPIs ─────────────────────────────────────────────────── */
+.kpis-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem; padding: 1.5rem 2rem;
+}
+.kpi-card {
+  background: var(--sup); border-radius: var(--radio); padding: 1.25rem;
+  box-shadow: var(--sombra); border-top: 4px solid transparent;
+  display: flex; flex-direction: column; gap: 0.2rem;
+  transition: transform 0.2s;
+  &:hover { transform: translateY(-2px); }
+  &--azul   { border-top-color: var(--azul);   }
+  &--verde  { border-top-color: var(--verde);  }
+  &--rojo   { border-top-color: var(--rojo);   }
+  &--morado { border-top-color: var(--morado); }
+  &__icon  { font-size: 1.6rem; }
+  &__valor { font-size: 2rem; font-weight: 800; line-height: 1; color: var(--texto); }
+  &__label { font-size: 0.82rem; font-weight: 600; color: var(--texto); }
+  &__sub   { font-size: 0.72rem; color: var(--suave); }
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+.dash-tabs {
+  display: flex; background: var(--sup); border-bottom: 2px solid var(--borde);
+  padding: 0 2rem; gap: 0; overflow-x: auto;
+}
+.dash-tab {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.85rem 1.25rem; background: none; border: none;
+  border-bottom: 3px solid transparent; margin-bottom: -2px;
+  color: var(--suave); font-size: 0.875rem; font-weight: 500;
+  cursor: pointer; white-space: nowrap; transition: all 0.2s;
+  &:hover { color: var(--azul); background: #f8faff; }
+  &--activa { color: var(--azul); border-bottom-color: var(--azul); font-weight: 700; }
+}
+.tab-badge {
+  background: var(--rojo); color: white;
+  border-radius: 100px; padding: 0.1rem 0.45rem;
+  font-size: 0.7rem; font-weight: 700;
+}
+
+/* ── Content ──────────────────────────────────────────────── */
+.dash-content { padding: 1.5rem 2rem; }
+.tab-panel { animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+.panel-header { margin-bottom: 1.5rem;
+  h2 { margin: 0 0 0.25rem; font-size: 1.2rem; font-weight: 700; color: var(--texto); }
+  p  { margin: 0; font-size: 0.875rem; color: var(--suave); }
+}
+
+/* ── Resumen ──────────────────────────────────────────────── */
+.resumen-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.info-card {
+  background: var(--sup); border-radius: var(--radio); padding: 1.25rem; box-shadow: var(--sombra);
+  &__title { margin: 0 0 0.75rem; font-size: 0.875rem; font-weight: 600; color: var(--suave); }
+  &__valor { font-size: 2.5rem; font-weight: 800; line-height: 1; margin-bottom: 0.25rem;
+    &--alerta { color: var(--rojo); }
+    &--ok     { color: var(--verde); }
+  }
+  &__desc { margin: 0; font-size: 0.78rem; color: var(--suave); }
+}
+.progress-card {
+  background: var(--sup); border-radius: var(--radio); padding: 1.25rem; box-shadow: var(--sombra);
+  &__header { display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.9rem; }
+  &__pct { color: var(--verde); font-weight: 700; }
+  &__meta { margin: 0.5rem 0 0; font-size: 0.75rem; color: var(--suave); }
+}
+.progress-bar-bg { height: 12px; background: var(--borde); border-radius: 100px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--verde), #34d399); border-radius: 100px; transition: width 0.6s; }
+
+/* ── Docentes ─────────────────────────────────────────────── */
+.buscador-wrapper { margin-bottom: 1rem; }
+.buscador-input {
+  width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--borde);
+  border-radius: var(--radio); font-size: 0.9rem; outline: none; box-sizing: border-box;
+  &:focus { border-color: var(--azul); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+}
+
+.tabla-wrapper { overflow-x: auto; border-radius: var(--radio); box-shadow: var(--sombra); background: var(--sup); }
+.docentes-tabla {
+  width: 100%; border-collapse: collapse; font-size: 0.835rem;
+  thead tr { background: linear-gradient(135deg, var(--azul), #1e4d8c); color: white; }
+  th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+  td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--borde); color: var(--texto); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #f8faff; }
+  .col-nombre { font-weight: 600; white-space: nowrap; }
+  .col-aula { font-size: 0.78rem; color: var(--suave); }
+  .col-num { text-align: center; font-weight: 600; }
+}
+
+.tag-especialidad {
+  padding: 0.2rem 0.6rem; background: #dbeafe; color: #1e40af;
+  border-radius: 100px; font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+}
+.mini-progress { height: 6px; background: var(--borde); border-radius: 100px; overflow: hidden; margin-bottom: 2px;
+  &__fill { height: 100%; border-radius: 100px; }
+  &[data-nivel="success"] .mini-progress__fill { background: var(--verde); }
+  &[data-nivel="warning"] .mini-progress__fill { background: var(--naranja); }
+  &[data-nivel="danger"]  .mini-progress__fill { background: var(--rojo); }
+}
+.pct-label { font-size: 0.72rem; font-weight: 600;
+  &[data-nivel="success"] { color: var(--verde); }
+  &[data-nivel="warning"] { color: var(--naranja); }
+  &[data-nivel="danger"]  { color: var(--rojo); }
+}
+.alerta-badge { padding: 0.2rem 0.5rem; background: #fef3c7; color: #92400e; border-radius: 100px; font-size: 0.72rem; font-weight: 600; }
+.ok-badge     { padding: 0.2rem 0.5rem; background: #d1fae5; color: #065f46; border-radius: 100px; font-size: 0.72rem; font-weight: 600; }
+.sin-resultados { padding: 2rem; text-align: center; color: var(--suave); font-size: 0.9rem; }
+
+/* ── Alertas ──────────────────────────────────────────────── */
+.alertas-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.alerta-card {
+  background: var(--sup); border-radius: var(--radio); padding: 1rem 1.25rem;
+  display: flex; align-items: center; gap: 1rem; box-shadow: var(--sombra);
+  border-left: 4px solid transparent;
+  &--riesgo   { border-left-color: var(--rojo); background: #fff8f8; }
+  &--pendiente{ border-left-color: var(--naranja); background: #fffdf0; }
+  &__icono { font-size: 1.5rem; flex-shrink: 0; }
+  &__info { flex: 1; }
+  &__msg  { margin: 0 0 0.2rem; font-size: 0.9rem; font-weight: 600; color: var(--texto); }
+  &__meta { margin: 0; font-size: 0.78rem; color: var(--suave); }
+  &__cantidad { font-size: 1.5rem; font-weight: 800; color: var(--texto); flex-shrink: 0; }
+}
+
+@media (max-width: 768px) {
+  .dash-content, .dash-header, .kpis-grid { padding-left: 1rem; padding-right: 1rem; }
+  .kpis-grid { grid-template-columns: repeat(2, 1fr); }
+  .resumen-cards { grid-template-columns: 1fr; }
+  .dash-tabs { padding: 0 0.5rem; }
+}
