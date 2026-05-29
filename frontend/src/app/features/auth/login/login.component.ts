@@ -101,7 +101,8 @@ export class LoginComponent {
       next: (resp) => {
         // Redirigir según rol
         switch (resp.rol) {
-          case 'DIRECTOR': this.router.navigate(['/admin-dashboard']); break;
+          case 'DIRECTOR':
+          case 'ADMIN':    this.router.navigate(['/admin-dashboard']); break;
           case 'DOCENTE':  this.router.navigate(['/docente/asistencia']); break;
           case 'ALUMNO':   this.router.navigate(['/alumno/portal']); break;
           default:         this.router.navigate(['/login']);
