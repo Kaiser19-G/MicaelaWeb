@@ -58,6 +58,18 @@ export const routes: Routes = [
     title: 'Control de Asistencia – I.E. Micaela Bastidas'
   },
 
+  // ── Portal Docente ──────────────────────────────────────────────────
+  {
+    path: 'docente/portal',
+    loadComponent: () =>
+      import('./features/docente-portal/docente-portal.component').then(
+        m => m.DocentePortalComponent
+      ),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['DOCENTE', 'DIRECTOR'] },
+    title: 'Portal Docente – I.E. Micaela Bastidas'
+  },
+
   // ── Matrículas ──────────────────────────────────────────────────────
   {
     path: 'matriculas',

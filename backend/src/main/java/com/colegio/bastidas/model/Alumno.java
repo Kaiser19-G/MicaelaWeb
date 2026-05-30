@@ -62,6 +62,10 @@ public class Alumno {
     private Sexo sexo;
 
     // ── Datos de Matrícula ────────────────────────────────────────────────
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "aula_id")
     private Aula aula;

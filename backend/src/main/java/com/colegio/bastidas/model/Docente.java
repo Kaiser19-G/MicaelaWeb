@@ -61,11 +61,15 @@ public class Docente {
     private Condicion condicion = Condicion.NOMBRADO;
 
     @Column(name = "email_institucional", length = 100)
-    @Email
     private String emailInstitucional;
 
-    @Column(name = "celular", length = 15)
+    @Column(length = 15)
     private String celular;
+
+    // ── Relación con Usuario ──────────────────────────────────────────────
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
 
     // ── Relaciones ────────────────────────────────────────────────────────
     @OneToMany(mappedBy = "docentePrincipal", fetch = FetchType.LAZY)
@@ -76,10 +80,7 @@ public class Docente {
     @Builder.Default
     private List<Asistencia> asistenciasRegistradas = new ArrayList<>();
 
-    // ── Relación con Usuario del sistema ──────────────────────────────────
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "usuario_id")
-    private Usuario usuario;
+
 
     // ── Auditoría ─────────────────────────────────────────────────────────
     @CreationTimestamp
