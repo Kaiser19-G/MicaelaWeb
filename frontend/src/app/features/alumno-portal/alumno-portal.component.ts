@@ -17,13 +17,20 @@ import { AuthService } from '../../core/services/auth.service';
 // ── Tipos ─────────────────────────────────────────────────────────────────
 export type TabCurso   = 'silabo' | 'contenido' | 'evaluaciones' | 'tareas' | 'notas' | 'asistencia';
 export type SidebarNav = 'cursos' | 'asistencia' | 'notas' | 'horario' | 'mensajes' | 'configuracion';
+export type CursosVista = 'lista' | 'detalle';
 
 // ── Interfaces ────────────────────────────────────────────────────────────
-export interface Materia {
+export interface CursoCard {
+  id: number;
   nombre: string;
   codigo: string;
   grado: string;
   modalidad: 'Presencial' | 'Virtual';
+  docente: string;
+  docente2?: string;
+  progreso: number;        // 0-100
+  color: string;           // color de fondo de la card
+  icono: string;           // emoji o SVG key
 }
 
 export type EstadoActividad = 'entregada' | 'vencida' | 'por_entregar' | 'no_revisado';
@@ -73,7 +80,8 @@ export interface HorarioCurso {
 
 /**
  * AlumnoPortalComponent – Portal del Alumno estilo UTP+class.
- * Sidebar oscuro + header + navegación por materia y tabs.
+ * Pantalla inicio: grid de cards de cursos.
+ * Pantalla detalle: tabs por curso (Sílabo, Contenido, Evaluaciones, etc.)
  */
 @Component({
   selector: 'app-alumno-portal',
@@ -90,14 +98,15 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
 
   // ── Signals ───────────────────────────────────────────────────────────
   readonly sidebarNav       = signal<SidebarNav>('cursos');
+  readonly cursosVista      = signal<CursosVista>('lista');   // 'lista' = cards, 'detalle' = tabs
   readonly tabCurso         = signal<TabCurso>('contenido');
-  readonly materiaActiva    = signal<string>('Matemática');
+  readonly cursoActivo      = signal<CursoCard | null>(null);
   readonly cargando         = signal(false);
   readonly alumnoId         = signal<number | null>(null);
   readonly anioActual       = signal(new Date().getFullYear());
-  readonly menuExpanded     = signal(false);
+  readonly filtroPeriodo    = signal('actual');
 
-  // Bimestres expandidos (array de números)
+  // Bimestres expandidos
   private bimestresExpandidos = signal<number[]>([1]);
 
   // ── Computed ──────────────────────────────────────────────────────────
@@ -115,18 +124,29 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
     return 'danger';
   });
 
-  // ── Datos ─────────────────────────────────────────────────────────────
-  readonly materias: Materia[] = [
-    { nombre: 'Matemática',           codigo: 'MAT', grado: '5to A', modalidad: 'Presencial' },
-    { nombre: 'Comunicación',         codigo: 'COM', grado: '5to A', modalidad: 'Presencial' },
-    { nombre: 'CTA',                  codigo: 'CTA', grado: '5to A', modalidad: 'Presencial' },
-    { nombre: 'Historia y Geografía', codigo: 'HGE', grado: '5to A', modalidad: 'Presencial' },
-    { nombre: 'Inglés',               codigo: 'ING', grado: '5to A', modalidad: 'Presencial' },
-    { nombre: 'Ed. Física',           codigo: 'EDF', grado: '5to A', modalidad: 'Presencial' },
-    { nombre: 'Arte y Cultura',       codigo: 'ART', grado: '5to A', modalidad: 'Presencial' },
-    { nombre: 'Tutoría',              codigo: 'TUT', grado: '5to A', modalidad: 'Presencial' },
+  // ── Cursos del alumno (datos del colegio) ─────────────────────────────
+  readonly cursos: CursoCard[] = [
+    { id: 1, nombre: 'Matemática',             codigo: '5to-MAT-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. María García',       progreso: 35, color: '#fde8d8', icono: 'math'     },
+    { id: 2, nombre: 'Comunicación',           codigo: '5to-COM-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Carlos Mendoza',     progreso: 42, color: '#d4edfa', icono: 'comm'     },
+    { id: 3, nombre: 'CTA',                    codigo: '5to-CTA-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Ana Torres',         progreso: 28, color: '#d9f5e0', icono: 'science'  },
+    { id: 4, nombre: 'Historia y Geografía',   codigo: '5to-HGE-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Luis Quispe',        progreso: 50, color: '#fde8d8', icono: 'history'  },
+    { id: 5, nombre: 'Inglés',                 codigo: '5to-ING-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Rosa Flores',        progreso: 20, color: '#ede8fd', icono: 'english'  },
+    { id: 6, nombre: 'Educación Física',       codigo: '5to-EDF-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Juan Ramírez',       progreso: 60, color: '#d4edfa', icono: 'sport'    },
+    { id: 7, nombre: 'Arte y Cultura',         codigo: '5to-ART-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Carmen Silva',       progreso: 45, color: '#fdf5d4', icono: 'art'      },
+    { id: 8, nombre: 'Tutoría',               codigo: '5to-TUT-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Diego Vargas',       progreso: 70, color: '#d9f5e0', icono: 'tutor'    },
   ];
 
+  // ── Tabs del curso ────────────────────────────────────────────────────
+  readonly cursoTabs: { id: TabCurso; label: string }[] = [
+    { id: 'silabo',       label: 'Sílabo' },
+    { id: 'contenido',    label: 'Contenido' },
+    { id: 'evaluaciones', label: 'Evaluaciones' },
+    { id: 'tareas',       label: 'Tareas' },
+    { id: 'notas',        label: 'Notas' },
+    { id: 'asistencia',   label: 'Asistencia' },
+  ];
+
+  // ── Bimestres (contenido del curso) ───────────────────────────────────
   readonly bimestres: BimestreData[] = [
     {
       numero: 1, nombre: 'Bimestre 1', periodo: 'Mar – May',
@@ -168,49 +188,18 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
         {
           numero: 6, actividades: [
             { tipo: 'material', esCalificada: false, subtipo: 'No calificada', nombre: 'Material SEMANA 06', estado: 'no_revisado', desde: '09/06/26 08:00 a.m.', hasta: '15/06/26 11:59 p.m.' },
-            { tipo: 'tarea', esCalificada: false, subtipo: 'No calificada', nombre: 'AppS06', estado: 'no_revisado', desde: '13/06/26 08:00 a.m.', hasta: '15/06/26 11:59 p.m.' },
           ]
         },
       ]
     },
-    {
-      numero: 3, nombre: 'Bimestre 3', periodo: 'Ago – Sep',
-      semanas: [
-        { numero: 9,  actividades: [] },
-        { numero: 10, actividades: [] },
-      ]
-    },
-    {
-      numero: 4, nombre: 'Bimestre 4', periodo: 'Oct – Nov',
-      semanas: [
-        { numero: 13, actividades: [] },
-        { numero: 14, actividades: [] },
-      ]
-    },
+    { numero: 3, nombre: 'Bimestre 3', periodo: 'Ago – Sep', semanas: [{ numero: 9, actividades: [] }] },
+    { numero: 4, nombre: 'Bimestre 4', periodo: 'Oct – Nov', semanas: [{ numero: 13, actividades: [] }] },
   ];
 
   notas: NotaAlumno[] = [];
   resumenAsistencia: ResumenAsistencia | null = null;
   historialAsistencia: Asistencia[] = [];
   horario: HorarioCurso[] = this.generarHorario();
-
-  readonly sidebarItems = [
-    { id: 'cursos'        as SidebarNav, label: 'Cursos',         icon: 'book' },
-    { id: 'notas'         as SidebarNav, label: 'Notas',          icon: 'chart' },
-    { id: 'asistencia'    as SidebarNav, label: 'Asistencia',     icon: 'calendar' },
-    { id: 'horario'       as SidebarNav, label: 'Horario',        icon: 'clock' },
-    { id: 'mensajes'      as SidebarNav, label: 'Mensajes',       icon: 'mail' },
-    { id: 'configuracion' as SidebarNav, label: 'Configuración',  icon: 'settings' },
-  ];
-
-  readonly cursoTabs: { id: TabCurso; label: string }[] = [
-    { id: 'silabo',       label: 'Sílabo' },
-    { id: 'contenido',    label: 'Contenido' },
-    { id: 'evaluaciones', label: 'Evaluaciones' },
-    { id: 'tareas',       label: 'Tareas' },
-    { id: 'notas',        label: 'Notas' },
-    { id: 'asistencia',   label: 'Asistencia' },
-  ];
 
   // ── Ciclo de vida ─────────────────────────────────────────────────────
   private destroy$ = new Subject<void>();
@@ -226,18 +215,31 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
   }
 
   // ── Navegación ─────────────────────────────────────────────────────────
-  setSidebarNav(nav: SidebarNav): void { this.sidebarNav.set(nav); }
+  setSidebarNav(nav: SidebarNav): void {
+    this.sidebarNav.set(nav);
+    if (nav === 'cursos') {
+      this.cursosVista.set('lista');
+      this.cursoActivo.set(null);
+    }
+  }
+
+  abrirCurso(curso: CursoCard): void {
+    this.cursoActivo.set(curso);
+    this.cursosVista.set('detalle');
+    this.tabCurso.set('contenido');
+  }
+
+  volverALista(): void {
+    this.cursosVista.set('lista');
+    this.cursoActivo.set(null);
+  }
+
   setTabCurso(tab: TabCurso): void {
     this.tabCurso.set(tab);
     if (tab === 'asistencia') this.cargarAsistencia();
   }
-  setMateria(nombre: string): void { this.materiaActiva.set(nombre); }
 
-  getMateriaActiva(): Materia {
-    return this.materias.find(m => m.nombre === this.materiaActiva()) ?? this.materias[0];
-  }
-
-  // ── Acordeón bimestres ──────────────────────────────────────────────────
+  // ── Acordeón ──────────────────────────────────────────────────────────
   toggleBimestre(num: number): void {
     const curr = this.bimestresExpandidos();
     if (curr.includes(num)) {
@@ -251,50 +253,50 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
     return this.bimestresExpandidos().includes(num);
   }
 
-  // ── Labels de estado ───────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────
   getEstadoLabel(estado: EstadoActividad): string {
     const mapa: Record<EstadoActividad, string> = {
-      entregada:    'Entregada',
-      vencida:      'Vencida',
-      por_entregar: 'Por entregar',
-      no_revisado:  'No revisado',
+      entregada: 'Entregada', vencida: 'Vencida',
+      por_entregar: 'Por entregar', no_revisado: 'No revisado',
     };
     return mapa[estado];
   }
 
-  // ── Helpers de asistencia ──────────────────────────────────────────────
   getEstadoAsistenciaClass(estado: string): string {
     const mapa: Record<string, string> = {
-      'ASISTIO':          'estado-asistio',
-      'FALTA':            'estado-falta',
-      'TARDANZA':         'estado-tardanza',
-      'JUSTIFICADO':      'estado-justificado',
-      'PERMISO_ACADEMIA': 'estado-academia',
-      'LICENCIA':         'estado-licencia'
+      'ASISTIO': 'estado-asistio', 'FALTA': 'estado-falta',
+      'TARDANZA': 'estado-tardanza', 'JUSTIFICADO': 'estado-justificado',
+      'PERMISO_ACADEMIA': 'estado-academia', 'LICENCIA': 'estado-licencia'
     };
     return mapa[estado] ?? '';
   }
 
   formatearEstado(estado: string): string {
     const etiquetas: Record<string, string> = {
-      'ASISTIO':          'Asistió',
-      'FALTA':            'Falta',
-      'TARDANZA':         'Tardanza',
-      'JUSTIFICADO':      'Justificado',
-      'PERMISO_ACADEMIA': 'Permiso Academia',
-      'LICENCIA':         'Licencia'
+      'ASISTIO': 'Asistió', 'FALTA': 'Falta', 'TARDANZA': 'Tardanza',
+      'JUSTIFICADO': 'Justificado', 'PERMISO_ACADEMIA': 'Permiso Academia', 'LICENCIA': 'Licencia'
     };
     return etiquetas[estado] ?? estado;
   }
 
   getLiteralClass(literal?: string): string {
     switch (literal) {
-      case 'AD': return 'badge-ad';
-      case 'A':  return 'badge-a';
-      case 'B':  return 'badge-b';
-      case 'C':  return 'badge-c';
+      case 'AD': return 'badge-ad'; case 'A': return 'badge-a';
+      case 'B': return 'badge-b';   case 'C': return 'badge-c';
       default:   return '';
     }
+  }
+
+  getActividadesFiltradas(tipo: 'evaluacion' | 'tarea'): { bimestre: number; semana: number; act: ActividadBimestre }[] {
+    const result: { bimestre: number; semana: number; act: ActividadBimestre }[] = [];
+    for (const b of this.bimestres) {
+      for (const s of b.semanas) {
+        for (const a of s.actividades) {
+          if (a.tipo === tipo) result.push({ bimestre: b.numero, semana: s.numero, act: a });
+        }
+      }
+    }
+    return result;
   }
 
   // ── Carga de datos ─────────────────────────────────────────────────────
@@ -307,14 +309,13 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
       { area: 'Inglés',               b1: 12, b2: 13, b3: 14, b4: 15, promedio: 13.5, literal: 'B'  },
       { area: 'Educación Física',     b1: 18, b2: 19, b3: 17, b4: 18, promedio: 18.0, literal: 'AD' },
       { area: 'Arte y Cultura',       b1: 16, b2: 17, b3: 18, b4: 16, promedio: 16.75, literal: 'A' },
-      { area: 'Tutoría',              b1: 18, b2: 18, b3: 18, b4: 18, promedio: 18.0, literal: 'AD' },
+      { area: 'Tutoría',             b1: 18, b2: 18, b3: 18, b4: 18, promedio: 18.0, literal: 'AD' },
     ];
   }
 
   cargarAsistencia(): void {
     const id = this.alumnoId();
     if (!id) return;
-
     this.cargando.set(true);
     const inicio = `${this.anioActual()}-03-01`;
     const fin    = `${this.anioActual()}-12-31`;
@@ -343,27 +344,14 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
 
   private generarHorario(): HorarioCurso[] {
     return [
-      { hora: '07:30 – 08:15', lunes: 'Matemática',    martes: 'Comunicación',    miercoles: 'CTA',       jueves: 'Historia',    viernes: 'Inglés'     },
-      { hora: '08:15 – 09:00', lunes: 'Matemática',    martes: 'Comunicación',    miercoles: 'CTA',       jueves: 'Historia',    viernes: 'Inglés'     },
-      { hora: '09:00 – 09:45', lunes: 'Inglés',        martes: 'Matemática',      miercoles: 'Comunicación', jueves: 'Arte',     viernes: 'Ed. Física' },
-      { hora: '09:45 – 10:00', lunes: '— Recreo —',   martes: '— Recreo —',     miercoles: '— Recreo —', jueves: '— Recreo —', viernes: '— Recreo —' },
-      { hora: '10:00 – 10:45', lunes: 'Historia',      martes: 'CTA',             miercoles: 'Matemática', jueves: 'Comunicación', viernes: 'Tutoría' },
-      { hora: '10:45 – 11:30', lunes: 'Historia',      martes: 'CTA',             miercoles: 'Matemática', jueves: 'Comunicación', viernes: 'Tutoría' },
-      { hora: '11:30 – 12:15', lunes: 'Arte',          martes: 'Ed. Física',      miercoles: 'Historia',  jueves: 'CTA',          viernes: 'Matemática' },
-      { hora: '12:15 – 13:00', lunes: 'Arte',          martes: 'Ed. Física',      miercoles: 'Historia',  jueves: 'CTA',          viernes: 'Matemática' },
+      { hora: '07:30 – 08:15', lunes: 'Matemática',  martes: 'Comunicación', miercoles: 'CTA',       jueves: 'Historia',    viernes: 'Inglés'     },
+      { hora: '08:15 – 09:00', lunes: 'Matemática',  martes: 'Comunicación', miercoles: 'CTA',       jueves: 'Historia',    viernes: 'Inglés'     },
+      { hora: '09:00 – 09:45', lunes: 'Inglés',      martes: 'Matemática',   miercoles: 'Comunicación', jueves: 'Arte',     viernes: 'Ed. Física' },
+      { hora: '09:45 – 10:00', lunes: '— Recreo —',  martes: '— Recreo —',  miercoles: '— Recreo —', jueves: '— Recreo —', viernes: '— Recreo —' },
+      { hora: '10:00 – 10:45', lunes: 'Historia',    martes: 'CTA',          miercoles: 'Matemática', jueves: 'Comunicación', viernes: 'Tutoría' },
+      { hora: '10:45 – 11:30', lunes: 'Historia',    martes: 'CTA',          miercoles: 'Matemática', jueves: 'Comunicación', viernes: 'Tutoría' },
+      { hora: '11:30 – 12:15', lunes: 'Arte',        martes: 'Ed. Física',   miercoles: 'Historia',  jueves: 'CTA',          viernes: 'Matemática' },
+      { hora: '12:15 – 13:00', lunes: 'Arte',        martes: 'Ed. Física',   miercoles: 'Historia',  jueves: 'CTA',          viernes: 'Matemática' },
     ];
-  }
-
-  // Retorna las actividades de evaluaciones o tareas para la tab activa
-  getActividadesFiltradas(tipo: 'evaluacion' | 'tarea'): { bimestre: number; semana: number; act: ActividadBimestre }[] {
-    const result: { bimestre: number; semana: number; act: ActividadBimestre }[] = [];
-    for (const b of this.bimestres) {
-      for (const s of b.semanas) {
-        for (const a of s.actividades) {
-          if (a.tipo === tipo) result.push({ bimestre: b.numero, semana: s.numero, act: a });
-        }
-      }
-    }
-    return result;
   }
 }

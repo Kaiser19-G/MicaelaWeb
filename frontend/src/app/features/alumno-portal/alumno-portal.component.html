@@ -5,17 +5,16 @@
     <div class="sidebar-logo">MB</div>
 
     <nav class="sidebar-nav">
-      <!-- Cursos -->
-      <button class="sidebar-item" [class.active]="sidebarNav() === 'cursos'" (click)="setSidebarNav('cursos')">
+      <button class="sidebar-item" [class.active]="sidebarNav() === 'cursos'" (click)="setSidebarNav('cursos')" title="Cursos">
         <span class="active-indicator"></span>
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
         </svg>
         <span class="sidebar-label">Cursos</span>
       </button>
 
-      <!-- Chat -->
-      <button class="sidebar-item" [class.active]="sidebarNav() === 'mensajes'" (click)="setSidebarNav('mensajes')">
+      <button class="sidebar-item" [class.active]="sidebarNav() === 'mensajes'" (click)="setSidebarNav('mensajes')" title="Chat">
         <span class="active-indicator"></span>
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -23,18 +22,17 @@
         <span class="sidebar-label">Chat</span>
       </button>
 
-      <!-- Calendario -->
-      <button class="sidebar-item" [class.active]="sidebarNav() === 'horario'" (click)="setSidebarNav('horario')">
+      <button class="sidebar-item" [class.active]="sidebarNav() === 'horario'" (click)="setSidebarNav('horario')" title="Calendario">
         <span class="active-indicator"></span>
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
         <span class="sidebar-label">Calendario</span>
       </button>
 
-      <!-- Notas -->
-      <button class="sidebar-item" [class.active]="sidebarNav() === 'notas'" (click)="setSidebarNav('notas')">
+      <button class="sidebar-item" [class.active]="sidebarNav() === 'notas'" (click)="setSidebarNav('notas')" title="Notas">
         <span class="active-indicator"></span>
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
@@ -42,19 +40,19 @@
         <span class="sidebar-label">Notas</span>
       </button>
 
-      <!-- Asistencia -->
-      <button class="sidebar-item" [class.active]="sidebarNav() === 'asistencia'" (click)="setSidebarNav('asistencia')">
+      <button class="sidebar-item" [class.active]="sidebarNav() === 'asistencia'" (click)="setSidebarNav('asistencia')" title="Asistencia">
         <span class="active-indicator"></span>
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
         <span class="sidebar-label">Asistencia</span>
       </button>
     </nav>
 
     <div class="sidebar-bottom">
-      <!-- Configuración -->
-      <button class="sidebar-item" [class.active]="sidebarNav() === 'configuracion'" (click)="setSidebarNav('configuracion')">
+      <button class="sidebar-item" [class.active]="sidebarNav() === 'configuracion'" (click)="setSidebarNav('configuracion')" title="Configuración">
         <span class="active-indicator"></span>
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3"/>
@@ -63,8 +61,7 @@
         <span class="sidebar-label">Config.</span>
       </button>
 
-      <!-- Avatar del alumno -->
-      <div class="sidebar-avatar">{{ usuarioInicial() }}</div>
+      <div class="sidebar-avatar" [title]="usuarioNombre()">{{ usuarioInicial() }}</div>
     </div>
   </aside>
 
@@ -73,18 +70,40 @@
 
     <!-- Header superior -->
     <header class="top-header">
-      <!-- Notificaciones -->
-      <div class="header-left">
+      <div class="header-title">
+        @if (sidebarNav() === 'cursos' && cursosVista() === 'lista') {
+          <span>Mis cursos</span>
+        }
+        @if (sidebarNav() === 'cursos' && cursosVista() === 'detalle') {
+          <span>{{ cursoActivo()?.nombre }}</span>
+        }
+        @if (sidebarNav() === 'notas')        { <span>Mis Notas</span> }
+        @if (sidebarNav() === 'asistencia')   { <span>Mi Asistencia</span> }
+        @if (sidebarNav() === 'horario')      { <span>Mi Horario</span> }
+        @if (sidebarNav() === 'mensajes')     { <span>Mensajes</span> }
+        @if (sidebarNav() === 'configuracion'){ <span>Configuración</span> }
+      </div>
+
+      @if (sidebarNav() === 'cursos' && cursosVista() === 'lista') {
+        <div class="header-filter">
+          <span class="filter-lbl">Filtrar por</span>
+          <div class="filter-select-wrap">
+            <select class="filter-select-btn">
+              <option>Periodo actual</option>
+              <option>Todos los periodos</option>
+            </select>
+          </div>
+        </div>
+      }
+
+      <div class="header-right">
         <button class="notif-btn">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
           <span class="notif-badge">2</span>
         </button>
-      </div>
-
-      <div class="header-right">
-        <span class="header-sep">|</span>
         <div class="header-user">
           <span class="header-greeting">Hola, <strong>{{ usuarioNombre() }}</strong></span>
           <span class="header-role">Estudiante</span>
@@ -93,89 +112,198 @@
       </div>
     </header>
 
-    <!-- ══ VISTA: CURSOS ═══════════════════════════════════════════════════ -->
-    @if (sidebarNav() === 'cursos') {
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- VISTA: CURSOS – LISTA DE CARDS                                    -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    @if (sidebarNav() === 'cursos' && cursosVista() === 'lista') {
+      <div class="content-scroll">
+        <div class="periodo-label">
+          <span class="periodo-year">{{ anioActual() }}</span>
+          <span class="periodo-sep">–</span>
+          <span class="periodo-name">Año Escolar (Actual)</span>
+        </div>
+
+        <!-- Grid de cards -->
+        <div class="cursos-grid">
+          @for (curso of cursos; track curso.id) {
+            <div class="curso-card" (click)="abrirCurso(curso)" role="button" [tabindex]="0"
+              (keydown.enter)="abrirCurso(curso)">
+              <!-- Thumbnail ilustrado -->
+              <div class="card-thumb" [style.background]="curso.color">
+                <!-- Badge de progreso -->
+                <span class="progreso-badge">{{ curso.progreso }}%</span>
+
+                <!-- Ilustración SVG según tipo de curso -->
+                <div class="card-illustration">
+                  @if (curso.icono === 'math') {
+                    <svg viewBox="0 0 200 130" class="ilustracion">
+                      <ellipse cx="100" cy="100" rx="90" ry="30" fill="rgba(0,0,0,0.05)"/>
+                      <circle cx="80" cy="60" r="35" fill="#e8a87c" opacity="0.9"/>
+                      <circle cx="80" cy="60" r="28" fill="#d4886a"/>
+                      <rect x="65" y="52" width="30" height="20" rx="3" fill="#fff" opacity="0.9"/>
+                      <line x1="70" y1="60" x2="90" y2="60" stroke="#e06c3a" stroke-width="2"/>
+                      <line x1="80" y1="55" x2="80" y2="72" stroke="#e06c3a" stroke-width="2"/>
+                      <circle cx="130" cy="55" r="25" fill="#e8a87c" opacity="0.9"/>
+                      <rect x="118" y="47" width="24" height="16" rx="2" fill="#fff" opacity="0.9"/>
+                      <text x="122" y="59" font-size="10" fill="#e06c3a" font-weight="bold">∑x²</text>
+                      <rect x="55" y="82" width="90" height="12" rx="3" fill="#c97a50" opacity="0.6"/>
+                      <circle cx="40" cy="40" r="8" fill="#f4a261" opacity="0.5"/>
+                      <polygon points="155,30 160,15 165,30" fill="#e76f51" opacity="0.4"/>
+                    </svg>
+                  }
+                  @if (curso.icono === 'comm') {
+                    <svg viewBox="0 0 200 130" class="ilustracion">
+                      <circle cx="75" cy="65" r="35" fill="#7fb3d6" opacity="0.9"/>
+                      <circle cx="75" cy="65" r="27" fill="#5b9cc4"/>
+                      <rect x="62" y="56" width="26" height="18" rx="2" fill="#fff" opacity="0.9"/>
+                      <line x1="66" y1="61" x2="86" y2="61" stroke="#3a7fb5" stroke-width="1.5"/>
+                      <line x1="66" y1="65" x2="86" y2="65" stroke="#3a7fb5" stroke-width="1.5"/>
+                      <line x1="66" y1="69" x2="80" y2="69" stroke="#3a7fb5" stroke-width="1.5"/>
+                      <circle cx="130" cy="58" r="28" fill="#7fb3d6" opacity="0.9"/>
+                      <path d="M115 52 Q130 44 145 52 L145 65 Q130 72 115 65 Z" fill="#fff" opacity="0.9"/>
+                      <circle cx="130" cy="59" r="5" fill="#3a7fb5" opacity="0.7"/>
+                      <rect x="50" y="85" width="100" height="10" rx="3" fill="#5b9cc4" opacity="0.5"/>
+                      <circle cx="35" cy="38" r="7" fill="#aed4ec" opacity="0.6"/>
+                      <circle cx="165" cy="80" r="9" fill="#7fb3d6" opacity="0.4"/>
+                    </svg>
+                  }
+                  @if (curso.icono === 'science') {
+                    <svg viewBox="0 0 200 130" class="ilustracion">
+                      <circle cx="80" cy="62" r="32" fill="#6bc4a0" opacity="0.9"/>
+                      <path d="M72 48 L72 68 L60 85 L100 85 L88 68 L88 48 Z" fill="#fff" opacity="0.9"/>
+                      <circle cx="80" cy="75" r="8" fill="#2ecc71" opacity="0.7"/>
+                      <circle cx="130" cy="58" r="26" fill="#6bc4a0" opacity="0.9"/>
+                      <rect x="122" y="44" width="16" height="28" rx="4" fill="#fff" opacity="0.85"/>
+                      <rect x="124" y="58" width="12" height="10" rx="2" fill="#3aaf7b" opacity="0.6"/>
+                      <circle cx="40" cy="42" r="9" fill="#a8e6cf" opacity="0.5"/>
+                      <polygon points="155,25 162,40 148,40" fill="#27ae60" opacity="0.4"/>
+                      <rect x="55" y="88" width="90" height="10" rx="3" fill="#4aae82" opacity="0.5"/>
+                    </svg>
+                  }
+                  @if (curso.icono === 'history') {
+                    <svg viewBox="0 0 200 130" class="ilustracion">
+                      <circle cx="80" cy="62" r="32" fill="#e8a87c" opacity="0.9"/>
+                      <ellipse cx="80" cy="62" rx="22" ry="24" fill="#d4886a" opacity="0.8"/>
+                      <path d="M68 50 Q80 44 92 50 L92 74 Q80 80 68 74 Z" fill="#fff" opacity="0.8"/>
+                      <line x1="70" y1="58" x2="90" y2="58" stroke="#c97a50" stroke-width="1.5"/>
+                      <line x1="70" y1="63" x2="90" y2="63" stroke="#c97a50" stroke-width="1.5"/>
+                      <line x1="70" y1="68" x2="84" y2="68" stroke="#c97a50" stroke-width="1.5"/>
+                      <circle cx="130" cy="56" r="26" fill="#e8a87c" opacity="0.9"/>
+                      <circle cx="130" cy="56" r="18" fill="#d4886a" opacity="0.7"/>
+                      <text x="122" y="60" font-size="14" fill="#fff" font-weight="bold">🌍</text>
+                      <circle cx="38" cy="40" r="8" fill="#f4a261" opacity="0.5"/>
+                      <polygon points="160,30 165,18 170,30" fill="#e76f51" opacity="0.4"/>
+                    </svg>
+                  }
+                  @if (curso.icono === 'english') {
+                    <svg viewBox="0 0 200 130" class="ilustracion">
+                      <circle cx="78" cy="62" r="32" fill="#b39ddb" opacity="0.9"/>
+                      <rect x="64" y="50" width="28" height="24" rx="3" fill="#fff" opacity="0.9"/>
+                      <text x="67" y="64" font-size="11" fill="#7e57c2" font-weight="bold">ABC</text>
+                      <circle cx="130" cy="58" r="26" fill="#b39ddb" opacity="0.9"/>
+                      <path d="M118 50 Q130 44 142 50 L138 72 Q130 76 122 72 Z" fill="#fff" opacity="0.85"/>
+                      <text x="122" y="64" font-size="9" fill="#7e57c2">Hello!</text>
+                      <circle cx="40" cy="42" r="8" fill="#d1c4e9" opacity="0.6"/>
+                      <circle cx="162" cy="82" r="10" fill="#b39ddb" opacity="0.4"/>
+                    </svg>
+                  }
+                  @if (curso.icono === 'sport') {
+                    <svg viewBox="0 0 200 130" class="ilustracion">
+                      <circle cx="80" cy="62" r="32" fill="#7fb3d6" opacity="0.9"/>
+                      <circle cx="80" cy="55" r="14" fill="#5b9cc4" opacity="0.85"/>
+                      <path d="M66 75 Q80 85 94 75 L94 90 L66 90 Z" fill="#3a7fb5" opacity="0.8"/>
+                      <path d="M73 75 L73 60" stroke="#fff" stroke-width="2" opacity="0.7"/>
+                      <path d="M87 75 L87 60" stroke="#fff" stroke-width="2" opacity="0.7"/>
+                      <circle cx="130" cy="58" r="22" fill="#5b9cc4" opacity="0.8"/>
+                      <path d="M120 50 A10 10 0 0 1 140 50 A10 10 0 0 1 120 50" fill="#fff" opacity="0.8"/>
+                      <line x1="130" y1="50" x2="130" y2="70" stroke="#fff" stroke-width="2"/>
+                      <circle cx="40" cy="38" r="9" fill="#aed4ec" opacity="0.5"/>
+                      <polygon points="158,28 164,14 170,28" fill="#2980b9" opacity="0.4"/>
+                    </svg>
+                  }
+                  @if (curso.icono === 'art') {
+                    <svg viewBox="0 0 200 130" class="ilustracion">
+                      <circle cx="80" cy="62" r="32" fill="#ffcc80" opacity="0.9"/>
+                      <circle cx="80" cy="62" r="20" fill="#ffa726" opacity="0.8"/>
+                      <circle cx="72" cy="58" r="5" fill="#e53935" opacity="0.8"/>
+                      <circle cx="86" cy="54" r="5" fill="#1e88e5" opacity="0.8"/>
+                      <circle cx="80" cy="68" r="5" fill="#43a047" opacity="0.8"/>
+                      <circle cx="130" cy="56" r="26" fill="#ffcc80" opacity="0.9"/>
+                      <rect x="118" y="44" width="24" height="24" rx="3" fill="#fff" opacity="0.85"/>
+                      <circle cx="130" cy="56" r="8" fill="#ff7043" opacity="0.7"/>
+                      <circle cx="36" cy="40" r="8" fill="#ffe082" opacity="0.6"/>
+                      <polygon points="158,28 163,16 168,28" fill="#ffa726" opacity="0.4"/>
+                    </svg>
+                  }
+                  @if (curso.icono === 'tutor') {
+                    <svg viewBox="0 0 200 130" class="ilustracion">
+                      <circle cx="80" cy="62" r="32" fill="#80cbc4" opacity="0.9"/>
+                      <circle cx="80" cy="52" r="14" fill="#4db6ac" opacity="0.85"/>
+                      <path d="M66 72 Q80 82 94 72" stroke="#fff" stroke-width="3" fill="none" opacity="0.9"/>
+                      <circle cx="130" cy="60" r="26" fill="#80cbc4" opacity="0.9"/>
+                      <path d="M118 54 Q130 46 142 54 L142 66 Q130 74 118 66 Z" fill="#fff" opacity="0.9"/>
+                      <text x="124" y="63" font-size="9" fill="#26a69a">Hola!</text>
+                      <circle cx="38" cy="40" r="9" fill="#b2dfdb" opacity="0.6"/>
+                      <polygon points="160,26 165,14 170,26" fill="#26a69a" opacity="0.4"/>
+                    </svg>
+                  }
+                </div>
+              </div>
+
+              <!-- Info de la card -->
+              <div class="card-body">
+                <h3 class="card-nombre">{{ curso.nombre }}</h3>
+                <p class="card-codigo">{{ curso.codigo }} · {{ curso.modalidad }}</p>
+                <div class="card-docente">
+                  <div class="docente-avatar-sm">{{ curso.docente[5] }}</div>
+                  <span class="docente-nombre">{{ curso.docente }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- VISTA: CURSOS – DETALLE DEL CURSO (tabs)                          -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    @if (sidebarNav() === 'cursos' && cursosVista() === 'detalle') {
       <div class="content-wrapper">
         <!-- Breadcrumb -->
         <div class="breadcrumb-bar">
-          <button class="back-btn" (click)="setSidebarNav('cursos')">
+          <button class="back-btn" (click)="volverALista()">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
-            Volver a cursos
+            Mis cursos
           </button>
-          <span class="breadcrumb-sep">|</span>
-          <span class="breadcrumb-curso">{{ getMateriaActiva().nombre }} – {{ getMateriaActiva().grado }}</span>
-          <span class="badge-presencial">{{ getMateriaActiva().modalidad }}</span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-curso">{{ cursoActivo()?.nombre }}</span>
+          <span class="badge-presencial">{{ cursoActivo()?.modalidad }}</span>
         </div>
 
-        <!-- Tabs del curso -->
+        <!-- Tabs -->
         <nav class="course-tabs">
           @for (tab of cursoTabs; track tab.id) {
-            <button
-              class="course-tab"
-              [class.active]="tabCurso() === tab.id"
-              (click)="setTabCurso(tab.id)"
-            >{{ tab.label }}</button>
+            <button class="course-tab" [class.active]="tabCurso() === tab.id" (click)="setTabCurso(tab.id)">
+              {{ tab.label }}
+            </button>
           }
         </nav>
 
-        <!-- ═ TAB: CONTENIDO ═══════════════════════════════════════════ -->
+        <!-- ─ TAB: CONTENIDO ─ -->
         @if (tabCurso() === 'contenido') {
           <div class="tab-body">
-            <!-- Banner informativo -->
             <div class="info-banner">
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
-              <span>Las clases presenciales serán transmitidas en vivo vía Zoom y quedarán grabadas en la plataforma. No obstante, <strong>recuerda...</strong></span>
-              <button class="banner-close">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <polyline points="18 15 12 9 6 15"/>
-                </svg>
-              </button>
+              <span>Las clases son <strong>presenciales</strong>. Los materiales y evaluaciones están disponibles en esta plataforma.</span>
             </div>
 
-            <!-- Información del curso -->
-            <div class="accordion-section">
-              <button class="accordion-header" (click)="toggleBimestre(0)">
-                <div class="accordion-title">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                  </svg>
-                  Información del curso
-                </div>
-                <svg class="chevron" [class.rotated]="esBimestreExpandido(0)"
-                  width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              @if (esBimestreExpandido(0)) {
-                <div class="accordion-body">
-                  <div class="sub-accordion">
-                    <button class="sub-item">
-                      Foro de Consultas
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <polyline points="6 9 12 15 18 9"/>
-                      </svg>
-                    </button>
-                    <button class="sub-item">
-                      Bibliografía
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <polyline points="6 9 12 15 18 9"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              }
-            </div>
-
-            <!-- Bimestres -->
-            <div class="bimestres-header">
-              <span>Total de Bimestres ({{ bimestres.length }})</span>
-            </div>
+            <div class="bimestres-header"><span>Bimestres del Año Escolar ({{ bimestres.length }})</span></div>
 
             @for (bim of bimestres; track bim.numero) {
               <div class="bimestre-block">
@@ -195,13 +323,7 @@
                   <div class="bimestre-body">
                     @for (sem of bim.semanas; track sem.numero) {
                       <div class="semana-block">
-                        <button class="semana-header">
-                          Semana {{ sem.numero | number:'2.0' }}
-                          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <polyline points="6 9 12 15 18 9"/>
-                          </svg>
-                        </button>
-
+                        <div class="semana-header">Semana {{ sem.numero }}</div>
                         @if (sem.actividades.length > 0) {
                           @for (act of sem.actividades; track act.nombre) {
                             <div class="actividad-card">
@@ -238,18 +360,21 @@
                               </div>
                               <div class="actividad-actions">
                                 <span class="badge-estado" [class]="'badge-' + act.estado">
-                                  @if (act.estado === 'entregada') { <span>✓</span> }
-                                  @if (act.estado === 'vencida') { <span>✗</span> }
-                                  @if (act.estado === 'por_entregar') { <span>⏰</span> }
-                                  @if (act.estado === 'no_revisado') { <span>⬤</span> }
                                   {{ getEstadoLabel(act.estado) }}
                                 </span>
-                                <button class="btn-actividad">→ Ir a la actividad</button>
+                                @if (act.tipo === 'tarea') {
+                                  <label class="btn-actividad" style="cursor: pointer;">
+                                    Subir Tarea
+                                    <input type="file" style="display: none;" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg">
+                                  </label>
+                                } @else {
+                                  <button class="btn-actividad">→ Ir a la actividad</button>
+                                }
                               </div>
                             </div>
                           }
                         } @else {
-                          <div class="semana-vacia">Semana {{ sem.numero }} (No tienes actividades)</div>
+                          <div class="semana-vacia">No hay actividades programadas para esta semana</div>
                         }
                       </div>
                     }
@@ -260,7 +385,7 @@
           </div>
         }
 
-        <!-- ═ TAB: SÍLABO ══════════════════════════════════════════════ -->
+        <!-- ─ TAB: SÍLABO ─ -->
         @if (tabCurso() === 'silabo') {
           <div class="tab-body">
             <div class="empty-state">
@@ -268,32 +393,19 @@
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
               </svg>
-              <p>Sílabo del curso disponible próximamente</p>
+              <p>El sílabo del curso estará disponible próximamente</p>
             </div>
           </div>
         }
 
-        <!-- ═ TAB: EVALUACIONES ════════════════════════════════════════ -->
+        <!-- ─ TAB: EVALUACIONES ─ -->
         @if (tabCurso() === 'evaluaciones') {
           <div class="tab-body">
             <div class="list-header">
-              <h3>Todas las evaluaciones ({{ getActividadesFiltradas('evaluacion').length }})</h3>
-              <div class="filter-group">
-                <span class="filter-label">Filtro por estado</span>
-                <select class="filter-select"><option>Todas</option></select>
-              </div>
+              <h3>Evaluaciones ({{ getActividadesFiltradas('evaluacion').length }})</h3>
             </div>
-            <p class="list-desc">Se listarán todas las evaluaciones, las que suman a tu promedio final se indicarán como <strong>calificadas</strong> y las que no se indicarán como <strong>no calificadas</strong>.</p>
-
             @for (item of getActividadesFiltradas('evaluacion'); track item.act.nombre) {
-              <div class="bimestre-group-header">Semana {{ item.semana | number:'2.0' }}</div>
-              <div class="actividad-card">
-                <div class="actividad-icon">
-                  <svg width="18" height="18" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
-                </div>
+              <div class="actividad-card" style="margin-bottom:8px">
                 <div class="actividad-info">
                   <span class="actividad-subtipo">{{ item.act.subtipo }}</span>
                   <span class="actividad-nombre">{{ item.act.nombre }}</span>
@@ -302,39 +414,22 @@
                     <span>Hasta: {{ item.act.hasta }}</span>
                   </div>
                 </div>
-                <div class="actividad-actions">
-                  <span class="badge-estado" [class]="'badge-' + item.act.estado">
-                    {{ getEstadoLabel(item.act.estado) }}
-                  </span>
-                  <button class="btn-actividad">→ Ir a la actividad</button>
-                </div>
+                <span class="badge-estado" [class]="'badge-' + item.act.estado">
+                  {{ getEstadoLabel(item.act.estado) }}
+                </span>
               </div>
             }
           </div>
         }
 
-        <!-- ═ TAB: TAREAS ══════════════════════════════════════════════ -->
+        <!-- ─ TAB: TAREAS ─ -->
         @if (tabCurso() === 'tareas') {
           <div class="tab-body">
             <div class="list-header">
-              <h3>Todas las tareas ({{ getActividadesFiltradas('tarea').length }})</h3>
-              <div class="filter-group">
-                <span class="filter-label">Filtro por estado</span>
-                <select class="filter-select"><option>Todas</option></select>
-              </div>
+              <h3>Tareas ({{ getActividadesFiltradas('tarea').length }})</h3>
             </div>
-            <p class="list-desc">Se listarán todas las tareas, las que suman a tu promedio final se indicarán como <strong>calificadas</strong> y las que no se indicarán como <strong>no calificadas</strong>.</p>
-
             @for (item of getActividadesFiltradas('tarea'); track item.act.nombre) {
-              <div class="bimestre-group-header">Semana {{ item.semana | number:'2.0' }}</div>
-              <div class="actividad-card">
-                <div class="actividad-icon">
-                  <svg width="18" height="18" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                  </svg>
-                </div>
+              <div class="actividad-card" style="margin-bottom:8px">
                 <div class="actividad-info">
                   <span class="actividad-subtipo">{{ item.act.subtipo }}</span>
                   <span class="actividad-nombre">{{ item.act.nombre }}</span>
@@ -343,21 +438,18 @@
                     <span>Hasta: {{ item.act.hasta }}</span>
                   </div>
                 </div>
-                <div class="actividad-actions">
-                  <span class="badge-estado" [class]="'badge-' + item.act.estado">
-                    {{ getEstadoLabel(item.act.estado) }}
-                  </span>
-                  <button class="btn-actividad">→ Ir a la actividad</button>
-                </div>
+                <span class="badge-estado" [class]="'badge-' + item.act.estado">
+                  {{ getEstadoLabel(item.act.estado) }}
+                </span>
               </div>
             }
           </div>
         }
 
-        <!-- ═ TAB: NOTAS ═══════════════════════════════════════════════ -->
+        <!-- ─ TAB: NOTAS ─ -->
         @if (tabCurso() === 'notas') {
           <div class="tab-body">
-            <h3 class="section-title">Mis Calificaciones – {{ getMateriaActiva().nombre }}</h3>
+            <h3 class="section-title">Calificaciones – {{ cursoActivo()?.nombre }}</h3>
             <table class="notas-table">
               <thead>
                 <tr>
@@ -383,7 +475,7 @@
           </div>
         }
 
-        <!-- ═ TAB: ASISTENCIA ══════════════════════════════════════════ -->
+        <!-- ─ TAB: ASISTENCIA ─ -->
         @if (tabCurso() === 'asistencia') {
           <div class="tab-body">
             @if (cargando()) {
@@ -395,46 +487,125 @@
                 <div class="asist-card danger-border"><span class="asist-num danger-text">{{ resumenAsistencia.faltas }}</span><span class="asist-lab">Faltas</span></div>
                 <div class="asist-card warning-border"><span class="asist-num warning-text">{{ resumenAsistencia.tardanzas }}</span><span class="asist-lab">Tardanzas</span></div>
                 <div class="asist-card">
-                  <span class="asist-num" [class]="porcentajeAsistenciaColor()">{{ resumenAsistencia.porcentajeAsistencia.toFixed(1) }}%</span>
+                  <span class="asist-num" [class]="porcentajeAsistenciaColor() + '-text'">{{ resumenAsistencia.porcentajeAsistencia.toFixed(1) }}%</span>
                   <span class="asist-lab">% Asistencia</span>
                 </div>
               </div>
-
-              <button class="btn-cargar" (click)="cargarAsistencia()">Cargar historial</button>
-
-              @if (historialAsistencia.length > 0) {
-                <div class="historial-list">
-                  @for (reg of historialAsistencia; track reg.id) {
-                    <div class="historial-item">
-                      <span class="hist-fecha">{{ reg.fecha }}</span>
-                      <span class="hist-estado" [class]="getEstadoAsistenciaClass(reg.estado)">
-                        {{ formatearEstado(reg.estado) }}
-                      </span>
-                    </div>
-                  }
-                </div>
-              }
+              <button class="btn-cargar" (click)="cargarAsistencia()">Recargar historial</button>
             } @else {
-              <div class="empty-state">
-                <p>No hay datos de asistencia disponibles</p>
-                <button class="btn-cargar" (click)="setTabCurso('asistencia')">Cargar asistencia</button>
-              </div>
+              <button class="btn-cargar" (click)="cargarAsistencia()">Cargar asistencia</button>
             }
           </div>
         }
       </div>
     }
 
-    <!-- ══ VISTA: LISTA DE CURSOS (home) ════════════════════════════════ -->
-    @if (sidebarNav() !== 'cursos') {
-      <div class="content-wrapper">
-        <div class="tab-body">
-          <div class="empty-state">
-            <svg width="48" height="48" fill="none" stroke="#d1d5db" stroke-width="1.5" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-            </svg>
-            <p>Selecciona una opción del menú lateral</p>
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- VISTA: NOTAS GLOBALES                                             -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    @if (sidebarNav() === 'notas') {
+      <div class="content-scroll">
+        <div class="periodo-label" style="margin-bottom:16px">
+          <span class="periodo-year">{{ anioActual() }}</span>
+          <span class="periodo-sep">–</span>
+          <span class="periodo-name">Cuadro de Méritos</span>
+        </div>
+        <table class="notas-table" style="background:#fff;border-radius:12px;overflow:hidden">
+          <thead>
+            <tr>
+              <th>Área Curricular</th>
+              <th>B1</th><th>B2</th><th>B3</th><th>B4</th>
+              <th>Promedio</th><th>Literal</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (nota of notas; track nota.area) {
+              <tr>
+                <td class="area-nombre">{{ nota.area }}</td>
+                <td [class]="nota.b1 && nota.b1 < 11 ? 'nota-baja' : ''">{{ nota.b1 ?? '–' }}</td>
+                <td [class]="nota.b2 && nota.b2 < 11 ? 'nota-baja' : ''">{{ nota.b2 ?? '–' }}</td>
+                <td [class]="nota.b3 && nota.b3 < 11 ? 'nota-baja' : ''">{{ nota.b3 ?? '–' }}</td>
+                <td [class]="nota.b4 && nota.b4 < 11 ? 'nota-baja' : ''">{{ nota.b4 ?? '–' }}</td>
+                <td class="promedio-val">{{ nota.promedio?.toFixed(1) ?? '–' }}</td>
+                <td><span class="badge-literal" [class]="getLiteralClass(nota.literal)">{{ nota.literal ?? '–' }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- VISTA: HORARIO                                                    -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    @if (sidebarNav() === 'horario') {
+      <div class="content-scroll">
+        <div class="periodo-label" style="margin-bottom:16px">
+          <span class="periodo-year">{{ anioActual() }}</span>
+          <span class="periodo-sep">–</span>
+          <span class="periodo-name">Horario de Clases – 5to A Secundaria</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="horario-table">
+            <thead>
+              <tr>
+                <th>Hora</th><th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (h of horario; track h.hora) {
+                <tr [class.recreo-row]="h.lunes === '— Recreo —'">
+                  <td class="hora-cell">{{ h.hora }}</td>
+                  <td>{{ h.lunes ?? '–' }}</td>
+                  <td>{{ h.martes ?? '–' }}</td>
+                  <td>{{ h.miercoles ?? '–' }}</td>
+                  <td>{{ h.jueves ?? '–' }}</td>
+                  <td>{{ h.viernes ?? '–' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- VISTA: ASISTENCIA GLOBAL                                          -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    @if (sidebarNav() === 'asistencia') {
+      <div class="content-scroll">
+        <div class="periodo-label" style="margin-bottom:16px">
+          <span class="periodo-year">{{ anioActual() }}</span>
+          <span class="periodo-sep">–</span>
+          <span class="periodo-name">Resumen de Asistencia</span>
+        </div>
+        @if (!resumenAsistencia) {
+          <button class="btn-cargar" (click)="cargarAsistencia()">Cargar mi asistencia</button>
+        } @else {
+          <div class="asistencia-resumen">
+            <div class="asist-card"><span class="asist-num">{{ resumenAsistencia.totalDias }}</span><span class="asist-lab">Total días</span></div>
+            <div class="asist-card success-border"><span class="asist-num success-text">{{ resumenAsistencia.asistencias }}</span><span class="asist-lab">Asistencias</span></div>
+            <div class="asist-card danger-border"><span class="asist-num danger-text">{{ resumenAsistencia.faltas }}</span><span class="asist-lab">Faltas</span></div>
+            <div class="asist-card warning-border"><span class="asist-num warning-text">{{ resumenAsistencia.tardanzas }}</span><span class="asist-lab">Tardanzas</span></div>
+            <div class="asist-card">
+              <span class="asist-num success-text">{{ resumenAsistencia.porcentajeAsistencia.toFixed(1) }}%</span>
+              <span class="asist-lab">% Asistencia</span>
+            </div>
           </div>
+        }
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- OTRAS VISTAS (mensajes, config)                                   -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    @if (sidebarNav() === 'mensajes' || sidebarNav() === 'configuracion') {
+      <div class="content-scroll">
+        <div class="empty-state">
+          <svg width="52" height="52" fill="none" stroke="#d1d5db" stroke-width="1.5" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+          </svg>
+          <p>Esta sección estará disponible próximamente</p>
         </div>
       </div>
     }
