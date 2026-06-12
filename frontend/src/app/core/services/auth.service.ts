@@ -63,6 +63,22 @@ export class AuthService {
     );
   }
 
+  // ── Cambio de Contraseña ───────────────────────────────────────────────
+
+  changePassword(newPassword: string): Observable<any> {
+    return this.http.put(`${this.BASE_URL}/change-password`, { newPassword }).pipe(
+      tap(() => {
+        // Actualizar el estado local
+        const user = this.getUsuarioActual();
+        if (user) {
+          user.primerLogin = false;
+          localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+          this.usuarioSubject.next(user);
+        }
+      })
+    );
+  }
+
   // ── Logout ─────────────────────────────────────────────────────────────
 
   logout(): void {

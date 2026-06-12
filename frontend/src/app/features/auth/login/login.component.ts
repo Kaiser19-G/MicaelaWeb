@@ -17,26 +17,46 @@ import { AuthService, LoginRequest } from '../../../core/services/auth.service';
           <h1>I.E. Micaela Bastidas</h1>
           <p>Sistema de Gestión Escolar</p>
         </div>
-        <form (ngSubmit)="onLogin()" #f="ngForm">
-          <div class="form-group">
-            <label for="username">Usuario</label>
-            <input id="username" type="text" name="username"
-              [(ngModel)]="credenciales.username" required
-              placeholder="DNI o código de usuario" />
-          </div>
-          <div class="form-group">
-            <label for="password">Contraseña</label>
-            <input id="password" type="password" name="password"
-              [(ngModel)]="credenciales.password" required
-              placeholder="••••••••" />
-          </div>
-          @if (error) {
-            <div class="error-msg">{{ error }}</div>
-          }
-          <button type="submit" [disabled]="cargando" class="btn-login">
-            {{ cargando ? 'Ingresando...' : 'Ingresar' }}
-          </button>
-        </form>
+        @if (!esPrimerLogin) {
+          <form (ngSubmit)="onLogin()" #f="ngForm">
+            <div class="form-group">
+              <label for="username">Usuario</label>
+              <input id="username" type="text" name="username"
+                [(ngModel)]="credenciales.username" required
+                placeholder="DNI o código de usuario" />
+            </div>
+            <div class="form-group">
+              <label for="password">Contraseña</label>
+              <input id="password" type="password" name="password"
+                [(ngModel)]="credenciales.password" required
+                placeholder="••••••••" />
+            </div>
+            @if (error) {
+              <div class="error-msg">{{ error }}</div>
+            }
+            <button type="submit" [disabled]="cargando" class="btn-login">
+              {{ cargando ? 'Ingresando...' : 'Ingresar' }}
+            </button>
+          </form>
+        } @else {
+          <form (ngSubmit)="onChangePassword()" #f2="ngForm">
+            <p style="margin-bottom: 1rem; color: #374151; font-size: 0.9rem;">
+              Por seguridad, debes cambiar tu contraseña inicial antes de continuar.
+            </p>
+            <div class="form-group">
+              <label for="newPassword">Nueva Contraseña</label>
+              <input id="newPassword" type="password" name="newPassword"
+                [(ngModel)]="nuevaPassword" required minlength="6"
+                placeholder="Mínimo 6 caracteres" />
+            </div>
+            @if (error) {
+              <div class="error-msg">{{ error }}</div>
+            }
+            <button type="submit" [disabled]="cargando || nuevaPassword.length < 6" class="btn-login">
+              {{ cargando ? 'Actualizando...' : 'Cambiar y Continuar' }}
+            </button>
+          </form>
+        }
       </div>
     </div>
   `,
@@ -91,6 +111,8 @@ export class LoginComponent {
   credenciales: LoginRequest = { username: '', password: '' };
   cargando = false;
   error = '';
+  esPrimerLogin = false;
+  nuevaPassword = '';
 
   constructor(private authService: AuthService, private router: Router) {}
 
@@ -99,20 +121,47 @@ export class LoginComponent {
     this.error = '';
     this.authService.login(this.credenciales).subscribe({
       next: (resp) => {
-        // Redirigir según rol
-        switch (resp.rol) {
-          case 'DIRECTOR':
-          case 'ADMIN':    this.router.navigate(['/admin-dashboard']); break;
-          case 'DOCENTE':  this.router.navigate(['/docente/asistencia']); break;
-          case 'ALUMNO':   this.router.navigate(['/alumno/portal']); break;
-          default:         this.router.navigate(['/login']);
-        }
         this.cargando = false;
+        if (resp.primerLogin) {
+          this.esPrimerLogin = true;
+        } else {
+          this.redirigirPorRol(resp.rol);
+        }
       },
       error: () => {
         this.error = 'Credenciales incorrectas. Verifique su usuario y contraseña.';
         this.cargando = false;
       }
     });
+  }
+
+  onChangePassword(): void {
+    this.cargando = true;
+    this.error = '';
+    this.authService.changePassword(this.nuevaPassword).subscribe({
+      next: () => {
+        this.cargando = false;
+        const user = this.authService.getUsuarioActual();
+        if (user) {
+          this.redirigirPorRol(user.rol);
+        } else {
+          this.router.navigate(['/login']);
+        }
+      },
+      error: () => {
+        this.error = 'Error al cambiar la contraseña. Intente nuevamente.';
+        this.cargando = false;
+      }
+    });
+  }
+
+  private redirigirPorRol(rol: string): void {
+    switch (rol) {
+      case 'DIRECTOR':
+      case 'ADMIN':    this.router.navigate(['/admin-dashboard']); break;
+      case 'DOCENTE':  this.router.navigate(['/docente/asistencia']); break;
+      case 'ALUMNO':   this.router.navigate(['/alumno/portal']); break;
+      default:         this.router.navigate(['/login']);
+    }
   }
 }
