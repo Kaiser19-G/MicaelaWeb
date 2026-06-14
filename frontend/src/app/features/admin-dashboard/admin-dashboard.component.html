@@ -310,7 +310,7 @@
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
         </svg>
         <div>
-          <span class="kpi-mini-val">{{ kpisDocentes.aprobados }}</span>
+          <span class="kpi-mini-val">{{ kpisDocentes().aprobados }}</span>
           <span class="kpi-mini-lab">Aprobados</span>
         </div>
       </div>
@@ -320,7 +320,7 @@
           <polyline points="12 6 12 12 16 14" />
         </svg>
         <div>
-          <span class="kpi-mini-val">{{ kpisDocentes.pendientes }}</span>
+          <span class="kpi-mini-val">{{ kpisDocentes().pendientes }}</span>
           <span class="kpi-mini-lab">Pendientes</span>
         </div>
       </div>
@@ -331,7 +331,7 @@
           <line x1="9" y1="9" x2="15" y2="15" />
         </svg>
         <div>
-          <span class="kpi-mini-val">{{ kpisDocentes.retrasados }}</span>
+          <span class="kpi-mini-val">{{ kpisDocentes().retrasados }}</span>
           <span class="kpi-mini-lab">Retrasados</span>
         </div>
       </div>
@@ -343,15 +343,19 @@
         @for (doc of docentesSupervision; track doc.id) {
         <div class="docente-card">
           <div class="docente-card-header">
-            <span class="docente-card-nombre">{{ doc.nombre }}</span>
-            <span class="docente-estado-icon" [class]="'estado-' + doc.estado">{{ doc.icono }}</span>
+            <span class="docente-card-nombre">{{ doc.nombreCompleto }}</span>
+            <span class="docente-estado-icon" [class]="'estado-' + doc.estadoCurricular.toLowerCase()">
+              @if (doc.estadoCurricular === 'APROBADO') { ✓ }
+              @if (doc.estadoCurricular === 'PENDIENTE') { ⏰ }
+              @if (doc.estadoCurricular === 'RETRASADO') { ✗ }
+            </span>
           </div>
           <span class="docente-especialidad">{{ doc.especialidad }}</span>
           <div class="docente-card-footer">
-            <span class="badge-estado" [class]="'badge-' + doc.estado">
-              {{ doc.estado | titlecase }}
+            <span class="badge-estado" [class]="'badge-' + doc.estadoCurricular.toLowerCase()">
+              {{ doc.estadoCurricular | titlecase }}
             </span>
-            <span class="evidencias-count">{{ doc.evidencias }} evidencias</span>
+            <span class="evidencias-count">{{ doc.cantidadEvidencias }} evidencias</span>
           </div>
         </div>
         }
