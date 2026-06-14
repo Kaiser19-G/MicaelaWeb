@@ -74,6 +74,13 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- ── Dotenv (para leer variables de entorno desde .env) ────── -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!-- ── Base de Datos – Supabase / PostgreSQL ───────────────────── -->
         <dependency>
             <groupId>org.postgresql</groupId>

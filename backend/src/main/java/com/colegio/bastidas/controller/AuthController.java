@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.Map;
 
@@ -76,5 +77,28 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("hash", hash, "texto", texto));
     }
 
+    /**
+     * PUT /auth/change-password
+     * Cambia la contraseña (obligatorio si primerLogin es true).
+     */
+    @PutMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, String>> changePassword(
+            Authentication authentication,
+            @RequestBody ChangePasswordRequest request) {
+
+        String username = authentication.getName();
+        Usuario usuario = usuarioRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        usuario.setPassword(passwordEncoder.encode(request.newPassword()));
+        usuario.setPrimerLogin(false);
+        usuarioRepository.save(usuario);
+
+        log.info("Usuario {} actualizó su contraseña (primer login completado)", username);
+        return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada exitosamente"));
+    }
+
     record LoginRequest(String username, String password) {}
+    record ChangePasswordRequest(String newPassword) {}
 }

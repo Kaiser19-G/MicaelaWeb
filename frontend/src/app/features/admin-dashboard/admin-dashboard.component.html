@@ -1,6 +1,6 @@
 <div class="dashboard-layout">
 
-  <!-- ══ SIDEBAR ══════════════════════════════════════════════════════════ -->
+  <!-- ══ SIDEBAR prueba ══════════════════════════════════════════════════════════ -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon">MB</div>
@@ -13,37 +13,43 @@
     <nav class="sidebar-nav">
       <button class="nav-item" [class.active]="tabActiva() === 'panel'" (click)="setTab('panel')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
         </svg>
         <span>Panel</span>
       </button>
 
       <button class="nav-item" [class.active]="tabActiva() === 'administracion'" (click)="setTab('administracion')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
         <span>Administración</span>
       </button>
 
       <button class="nav-item" [class.active]="tabActiva() === 'docentes'" (click)="setTab('docentes')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+          <path d="M6 12v5c3 3 9 3 12 0v-5" />
         </svg>
         <span>Docentes</span>
       </button>
 
       <button class="nav-item" [class.active]="tabActiva() === 'calidad'" (click)="setTab('calidad')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          <polyline points="9 11 12 14 22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
         </svg>
         <span>Calidad</span>
       </button>
 
       <button class="nav-item" [class.active]="tabActiva() === 'mensajes'" (click)="setTab('mensajes')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
         <span>Mensajes</span>
       </button>
@@ -64,609 +70,639 @@
     <!-- Top action bar -->
     <div class="top-action-bar">
       <button class="btn-vista btn-docente" (click)="irAVistaDocente()">Ver como Docente</button>
-      <button class="btn-vista btn-alumno"  (click)="irAVistaAlumno()">Ver como Alumno</button>
+      <button class="btn-vista btn-alumno" (click)="irAVistaAlumno()">Ver como Alumno</button>
     </div>
 
     <!-- ══ TAB: PANEL ═══════════════════════════════════════════════════════ -->
     @if (tabActiva() === 'panel') {
-      <div class="tab-header">
-        <h1 class="tab-title">Panel de Control</h1>
-        <p class="tab-subtitle">Vista estratégica del colegio – Gestión sin papel</p>
-      </div>
+    <div class="tab-header">
+      <h1 class="tab-title">Panel de Control</h1>
+      <p class="tab-subtitle">Vista estratégica del colegio – Gestión sin papel</p>
+    </div>
 
-      <!-- KPIs -->
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-content">
-            <span class="kpi-label">Alumnos Totales</span>
-            <span class="kpi-value">{{ kpis().alumnosTotales }}</span>
-          </div>
-          <div class="kpi-icon kpi-icon-blue">
-            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Alumnos Totales</span>
+          <span class="kpi-value">{{ kpis().alumnosTotales }}</span>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-content">
-            <span class="kpi-label">Docentes</span>
-            <span class="kpi-value">{{ kpis().docentes }}</span>
-          </div>
-          <div class="kpi-icon kpi-icon-blue">
-            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-            </svg>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-content">
-            <span class="kpi-label">Aulas</span>
-            <span class="kpi-value">{{ kpis().aulas }}</span>
-          </div>
-          <div class="kpi-icon kpi-icon-blue">
-            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-          </div>
-        </div>
-        <div class="kpi-card kpi-card-alert">
-          <div class="kpi-content">
-            <span class="kpi-label">Alertas Activas</span>
-            <span class="kpi-value kpi-value-alert">{{ kpis().alertasActivas }}</span>
-          </div>
-          <div class="kpi-icon kpi-icon-red">
-            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
+        <div class="kpi-icon kpi-icon-blue">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
         </div>
       </div>
-
-      <!-- Charts + Alertas -->
-      <div class="panel-row">
-        <!-- Chart Asistencia -->
-        <div class="card chart-card">
-          <h3 class="card-title">Asistencia Semanal</h3>
-          <div class="chart-container">
-            <div class="chart-y-labels">
-              <span>600</span><span>450</span><span>300</span><span>150</span><span>0</span>
-            </div>
-            <div class="chart-bars">
-              @for (d of asistenciaSemanal; track d.dia) {
-                <div class="chart-day">
-                  <div class="bar-group">
-                    <div class="bar bar-alumno" [style.height.px]="alturaBarraAlumno(d.alumnos)" title="Alumnos: {{d.alumnos}}"></div>
-                    <div class="bar bar-docente" [style.height.px]="alturaBarraDocente(d.docentes)" title="Docentes: {{d.docentes}}"></div>
-                  </div>
-                  <span class="bar-label">{{ d.dia }}</span>
-                </div>
-              }
-            </div>
-          </div>
-          <div class="chart-legend">
-            <span class="legend-item"><span class="legend-dot legend-blue"></span> Alumnos</span>
-            <span class="legend-item"><span class="legend-dot legend-green"></span> Docentes</span>
-          </div>
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Docentes</span>
+          <span class="kpi-value">{{ kpis().docentes }}</span>
         </div>
+        <div class="kpi-icon kpi-icon-blue">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+          </svg>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Aulas</span>
+          <span class="kpi-value">{{ kpis().aulas }}</span>
+        </div>
+        <div class="kpi-icon kpi-icon-blue">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+        </div>
+      </div>
+      <div class="kpi-card kpi-card-alert">
+        <div class="kpi-content">
+          <span class="kpi-label">Alertas Activas</span>
+          <span class="kpi-value kpi-value-alert">{{ kpis().alertasActivas }}</span>
+        </div>
+        <div class="kpi-icon kpi-icon-red">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
+      </div>
+    </div>
 
-        <!-- Centro de Alertas -->
-        <div class="card alertas-card">
-          <div class="alertas-header">
-            <h3 class="card-title">Centro de Alertas</h3>
-            <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
+    <!-- Charts + Alertas -->
+    <div class="panel-row">
+      <!-- Chart Asistencia -->
+      <div class="card chart-card">
+        <h3 class="card-title">Asistencia Semanal</h3>
+        <div class="chart-container">
+          <div class="chart-y-labels">
+            <span>600</span><span>450</span><span>300</span><span>150</span><span>0</span>
           </div>
-          <div class="alertas-list">
-            @for (alerta of alertasCentro; track alerta.titulo) {
-              <div class="alerta-item">
-                <div class="alerta-text">
-                  <span class="alerta-titulo">{{ alerta.titulo }}</span>
-                  <span class="alerta-sub">{{ alerta.subtitulo }}</span>
-                </div>
-                <span class="alerta-badge">{{ alerta.cantidad }}</span>
+          <div class="chart-bars">
+            @for (d of asistenciaSemanal; track d.dia) {
+            <div class="chart-day">
+              <div class="bar-group">
+                <div class="bar bar-alumno" [style.height.px]="alturaBarraAlumno(d.alumnos)"
+                  title="Alumnos: {{d.alumnos}}"></div>
+                <div class="bar bar-docente" [style.height.px]="alturaBarraDocente(d.docentes)"
+                  title="Docentes: {{d.docentes}}"></div>
               </div>
+              <span class="bar-label">{{ d.dia }}</span>
+            </div>
             }
           </div>
         </div>
-      </div>
-
-      <!-- Programación Docente -->
-      <div class="card" style="margin-top: 1rem;">
-        <h3 class="card-title">Entrega de Programación Docente</h3>
-        <p class="card-sub">Seguimiento de unidades didácticas y sesiones de aprendizaje</p>
-        <div class="prog-stats">
-          <div class="prog-item">
-            <span class="prog-num success-text">58</span>
-            <span class="prog-label">Entregadas</span>
-          </div>
-          <div class="prog-item">
-            <span class="prog-num warning-text">7</span>
-            <span class="prog-label">Pendientes</span>
-          </div>
-          <div class="prog-item">
-            <span class="prog-num danger-text">3</span>
-            <span class="prog-label">Atrasadas</span>
-          </div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot legend-blue"></span> Alumnos</span>
+          <span class="legend-item"><span class="legend-dot legend-green"></span> Docentes</span>
         </div>
       </div>
+
+      <!-- Centro de Alertas -->
+      <div class="card alertas-card">
+        <div class="alertas-header">
+          <h3 class="card-title">Centro de Alertas</h3>
+          <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
+        <div class="alertas-list">
+          @for (alerta of alertasCentro; track alerta.titulo) {
+          <div class="alerta-item">
+            <div class="alerta-text">
+              <span class="alerta-titulo">{{ alerta.titulo }}</span>
+              <span class="alerta-sub">{{ alerta.subtitulo }}</span>
+            </div>
+            <span class="alerta-badge">{{ alerta.cantidad }}</span>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Programación Docente -->
+    <div class="card" style="margin-top: 1rem;">
+      <h3 class="card-title">Entrega de Programación Docente</h3>
+      <p class="card-sub">Seguimiento de unidades didácticas y sesiones de aprendizaje</p>
+      <div class="prog-stats">
+        <div class="prog-item">
+          <span class="prog-num success-text">58</span>
+          <span class="prog-label">Entregadas</span>
+        </div>
+        <div class="prog-item">
+          <span class="prog-num warning-text">7</span>
+          <span class="prog-label">Pendientes</span>
+        </div>
+        <div class="prog-item">
+          <span class="prog-num danger-text">3</span>
+          <span class="prog-label">Atrasadas</span>
+        </div>
+      </div>
+    </div>
     }
 
     <!-- ══ TAB: ADMINISTRACIÓN ══════════════════════════════════════════════ -->
     @if (tabActiva() === 'administracion') {
-      <div class="tab-header">
-        <h1 class="tab-title">Gestión Administrativa</h1>
-        <p class="tab-subtitle">El cerebro del sistema – Documentación digital</p>
+    <div class="tab-header">
+      <h1 class="tab-title">Gestión Administrativa</h1>
+      <p class="tab-subtitle">El cerebro del sistema – Documentación digital</p>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Expediente Digital del Estudiante</h3>
+      <div class="search-bar">
+        <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <input type="text" [(ngModel)]="busquedaText" placeholder="Buscar por nombre, DNI o grado..."
+          class="search-input" />
       </div>
 
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Estudiante</th>
+            <th>DNI</th>
+            <th>Grado</th>
+            <th>Documentos</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (exp of expedientesFiltrados(); track exp.id) {
+          <tr>
+            <td>
+              <span class="student-name">{{ exp.nombre }}</span>
+              @if (exp.nee) { <span class="badge badge-nee">NEE</span> }
+            </td>
+            <td class="text-mono">{{ exp.dni }}</td>
+            <td>{{ exp.grado }}</td>
+            <td>
+              <div class="doc-icons">
+                @for (doc of exp.documentos; track $index) {
+                @if (doc === 'ok') { <span class="doc-icon doc-ok">✓</span> }
+                @if (doc === 'warn') { <span class="doc-icon doc-warn">!</span> }
+                @if (doc === 'error') { <span class="doc-icon doc-error">✗</span> }
+                }
+              </div>
+            </td>
+            <td>
+              <button class="btn-primary btn-sm">Ver Expediente</button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="two-col-grid" style="margin-top: 1rem;">
       <div class="card">
-        <h3 class="card-title">Expediente Digital del Estudiante</h3>
-        <div class="search-bar">
-          <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input
-            type="text"
-            [(ngModel)]="busquedaText"
-            placeholder="Buscar por nombre, DNI o grado..."
-            class="search-input"
-          />
-        </div>
-
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Estudiante</th>
-              <th>DNI</th>
-              <th>Grado</th>
-              <th>Documentos</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (exp of expedientesFiltrados(); track exp.id) {
-              <tr>
-                <td>
-                  <span class="student-name">{{ exp.nombre }}</span>
-                  @if (exp.nee) { <span class="badge badge-nee">NEE</span> }
-                </td>
-                <td class="text-mono">{{ exp.dni }}</td>
-                <td>{{ exp.grado }}</td>
-                <td>
-                  <div class="doc-icons">
-                    @for (doc of exp.documentos; track $index) {
-                      @if (doc === 'ok')    { <span class="doc-icon doc-ok">✓</span> }
-                      @if (doc === 'warn')  { <span class="doc-icon doc-warn">!</span> }
-                      @if (doc === 'error') { <span class="doc-icon doc-error">✗</span> }
-                    }
-                  </div>
-                </td>
-                <td>
-                  <button class="btn-primary btn-sm">Ver Expediente</button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <div class="two-col-grid" style="margin-top: 1rem;">
-        <div class="card">
-          <h3 class="card-title">Centro de Matrícula</h3>
-          <p class="card-sub">Gestión de matrículas y documentos requeridos</p>
-          <div class="mini-stats">
-            <div class="mini-stat">
-              <span class="mini-num success-text">527</span>
-              <span class="mini-label">Matriculados</span>
-            </div>
-            <div class="mini-stat">
-              <span class="mini-num warning-text">15</span>
-              <span class="mini-label">Pendientes</span>
-            </div>
+        <h3 class="card-title">Centro de Matrícula</h3>
+        <p class="card-sub">Gestión de matrículas y documentos requeridos</p>
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <span class="mini-num success-text">527</span>
+            <span class="mini-label">Matriculados</span>
           </div>
-          <button class="btn-primary" style="margin-top: 1rem; width: 100%;">Ver Matrículas</button>
-        </div>
-        <div class="card">
-          <h3 class="card-title">Control de Ingresos Especiales</h3>
-          <p class="card-sub">Alumnos con permiso de academia – Entrada 13:30 / 14:30</p>
-          <div class="mini-stats">
-            <div class="mini-stat">
-              <span class="mini-num info-text">23</span>
-              <span class="mini-label">Con permiso</span>
-            </div>
-            <div class="mini-stat">
-              <span class="mini-num success-text">21</span>
-              <span class="mini-label">Activos hoy</span>
-            </div>
+          <div class="mini-stat">
+            <span class="mini-num warning-text">15</span>
+            <span class="mini-label">Pendientes</span>
           </div>
-          <button class="btn-outline" style="margin-top: 1rem; width: 100%;">Ver Permisos</button>
         </div>
+        <button class="btn-primary" style="margin-top: 1rem; width: 100%;">Ver Matrículas</button>
       </div>
+      <div class="card">
+        <h3 class="card-title">Control de Ingresos Especiales</h3>
+        <p class="card-sub">Alumnos con permiso de academia – Entrada 13:30 / 14:30</p>
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <span class="mini-num info-text">23</span>
+            <span class="mini-label">Con permiso</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-num success-text">21</span>
+            <span class="mini-label">Activos hoy</span>
+          </div>
+        </div>
+        <button class="btn-outline" style="margin-top: 1rem; width: 100%;">Ver Permisos</button>
+      </div>
+    </div>
     }
 
     <!-- ══ TAB: DOCENTES ════════════════════════════════════════════════════ -->
     @if (tabActiva() === 'docentes') {
-      <div class="tab-header">
-        <h1 class="tab-title">Supervisión Docente</h1>
-        <p class="tab-subtitle">Monitoreo de planificación y evidencias – 68 docentes</p>
-      </div>
+    <div class="tab-header">
+      <h1 class="tab-title">Supervisión Docente</h1>
+      <p class="tab-subtitle">Monitoreo de planificación y evidencias – 68 docentes</p>
+    </div>
 
-      <div class="kpi-grid-3">
-        <div class="kpi-card-mini kpi-success">
-          <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <polyline points="9 11 12 14 22 4"/>
-            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+    <div class="kpi-grid-3">
+      <div class="kpi-card-mini kpi-success">
+        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="9 11 12 14 22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+        <div>
+          <span class="kpi-mini-val">{{ kpisDocentes().aprobados }}</span>
+          <span class="kpi-mini-lab">Aprobados</span>
+        </div>
+      </div>
+      <div class="kpi-card-mini kpi-warning">
+        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+        <div>
+          <span class="kpi-mini-val">{{ kpisDocentes().pendientes }}</span>
+          <span class="kpi-mini-lab">Pendientes</span>
+        </div>
+      </div>
+      <div class="kpi-card-mini kpi-danger">
+        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="15" y1="9" x2="9" y2="15" />
+          <line x1="9" y1="9" x2="15" y2="15" />
+        </svg>
+        <div>
+          <span class="kpi-mini-val">{{ kpisDocentes().retrasados }}</span>
+          <span class="kpi-mini-lab">Retrasados</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 1rem;">
+      <h3 class="card-title">Estado de Planificación por Docente</h3>
+      <div class="docentes-grid">
+        @for (doc of docentesSupervision; track doc.id) {
+        <div class="docente-card">
+          <div class="docente-card-header">
+            <span class="docente-card-nombre">{{ doc.nombreCompleto }}</span>
+            <span class="docente-estado-icon" [class]="'estado-' + doc.estadoCurricular.toLowerCase()">
+              @if (doc.estadoCurricular === 'APROBADO') { ✓ }
+              @if (doc.estadoCurricular === 'PENDIENTE') { ⏰ }
+              @if (doc.estadoCurricular === 'RETRASADO') { ✗ }
+            </span>
+          </div>
+          <span class="docente-especialidad">{{ doc.especialidad }}</span>
+          <div class="docente-card-footer">
+            <span class="badge-estado" [class]="'badge-' + doc.estadoCurricular.toLowerCase()">
+              {{ doc.estadoCurricular | titlecase }}
+            </span>
+            <span class="evidencias-count">{{ doc.cantidadEvidencias }} evidencias</span>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 1rem;">
+      <div class="auditor-header">
+        <div>
+          <h3 class="card-title">Auditor de Evidencias</h3>
+          <p class="card-sub" style="color:#2563eb">Antes de exportar al SIAGIE</p>
+        </div>
+      </div>
+      <p class="card-sub">Revise las fotos/archivos subidos por los docentes que justifican las notas</p>
+      <div class="auditor-list">
+        @for (ev of auditorEvidencias; track ev.profesor) {
+        <div class="auditor-item">
+          <div class="auditor-info">
+            <span class="auditor-profesor">{{ ev.profesor }}</span>
+            <span class="auditor-detalle" style="color:#2563eb">{{ ev.aula }} – {{ ev.actividad }}</span>
+            <span class="auditor-fecha">Fecha: {{ ev.fecha }}</span>
+          </div>
+          <div class="auditor-actions">
+            <span class="foto-badge">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              {{ ev.fotos }}
+            </span>
+            <button class="btn-primary btn-sm">Revisar</button>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="card card-carga" style="margin-top: 1rem;">
+      <div class="carga-content">
+        <div class="carga-icon">
+          <svg width="28" height="28" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="16 16 12 12 8 16" />
+            <line x1="12" y1="12" x2="12" y2="21" />
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
           </svg>
-          <div>
-            <span class="kpi-mini-val">{{ kpisDocentes.aprobados }}</span>
-            <span class="kpi-mini-lab">Aprobados</span>
-          </div>
         </div>
-        <div class="kpi-card-mini kpi-warning">
-          <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <div>
-            <span class="kpi-mini-val">{{ kpisDocentes.pendientes }}</span>
-            <span class="kpi-mini-lab">Pendientes</span>
-          </div>
-        </div>
-        <div class="kpi-card-mini kpi-danger">
-          <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-          </svg>
-          <div>
-            <span class="kpi-mini-val">{{ kpisDocentes.retrasados }}</span>
-            <span class="kpi-mini-lab">Retrasados</span>
-          </div>
+        <div>
+          <h4 class="carga-title">Centro de Carga de Evidencias</h4>
+          <p class="carga-sub">Los docentes pueden subir fotos de trabajos, evaluaciones y actividades para respaldar
+            las calificaciones antes de la exportación oficial.</p>
         </div>
       </div>
-
-      <div class="card" style="margin-top: 1rem;">
-        <h3 class="card-title">Estado de Planificación por Docente</h3>
-        <div class="docentes-grid">
-          @for (doc of docentesSupervision; track doc.id) {
-            <div class="docente-card">
-              <div class="docente-card-header">
-                <span class="docente-card-nombre">{{ doc.nombre }}</span>
-                <span class="docente-estado-icon" [class]="'estado-' + doc.estado">{{ doc.icono }}</span>
-              </div>
-              <span class="docente-especialidad">{{ doc.especialidad }}</span>
-              <div class="docente-card-footer">
-                <span class="badge-estado" [class]="'badge-' + doc.estado">
-                  {{ doc.estado | titlecase }}
-                </span>
-                <span class="evidencias-count">{{ doc.evidencias }} evidencias</span>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <div class="card" style="margin-top: 1rem;">
-        <div class="auditor-header">
-          <div>
-            <h3 class="card-title">Auditor de Evidencias</h3>
-            <p class="card-sub" style="color:#2563eb">Antes de exportar al SIAGIE</p>
-          </div>
-        </div>
-        <p class="card-sub">Revise las fotos/archivos subidos por los docentes que justifican las notas</p>
-        <div class="auditor-list">
-          @for (ev of auditorEvidencias; track ev.profesor) {
-            <div class="auditor-item">
-              <div class="auditor-info">
-                <span class="auditor-profesor">{{ ev.profesor }}</span>
-                <span class="auditor-detalle" style="color:#2563eb">{{ ev.aula }} – {{ ev.actividad }}</span>
-                <span class="auditor-fecha">Fecha: {{ ev.fecha }}</span>
-              </div>
-              <div class="auditor-actions">
-                <span class="foto-badge">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                    <polyline points="21 15 16 10 5 21"/>
-                  </svg>
-                  {{ ev.fotos }}
-                </span>
-                <button class="btn-primary btn-sm">Revisar</button>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <div class="card card-carga" style="margin-top: 1rem;">
-        <div class="carga-content">
-          <div class="carga-icon">
-            <svg width="28" height="28" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
-              <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
-              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-            </svg>
-          </div>
-          <div>
-            <h4 class="carga-title">Centro de Carga de Evidencias</h4>
-            <p class="carga-sub">Los docentes pueden subir fotos de trabajos, evaluaciones y actividades para respaldar las calificaciones antes de la exportación oficial.</p>
-          </div>
-        </div>
-        <button class="btn-primary" style="margin-top: 1rem;">Ver Portal de Carga</button>
-      </div>
+      <button class="btn-primary" style="margin-top: 1rem;">Ver Portal de Carga</button>
+    </div>
     }
 
     <!-- ══ TAB: CALIDAD ═════════════════════════════════════════════════════ -->
     @if (tabActiva() === 'calidad') {
-      <div class="tab-header">
-        <h1 class="tab-title">Módulo de Calidad y SIAGIE</h1>
-        <p class="tab-subtitle">Validación de notas antes de exportar al SIAGIE – UGEL</p>
-      </div>
+    <div class="tab-header">
+      <h1 class="tab-title">Módulo de Calidad y SIAGIE</h1>
+      <p class="tab-subtitle">Validación de notas antes de exportar al SIAGIE – UGEL</p>
+    </div>
 
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-content">
-            <span class="kpi-label">Total Aulas</span>
-            <span class="kpi-value">{{ kpisCalidad.totalAulas }}</span>
-          </div>
-          <div class="kpi-icon">
-            <svg width="22" height="22" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
-          </div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Total Aulas</span>
+          <span class="kpi-value">{{ kpisCalidad.totalAulas }}</span>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-content">
-            <span class="kpi-label">Aulas OK</span>
-            <span class="kpi-value success-text">{{ kpisCalidad.aulasOk }}</span>
-          </div>
-          <div class="kpi-icon kpi-icon-green">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <polyline points="9 11 12 14 22 4"/>
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-            </svg>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-content">
-            <span class="kpi-label">Con Advertencias</span>
-            <span class="kpi-value warning-text">{{ kpisCalidad.conAdvertencias }}</span>
-          </div>
-          <div class="kpi-icon kpi-icon-yellow">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-content">
-            <span class="kpi-label">Con Errores</span>
-            <span class="kpi-value danger-text">{{ kpisCalidad.conErrores }}</span>
-          </div>
-          <div class="kpi-icon kpi-icon-red">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-            </svg>
-          </div>
+        <div class="kpi-icon">
+          <svg width="22" height="22" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
         </div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Aulas OK</span>
+          <span class="kpi-value success-text">{{ kpisCalidad.aulasOk }}</span>
+        </div>
+        <div class="kpi-icon kpi-icon-green">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="9 11 12 14 22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Con Advertencias</span>
+          <span class="kpi-value warning-text">{{ kpisCalidad.conAdvertencias }}</span>
+        </div>
+        <div class="kpi-icon kpi-icon-yellow">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Con Errores</span>
+          <span class="kpi-value danger-text">{{ kpisCalidad.conErrores }}</span>
+        </div>
+        <div class="kpi-icon kpi-icon-red">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+      </div>
+    </div>
 
-      <div class="card" style="margin-top: 1rem;">
-        <h3 class="card-title">Validador de Pre-Actas</h3>
-        <p class="card-sub">Detecta notas en blanco o inconsistencias antes de la exportación oficial</p>
-        <div class="validador-list">
-          @for (aula of aulasValidacion; track aula.nombre) {
-            <div class="validador-row" [class]="'aula-' + aula.estado">
-              <div class="validador-indicator" [class]="'indicator-' + aula.estado"></div>
-              <div class="validador-content">
-                <span class="aula-nombre">
-                  @if (aula.estado === 'ok') {
-                    <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                      <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
-                  }
-                  @if (aula.estado === 'advertencia') {
-                    <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24">
-                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                    </svg>
-                  }
-                  @if (aula.estado === 'error') {
-                    <svg width="16" height="16" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-                    </svg>
-                  }
-                  {{ aula.nombre }}
-                </span>
-                <div class="aula-stats">
-                  <span>Estudiantes <strong>{{ aula.estudiantes }}</strong></span>
-                  <span>Notas Completas <strong class="success-text">{{ aula.notasCompletas }}</strong></span>
-                  <span>Notas en Blanco <strong [class]="aula.notasBlanco > 0 ? 'danger-text' : ''">{{ aula.notasBlanco }}</strong></span>
-                  <span>Inconsistencias <strong [class]="aula.inconsistencias > 0 ? 'danger-text' : ''">{{ aula.inconsistencias }}</strong></span>
-                </div>
-              </div>
-              @if (aula.estado !== 'ok') {
-                <button class="btn-primary btn-sm">Corregir</button>
+    <div class="card" style="margin-top: 1rem;">
+      <h3 class="card-title">Validador de Pre-Actas</h3>
+      <p class="card-sub">Detecta notas en blanco o inconsistencias antes de la exportación oficial</p>
+      <div class="validador-list">
+        @for (aula of aulasValidacion; track aula.nombre) {
+        <div class="validador-row" [class]="'aula-' + aula.estado">
+          <div class="validador-indicator" [class]="'indicator-' + aula.estado"></div>
+          <div class="validador-content">
+            <span class="aula-nombre">
+              @if (aula.estado === 'ok') {
+              <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
               }
+              @if (aula.estado === 'advertencia') {
+              <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              </svg>
+              }
+              @if (aula.estado === 'error') {
+              <svg width="16" height="16" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+              }
+              {{ aula.nombre }}
+            </span>
+            <div class="aula-stats">
+              <span>Estudiantes <strong>{{ aula.estudiantes }}</strong></span>
+              <span>Notas Completas <strong class="success-text">{{ aula.notasCompletas }}</strong></span>
+              <span>Notas en Blanco <strong [class]="aula.notasBlanco > 0 ? 'danger-text' : ''">{{ aula.notasBlanco
+                  }}</strong></span>
+              <span>Inconsistencias <strong [class]="aula.inconsistencias > 0 ? 'danger-text' : ''">{{
+                  aula.inconsistencias }}</strong></span>
             </div>
+          </div>
+          @if (aula.estado !== 'ok') {
+          <button class="btn-primary btn-sm">Corregir</button>
           }
         </div>
+        }
       </div>
+    </div>
 
-      <div class="card" style="margin-top: 1rem;">
-        <h3 class="card-title">Estado General de Validación</h3>
-        <div class="validacion-global">
-          <div class="validacion-label">
-            <span>Notas completas del sistema</span>
-            <span>{{ progresValidacion.completas }} de {{ progresValidacion.total }} ({{ porcentajeValidacion() }}%)</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" [style.width.%]="porcentajeValidacion()"></div>
-          </div>
+    <div class="card" style="margin-top: 1rem;">
+      <h3 class="card-title">Estado General de Validación</h3>
+      <div class="validacion-global">
+        <div class="validacion-label">
+          <span>Notas completas del sistema</span>
+          <span>{{ progresValidacion.completas }} de {{ progresValidacion.total }} ({{ porcentajeValidacion()
+            }}%)</span>
         </div>
-        <div class="alert-box alert-warning" style="margin-top: 1rem;">
-          <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-          </svg>
-          <div>
-            <strong>Validación Previa Requerida</strong>
-            <p>Se detectaron 22 registros pendientes. Por favor, complete todas las notas antes de exportar al SIAGIE.</p>
-          </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" [style.width.%]="porcentajeValidacion()"></div>
         </div>
       </div>
+      <div class="alert-box alert-warning" style="margin-top: 1rem;">
+        <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+        </svg>
+        <div>
+          <strong>Validación Previa Requerida</strong>
+          <p>Se detectaron 22 registros pendientes. Por favor, complete todas las notas antes de exportar al SIAGIE.</p>
+        </div>
+      </div>
+    </div>
 
-      <div class="card card-siagie" style="margin-top: 1rem;">
-        <div class="siagie-left">
-          <h4 class="siagie-title">Exportación al SIAGIE</h4>
-          <p class="siagie-sub">Sistema de Información de Apoyo a la Gestión</p>
-          <p class="siagie-sub">Cumplimiento legal UGEL – Ministerio de Educación</p>
-          <p class="siagie-warning">
-            <svg width="14" height="14" fill="none" stroke="#fbbf24" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            </svg>
-            Corrija los errores detectados antes de exportar
-          </p>
-        </div>
-        <button class="btn-siagie" (click)="exportarSiagie()">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/>
-            <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.36"/>
+    <div class="card card-siagie" style="margin-top: 1rem;">
+      <div class="siagie-left">
+        <h4 class="siagie-title">Exportación al SIAGIE</h4>
+        <p class="siagie-sub">Sistema de Información de Apoyo a la Gestión</p>
+        <p class="siagie-sub">Cumplimiento legal UGEL – Ministerio de Educación</p>
+        <p class="siagie-warning">
+          <svg width="14" height="14" fill="none" stroke="#fbbf24" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
           </svg>
-          Exportar al SIAGIE
-        </button>
+          Corrija los errores detectados antes de exportar
+        </p>
       </div>
+      <button class="btn-siagie" (click)="exportarSiagie()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="8 17 12 21 16 17" />
+          <line x1="12" y1="12" x2="12" y2="21" />
+          <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.36" />
+        </svg>
+        Exportar al SIAGIE
+      </button>
+    </div>
     }
 
     <!-- ══ TAB: MENSAJES ════════════════════════════════════════════════════ -->
     @if (tabActiva() === 'mensajes') {
-      <div class="tab-header">
-        <h1 class="tab-title">Comunicación Oficial</h1>
-        <p class="tab-subtitle">Circulares y gestión de reuniones con padres de familia</p>
-      </div>
+    <div class="tab-header">
+      <h1 class="tab-title">Comunicación Oficial</h1>
+      <p class="tab-subtitle">Circulares y gestión de reuniones con padres de familia</p>
+    </div>
 
+    <div class="card">
+      <div class="card-header-row">
+        <h3 class="card-title">Circulares Oficiales</h3>
+        <button class="btn-primary">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="12" y1="18" x2="12" y2="12" />
+            <line x1="9" y1="15" x2="15" y2="15" />
+          </svg>
+          Nueva Circular
+        </button>
+      </div>
+      <p class="card-sub">Comunicados para padres de familia</p>
+      <div class="circular-list">
+        @for (circ of circulares; track circ.id) {
+        <div class="circular-item">
+          <div class="circular-info">
+            <div class="circular-titulo-row">
+              <span class="circular-titulo">{{ circ.titulo }}</span>
+              <span class="badge-circular" [class]="'badge-circ-' + circ.estado">
+                {{ circ.estado === 'enviado' ? 'Enviado' : 'Borrador' }}
+              </span>
+            </div>
+            <div class="circular-meta">
+              <span>
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                {{ circ.fecha }}
+              </span>
+              <span>
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                </svg>
+                {{ circ.destinatarios }} destinatarios
+              </span>
+            </div>
+          </div>
+          <div class="circular-actions">
+            <button class="btn-outline btn-sm">Ver</button>
+            @if (circ.estado === 'borrador') {
+            <button class="btn-primary btn-sm" (click)="enviarCircular(circ.id)">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+              Enviar
+            </button>
+            }
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 1rem;">
+      <div class="card-header-row">
+        <h3 class="card-title">Calendario de Reuniones</h3>
+        <button class="btn-outline">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          Agendar Reunión
+        </button>
+      </div>
+      <p class="card-sub">Citas entre dirección y padres de familia</p>
+      <div class="reunion-list">
+        @for (reunion of reuniones; track reunion.id) {
+        <div class="reunion-item">
+          <div class="reunion-info">
+            <div class="reunion-header">
+              <span class="reunion-padre">{{ reunion.padre }}</span>
+              <span class="badge-reunion" [class]="'badge-reun-' + reunion.estado">
+                {{ reunion.estado === 'confirmada' ? 'Confirmada' : 'Pendiente' }}
+              </span>
+            </div>
+            <span class="reunion-estudiante" style="color:#2563eb">Estudiante: {{ reunion.estudiante }}</span>
+            <div class="reunion-meta">
+              <span>
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                </svg>
+                {{ reunion.fecha }}
+              </span>
+              <span>
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                {{ reunion.hora }}
+              </span>
+            </div>
+            <span class="reunion-motivo">Motivo: {{ reunion.motivo }}</span>
+          </div>
+          @if (reunion.estado === 'pendiente') {
+          <button class="btn-success btn-sm" (click)="confirmarReunion(reunion.id)">Confirmar</button>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="two-col-grid" style="margin-top: 1rem;">
       <div class="card">
-        <div class="card-header-row">
-          <h3 class="card-title">Circulares Oficiales</h3>
-          <button class="btn-primary">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/>
-              <line x1="9" y1="15" x2="15" y2="15"/>
-            </svg>
-            Nueva Circular
-          </button>
+        <h3 class="card-title">Próximas Reuniones</h3>
+        @for (r of proximasReuniones; track r.periodo) {
+        <div class="proxima-row">
+          <span class="proxima-periodo">{{ r.periodo }}<br><small>{{ r.cantidad === 2 ? '2 reuniones programadas' : '4
+              reuniones totales' }}</small></span>
+          <span class="proxima-num">{{ r.cantidad }}</span>
         </div>
-        <p class="card-sub">Comunicados para padres de familia</p>
-        <div class="circular-list">
-          @for (circ of circulares; track circ.id) {
-            <div class="circular-item">
-              <div class="circular-info">
-                <div class="circular-titulo-row">
-                  <span class="circular-titulo">{{ circ.titulo }}</span>
-                  <span class="badge-circular" [class]="'badge-circ-' + circ.estado">
-                    {{ circ.estado === 'enviado' ? 'Enviado' : 'Borrador' }}
-                  </span>
-                </div>
-                <div class="circular-meta">
-                  <span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-                      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                    {{ circ.fecha }}
-                  </span>
-                  <span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    </svg>
-                    {{ circ.destinatarios }} destinatarios
-                  </span>
-                </div>
-              </div>
-              <div class="circular-actions">
-                <button class="btn-outline btn-sm">Ver</button>
-                @if (circ.estado === 'borrador') {
-                  <button class="btn-primary btn-sm" (click)="enviarCircular(circ.id)">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
-                    Enviar
-                  </button>
-                }
-              </div>
-            </div>
-          }
-        </div>
+        }
       </div>
-
-      <div class="card" style="margin-top: 1rem;">
-        <div class="card-header-row">
-          <h3 class="card-title">Calendario de Reuniones</h3>
-          <button class="btn-outline">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            Agendar Reunión
-          </button>
-        </div>
-        <p class="card-sub">Citas entre dirección y padres de familia</p>
-        <div class="reunion-list">
-          @for (reunion of reuniones; track reunion.id) {
-            <div class="reunion-item">
-              <div class="reunion-info">
-                <div class="reunion-header">
-                  <span class="reunion-padre">{{ reunion.padre }}</span>
-                  <span class="badge-reunion" [class]="'badge-reun-' + reunion.estado">
-                    {{ reunion.estado === 'confirmada' ? 'Confirmada' : 'Pendiente' }}
-                  </span>
-                </div>
-                <span class="reunion-estudiante" style="color:#2563eb">Estudiante: {{ reunion.estudiante }}</span>
-                <div class="reunion-meta">
-                  <span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <rect x="3" y="4" width="18" height="18" rx="2"/>
-                    </svg>
-                    {{ reunion.fecha }}
-                  </span>
-                  <span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    {{ reunion.hora }}
-                  </span>
-                </div>
-                <span class="reunion-motivo">Motivo: {{ reunion.motivo }}</span>
-              </div>
-              @if (reunion.estado === 'pendiente') {
-                <button class="btn-success btn-sm" (click)="confirmarReunion(reunion.id)">Confirmar</button>
-              }
-            </div>
-          }
-        </div>
+      <div class="card">
+        <h3 class="card-title">Estadísticas de Comunicación</h3>
+        <div class="est-row"><span>Circulares enviadas (mes)</span><strong>{{
+            estadisticasComunicacion.circularesEnviadas }}</strong></div>
+        <div class="est-row"><span>Reuniones realizadas (mes)</span><strong>{{
+            estadisticasComunicacion.reunionesRealizadas }}</strong></div>
+        <div class="est-row"><span>Tasa de respuesta</span><strong class="success-text">{{
+            estadisticasComunicacion.tasaRespuesta }}%</strong></div>
       </div>
-
-      <div class="two-col-grid" style="margin-top: 1rem;">
-        <div class="card">
-          <h3 class="card-title">Próximas Reuniones</h3>
-          @for (r of proximasReuniones; track r.periodo) {
-            <div class="proxima-row">
-              <span class="proxima-periodo">{{ r.periodo }}<br><small>{{ r.cantidad === 2 ? '2 reuniones programadas' : '4 reuniones totales' }}</small></span>
-              <span class="proxima-num">{{ r.cantidad }}</span>
-            </div>
-          }
-        </div>
-        <div class="card">
-          <h3 class="card-title">Estadísticas de Comunicación</h3>
-          <div class="est-row"><span>Circulares enviadas (mes)</span><strong>{{ estadisticasComunicacion.circularesEnviadas }}</strong></div>
-          <div class="est-row"><span>Reuniones realizadas (mes)</span><strong>{{ estadisticasComunicacion.reunionesRealizadas }}</strong></div>
-          <div class="est-row"><span>Tasa de respuesta</span><strong class="success-text">{{ estadisticasComunicacion.tasaRespuesta }}%</strong></div>
-        </div>
-      </div>
+    </div>
     }
 
   </main>

@@ -4,8 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { DashboardService, DashboardKpi, AlertaDashboard } from '../../core/services/dashboard.service';
+import { DocenteService, DocenteResponse } from '../../core/services/docente.service';
 
-// ── Tipos ──────────────────────────────────────────────────────────────────
+// ── Tipos prueba ──────────────────────────────────────────────────────────────────
 export type TabDirector = 'panel' | 'administracion' | 'docentes' | 'calidad' | 'mensajes';
 
 // ── Interfaces ─────────────────────────────────────────────────────────────
@@ -78,35 +80,42 @@ export class AdminDashboardComponent implements OnInit {
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private dashboardService = inject(DashboardService);
+  private docenteService = inject(DocenteService);
 
-  // ── Signals ────────────────────────────────────────────────────
-  readonly tabActiva        = signal<TabDirector>('panel');
-  readonly cargando         = signal(false);
+  // ── Signals ─────────────────────────────────────────────────────────────
+  readonly tabActiva = signal<TabDirector>('panel');
+  readonly cargando = signal(true);
   readonly busquedaExpediente = signal('');
+  readonly errorConexion = signal(false);
 
-  // ── KPIs Institucionales ───────────────────────────────────────
+  // ── KPIs Institucionales (desde API real) ─────────────────────────────────
   readonly kpis = signal({
-    alumnosTotales:   542,
-    docentes:          68,
-    aulas:             23,
-    alertasActivas:     3,
+    alumnosTotales: 0,
+    docentes: 0,
+    aulas: 0,
+    alertasActivas: 0,
+    presentesHoy: 0,
+    faltasHoy: 0,
   });
 
-  readonly asistenciaSemanal = [
-    { dia: 'Lun', alumnos: 498, docentes: 66 },
-    { dia: 'Mar', alumnos: 481, docentes: 65 },
-    { dia: 'Mié', alumnos: 512, docentes: 67 },
-    { dia: 'Jue', alumnos: 490, docentes: 64 },
-    { dia: 'Vie', alumnos: 476, docentes: 63 },
+  readonly asistenciaSemanal: { dia: string; alumnos: number; docentes: number }[] = [
+    { dia: 'Lun', alumnos: 0, docentes: 0 },
+    { dia: 'Mar', alumnos: 0, docentes: 0 },
+    { dia: 'Mié', alumnos: 0, docentes: 0 },
+    { dia: 'Jue', alumnos: 0, docentes: 0 },
+    { dia: 'Vie', alumnos: 0, docentes: 0 },
   ];
 
-  readonly maxAlumnos = Math.max(...this.asistenciaSemanal.map(d => d.alumnos));
+  readonly maxAlumnos = computed(() =>
+    Math.max(1, ...this.asistenciaSemanal.map(d => d.alumnos))
+  );
 
   // ── Alertas Centro ─────────────────────────────────────────────
   readonly alertasCentro = [
-    { titulo: 'Documentos Faltantes',      subtitulo: 'DNI/Partidas sin entregar',  cantidad: 12 },
-    { titulo: 'Matrículas Extemporáneas',  subtitulo: 'Pendientes de validación',   cantidad: 3  },
-    { titulo: 'Evidencias Docentes',       subtitulo: 'Sin subir al sistema',        cantidad: 8  },
+    { titulo: 'Documentos Faltantes', subtitulo: 'DNI/Partidas sin entregar', cantidad: 12 },
+    { titulo: 'Matrículas Extemporáneas', subtitulo: 'Pendientes de validación', cantidad: 3 },
+    { titulo: 'Evidencias Docentes', subtitulo: 'Sin subir al sistema', cantidad: 8 },
   ];
 
   // ── Administración ─────────────────────────────────────────────
@@ -123,15 +132,11 @@ export class AdminDashboardComponent implements OnInit {
     );
   });
 
-  // ── Docentes ───────────────────────────────────────────────────
-  docentesSupervision: DocenteSupervision[] = [];
+  // ── Semáforo Curricular (desde API real) ────────────────────────────
+  docentesSupervision: DocenteResponse[] = [];
   auditorEvidencias: AuditorEvidencia[] = [];
 
-  readonly kpisDocentes = {
-    aprobados: 62,
-    pendientes: 4,
-    retrasados: 2,
-  };
+  readonly kpisDocentes = signal({ aprobados: 0, pendientes: 0, retrasados: 0 });
 
   // ── Calidad ────────────────────────────────────────────────────
   aulasValidacion: AulaValidacion[] = [];
@@ -159,11 +164,11 @@ export class AdminDashboardComponent implements OnInit {
   };
 
   readonly proximasReuniones = [
-    { periodo: 'Hoy',         cantidad: 2 },
+    { periodo: 'Hoy', cantidad: 2 },
     { periodo: 'Esta Semana', cantidad: 4 },
   ];
 
-  // ── Ciclo de vida ──────────────────────────────────────────────
+  // ── Ciclo de vida ────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.cargarDatos();
   }
@@ -172,13 +177,14 @@ export class AdminDashboardComponent implements OnInit {
   setTab(tab: TabDirector): void { this.tabActiva.set(tab); }
 
   irAVistaDocente(): void { this.router.navigate(['/docente/asistencia']); }
-  irAVistaAlumno():  void { this.router.navigate(['/alumno/portal']); }
+  irAVistaAlumno(): void { this.router.navigate(['/alumno/portal']); }
 
   logout(): void { this.authService.logout(); }
 
-  // ── Helpers ────────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────
   alturaBarraAlumno(alumnos: number): number {
-    return Math.round((alumnos / this.maxAlumnos) * 160);
+    const max = Math.max(1, ...this.asistenciaSemanal.map(d => d.alumnos));
+    return Math.round((alumnos / max) * 160);
   }
 
   alturaBarraDocente(docentes: number): number {
@@ -199,51 +205,50 @@ export class AdminDashboardComponent implements OnInit {
     if (r) r.estado = 'confirmada';
   }
 
-  // ── Carga de datos ─────────────────────────────────────────────
+  // ── Carga de datos REALES desde el Backend ────────────────────────────────
   private cargarDatos(): void {
-    this.expedientes = [
-      { id: 1, nombre: 'García Pérez, Ana María',      dni: '76543210', grado: '5to Primaria',    documentos: ['ok','ok','ok'],     nee: false },
-      { id: 2, nombre: 'López Torres, Carlos José',    dni: '76543211', grado: '3ro Secundaria',  documentos: ['ok','warn','ok'],   nee: false },
-      { id: 3, nombre: 'Ramírez Silva, María Elena',   dni: '76543212', grado: '2do Primaria',    documentos: ['error','error','ok'], nee: true  },
-      { id: 4, nombre: 'Fernández Rojas, Juan Pablo',  dni: '76543213', grado: '4to Secundaria',  documentos: ['ok','ok','ok'],     nee: false },
-      { id: 5, nombre: 'Sánchez Vargas, Lucía Isabel', dni: '76543214', grado: '1ro Secundaria',  documentos: ['ok','ok','error'],  nee: true  },
-    ];
+    this.cargando.set(true);
+    this.errorConexion.set(false);
 
-    this.docentesSupervision = [
-      { id: 1, nombre: 'Prof. María García',   especialidad: 'Matemáticas',      estado: 'aprobado',  evidencias: 12, icono: '✓' },
-      { id: 2, nombre: 'Prof. Carlos Mendoza', especialidad: 'Comunicación',     estado: 'aprobado',  evidencias: 15, icono: '✓' },
-      { id: 3, nombre: 'Prof. Ana Torres',     especialidad: 'Ciencias',         estado: 'pendiente', evidencias:  8, icono: '⏰' },
-      { id: 4, nombre: 'Prof. Luis Quispe',    especialidad: 'Historia',         estado: 'retrasado', evidencias:  3, icono: '✗' },
-      { id: 5, nombre: 'Prof. Rosa Flores',    especialidad: 'Inglés',           estado: 'aprobado',  evidencias: 14, icono: '✓' },
-      { id: 6, nombre: 'Prof. Juan Ramírez',   especialidad: 'Educación Física', estado: 'pendiente', evidencias: 10, icono: '⏰' },
-      { id: 7, nombre: 'Prof. Carmen Silva',   especialidad: 'Arte',             estado: 'aprobado',  evidencias: 11, icono: '✓' },
-      { id: 8, nombre: 'Prof. Diego Vargas',   especialidad: 'Matemáticas',      estado: 'pendiente', evidencias:  9, icono: '⏰' },
-    ];
+    // ─ 1. KPIs principales del Dashboard ────────────────────────────────────
+    this.dashboardService.obtenerKpis().subscribe({
+      next: (kpi) => {
+        this.kpis.set({
+          alumnosTotales: kpi.alumnosTotales,
+          docentes:       kpi.docentesTotales,
+          aulas:          kpi.aulasTotales,
+          alertasActivas: kpi.alumnosMatriculaProvisional,
+          presentesHoy:   kpi.alumnosPresentesHoy,
+          faltasHoy:      kpi.alumnosFaltasHoy,
+        });
+        // Actualizar gráfico de barras con datos reales de la semana
+        if (kpi.asistenciaSemanal?.length) {
+          kpi.asistenciaSemanal.forEach((d, i) => {
+            if (this.asistenciaSemanal[i]) {
+              this.asistenciaSemanal[i].alumnos  = d.alumnos;
+              this.asistenciaSemanal[i].docentes = d.docentes;
+            }
+          });
+        }
+        this.kpisDocentes.set({
+          aprobados:  kpi.docentesAprobados,
+          pendientes: kpi.docentesPendientes,
+          retrasados: kpi.docentesRetrasados,
+        });
+        this.cargando.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar KPIs del dashboard:', err);
+        this.errorConexion.set(true);
+        this.cargando.set(false);
+      }
+    });
 
-    this.auditorEvidencias = [
-      { profesor: 'Prof. Ana Torres',   aula: '3ro A', actividad: 'Evaluación práctica', fecha: '2026-04-20', fotos: 3 },
-      { profesor: 'Prof. Luis Quispe',  aula: '5to B', actividad: 'Proyecto final',       fecha: '2026-04-18', fotos: 1 },
-      { profesor: 'Prof. Juan Ramírez', aula: '2do C', actividad: 'Rúbricas',             fecha: '2026-04-22', fotos: 5 },
-    ];
-
-    this.aulasValidacion = [
-      { nombre: '1ro A – Primaria',   estado: 'advertencia', estudiantes: 25, notasCompletas: 23, notasBlanco: 2, inconsistencias: 0 },
-      { nombre: '2do B – Primaria',   estado: 'ok',          estudiantes: 24, notasCompletas: 24, notasBlanco: 0, inconsistencias: 0 },
-      { nombre: '3ro A – Secundaria', estado: 'error',       estudiantes: 28, notasCompletas: 25, notasBlanco: 3, inconsistencias: 1 },
-      { nombre: '4to A – Secundaria', estado: 'ok',          estudiantes: 27, notasCompletas: 27, notasBlanco: 0, inconsistencias: 0 },
-      { nombre: '5to A – Secundaria', estado: 'ok',          estudiantes: 26, notasCompletas: 26, notasBlanco: 0, inconsistencias: 0 },
-    ];
-
-    this.circulares = [
-      { id: 1, titulo: 'Cronograma de Evaluaciones – II Bimestre', estado: 'enviado',  fecha: '2026-04-15', destinatarios: 542 },
-      { id: 2, titulo: 'Reunión de Padres – 3ro Secundaria',       estado: 'enviado',  fecha: '2026-04-20', destinatarios:  85 },
-      { id: 3, titulo: 'Actividades por Día del Trabajo',          estado: 'borrador', fecha: '2026-04-25', destinatarios: 542 },
-    ];
-
-    this.reuniones = [
-      { id: 1, padre: 'Sra. María García',  estudiante: 'Ana García (5to Primaria)',   fecha: '2026-04-27', hora: '10:30 AM', motivo: 'Rendimiento académico', estado: 'confirmada' },
-      { id: 2, padre: 'Sra. Rosa Torres',   estudiante: 'María Torres (2do Primaria)', fecha: '2026-04-29', hora: '09:00 AM', motivo: 'NEE – Adaptaciones',    estado: 'confirmada' },
-      { id: 3, padre: 'Sr. Juan Ramírez',   estudiante: 'Luis Ramírez (4to Secundaria)', fecha: '2026-04-29', hora: '02:00 PM', motivo: 'Orientación vocacional', estado: 'pendiente' },
-    ];
+    // ─ 2. Semáforo Curricular (lista de docentes) ────────────────────────────
+    this.docenteService.obtenerSemaforo().subscribe({
+      next: (docentes) => { this.docentesSupervision = docentes; },
+      error: (err) => console.error('Error al cargar semáforo:', err)
+    });
   }
 }
+
