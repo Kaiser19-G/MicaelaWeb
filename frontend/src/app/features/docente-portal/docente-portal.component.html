@@ -167,9 +167,9 @@
                   {{ cursoActivo()?.nombre }} – {{ cursoActivo()?.grado }}
                   &nbsp;·&nbsp;
                   <span class="escala-badge"
-                    [class.escala-literal]="filasNotas[0]?.tipoEscala === 'LITERAL'"
-                    [class.escala-vigesimal]="filasNotas[0]?.tipoEscala === 'VIGESIMAL'">
-                    {{ filasNotas[0]?.tipoEscala === 'LITERAL' ? 'Escala Literal (AD/A/B/C)' : 'Escala Vigesimal (0–20)' }}
+                    [class.escala-literal]="filasNotas.length > 0 && filasNotas[0].tipoEscala === 'LITERAL'"
+                    [class.escala-vigesimal]="filasNotas.length > 0 && filasNotas[0].tipoEscala === 'VIGESIMAL'">
+                    {{ (filasNotas.length > 0 && filasNotas[0].tipoEscala === 'LITERAL') ? 'Escala Literal (AD/A/B/C)' : 'Escala Vigesimal (0–20)' }}
                   </span>
                 </p>
               </div>

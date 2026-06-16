@@ -4,7 +4,7 @@
   "description": "Sistema de Gestión Escolar – I.E. Micaela Bastidas Puyocahua",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --hmr=false",
     "build": "ng build",
     "watch": "ng build --watch --configuration development"
   },
