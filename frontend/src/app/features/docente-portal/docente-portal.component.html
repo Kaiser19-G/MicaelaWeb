@@ -156,12 +156,125 @@
             </div>
           </div>
   
-          <!-- TAB: NOTAS (WIP) -->
-          <div *ngIf="tabCurso() === 'notas'">
-             <div class="empty-state">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                <p>Las notas de los estudiantes estarán disponibles aquí.</p>
-             </div>
+          <!-- TAB: NOTAS – Registro de Calificaciones -->
+          <div *ngIf="tabCurso() === 'notas'" class="notas-container">
+
+            <!-- Encabezado del módulo de notas -->
+            <div class="notas-header">
+              <div>
+                <h2 class="notas-title">Registro de Calificaciones</h2>
+                <p class="notas-sub">
+                  {{ cursoActivo()?.nombre }} – {{ cursoActivo()?.grado }}
+                  &nbsp;·&nbsp;
+                  <span class="escala-badge"
+                    [class.escala-literal]="filasNotas[0]?.tipoEscala === 'LITERAL'"
+                    [class.escala-vigesimal]="filasNotas[0]?.tipoEscala === 'VIGESIMAL'">
+                    {{ filasNotas[0]?.tipoEscala === 'LITERAL' ? 'Escala Literal (AD/A/B/C)' : 'Escala Vigesimal (0–20)' }}
+                  </span>
+                </p>
+              </div>
+              <!-- Selector de bimestre -->
+              <div class="bimestre-selector">
+                <label class="bim-label">Bimestre</label>
+                <div class="bim-btns">
+                  <button *ngFor="let b of [1,2,3,4]"
+                    class="bim-btn"
+                    [class.active]="bimestreActivo === b"
+                    (click)="bimestreActivo = b; cargarFilasNotas()">
+                    {{ b }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alertas de validación -->
+            <div *ngIf="errorNotasSinEvidencia()" class="alerta-evidencia">
+              ⚠️ <strong>Evidencia requerida:</strong> Debes adjuntar una evidencia para cada nota que modifiques antes de guardar.
+            </div>
+            <div *ngIf="notasGuardadasExito()" class="alerta-exito">
+              ✅ Notas guardadas exitosamente.
+            </div>
+
+            <!-- Tabla de notas -->
+            <div class="notas-table-wrap">
+              <table class="notas-table">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Alumno</th>
+                    <th>Nota</th>
+                    <th>Evidencia</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let fila of filasNotas; let i = index"
+                    [class.fila-modificada]="fila.modificado">
+
+                    <td class="td-num">{{ i + 1 }}</td>
+
+                    <td class="td-alumno">{{ fila.nombreAlumno }}</td>
+
+                    <!-- Nota según escala del curso -->
+                    <td class="td-nota">
+                      <!-- Escala LITERAL: AD / A / B / C -->
+                      <select *ngIf="fila.tipoEscala === 'LITERAL'"
+                        class="nota-select nota-literal"
+                        [(ngModel)]="fila.notaLiteral"
+                        (change)="onNotaChange(fila)">
+                        <option [value]="undefined" disabled>–</option>
+                        <option *ngFor="let op of escalaLiteralOpciones" [value]="op">{{ op }}</option>
+                      </select>
+
+                      <!-- Escala VIGESIMAL: 0–20 -->
+                      <input *ngIf="fila.tipoEscala === 'VIGESIMAL'"
+                        type="number"
+                        class="nota-input nota-vigesimal"
+                        [(ngModel)]="fila.notaVigesimal"
+                        (ngModelChange)="onNotaChange(fila)"
+                        min="0" max="20" step="1"
+                        placeholder="0–20" />
+                    </td>
+
+                    <!-- Evidencia -->
+                    <td class="td-evidencia">
+                      <label class="btn-evidencia" [class.con-archivo]="fila.conEvidencia">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="17 8 12 3 7 8"/>
+                          <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        {{ fila.conEvidencia ? fila.archivoPendiente?.name ?? 'Adjuntada' : 'Adjuntar' }}
+                        <input type="file" accept="image/*,.pdf"
+                          style="display:none"
+                          (change)="onArchivoSeleccionado($event, fila)" />
+                      </label>
+                    </td>
+
+                    <!-- Estado de la fila -->
+                    <td class="td-estado">
+                      <span *ngIf="!fila.modificado" class="estado-badge estado-sin-cambios">Sin cambios</span>
+                      <span *ngIf="fila.modificado && !fila.conEvidencia" class="estado-badge estado-falta-evidencia">Falta evidencia</span>
+                      <span *ngIf="fila.modificado && fila.conEvidencia" class="estado-badge estado-listo">Listo</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Botón de guardar -->
+            <div class="notas-footer">
+              <p class="notas-footer-nota">
+                💡 <strong>Importante:</strong> No se puede cerrar un bimestre sin adjuntar evidencia para cada nota registrada.
+              </p>
+              <button class="btn-guardar-notas"
+                [disabled]="guardandoNotas()"
+                (click)="guardarNotas()">
+                <span *ngIf="guardandoNotas()" class="spinner-sm"></span>
+                {{ guardandoNotas() ? 'Guardando…' : '💾 Guardar Notas del Bimestre ' + bimestreActivo }}
+              </button>
+            </div>
+            <!-- TODO: conectar a POST /api/v1/notas y POST /api/v1/evidencias/upload -->
           </div>
 
           <!-- TAB: ASISTENCIA (WIP) -->

@@ -26,15 +26,37 @@
       }
     </div>
 
-    <!-- Selector de Aula y Fecha -->
+    <!-- Selectores en cascada: Nivel → Grado → Sección -->
     <div class="da-header__controls">
       <div class="control-group">
-        <label for="select-aula" class="control-label">Aula</label>
-        <select id="select-aula" class="control-select"
-          [(ngModel)]="aulaSeleccionada" (change)="onAulaChange()">
-          <option [value]="null" disabled>Selecciona un aula…</option>
-          @for (aula of aulas; track aula.id) {
-            <option [value]="aula.id">{{ aula.descripcion }}</option>
+        <label for="select-nivel" class="control-label">Nivel</label>
+        <select id="select-nivel" class="control-select"
+          [(ngModel)]="nivelSeleccionado" (change)="onNivelChange()">
+          <option [value]="null" disabled>Selecciona un nivel…</option>
+          @for (niv of niveles; track niv.id) {
+            <option [value]="niv.id">{{ niv.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="select-grado" class="control-label">Grado</label>
+        <select id="select-grado" class="control-select"
+          [(ngModel)]="gradoSeleccionado" (change)="onGradoChange()"
+          [disabled]="!nivelSeleccionado">
+          <option [value]="null" disabled>Selecciona un grado…</option>
+          @for (grado of gradosFiltrados; track grado.id) {
+            <option [value]="grado.id">{{ grado.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="select-seccion" class="control-label">Sección</label>
+        <select id="select-seccion" class="control-select"
+          [(ngModel)]="seccionSeleccionada" (change)="onSeccionChange()"
+          [disabled]="!gradoSeleccionado">
+          <option [value]="null" disabled>Selecciona una sección…</option>
+          @for (sec of seccionesFiltradas; track sec.id) {
+            <option [value]="sec.id">{{ sec.nombre }}</option>
           }
         </select>
       </div>
@@ -51,7 +73,7 @@
     <!-- Estado vacío -->
     <div class="empty-prompt">
       <span class="empty-prompt__icon">🏫</span>
-      <p>Selecciona un aula para comenzar el registro de asistencia</p>
+      <p>Selecciona el nivel, grado y sección para comenzar el registro de asistencia</p>
     </div>
   }
 
@@ -128,6 +150,8 @@
                 [class.btn-estado--activo]="alumno.estado === est.valor"
                 [attr.aria-label]="est.label"
                 [title]="est.label"
+                [disabled]="est.valor === 'FALTA' && debeDeshabilitarFalta(alumno)"
+                [class.btn-estado--deshabilitado]="est.valor === 'FALTA' && debeDeshabilitarFalta(alumno)"
                 (click)="marcarEstado(alumno.id, est.valor)">
                 {{ est.emoji }}
               </button>

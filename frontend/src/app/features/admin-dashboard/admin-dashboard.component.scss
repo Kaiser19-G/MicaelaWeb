@@ -1389,3 +1389,124 @@ $bg-content: #f8fafc;
 .info-text {
   color: $info;
 }
+
+// ── Logout button (sidebar footer) ────────────────────────────────────────
+.btn-logout {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: $text-sec;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &:hover {
+    background: $danger-light;
+    color: $danger;
+  }
+}
+
+// ── Alertas Faltas Excesivas ───────────────────────────────────────────────
+.card-alertas-faltas {
+  border-left: 3px solid $danger;
+}
+
+.alertas-faltas-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.alertas-faltas-count {
+  font-size: 12px;
+  font-weight: 700;
+  background: $danger-light;
+  color: $danger;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.alertas-faltas-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: $success-light;
+  border-radius: 8px;
+  font-size: 13px;
+  color: $success;
+  font-weight: 500;
+}
+
+.alertas-faltas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alerta-falta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  background: #fff;
+  transition: background 0.12s;
+
+  &:hover {
+    background: $danger-light;
+  }
+}
+
+.alerta-falta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alerta-falta-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.alerta-falta-sub {
+  font-size: 11px;
+  color: $text-sec;
+}
+
+.alerta-falta-badge-wrap {
+  flex-shrink: 0;
+}
+
+.alerta-falta-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+
+  &.badge-critico {
+    background: $danger;
+    color: #fff;
+  }
+
+  &.badge-alto {
+    background: #f97316;
+    color: #fff;
+  }
+
+  &.badge-alerta {
+    background: $warning-light;
+    color: $warning;
+  }
+}
