@@ -11,14 +11,14 @@ interface AlumnoLista {
   codigoEstudiante: string;
   dni: string;
   tienePermisoAcademia: boolean;
-  horaEntradaAcademia?: string;
+  horaEntradaAcademia?: string;  // formato HH:mm
   estado: EstadoAsistencia;
 }
 
-interface AulaSimple {
-  id: number;
-  descripcion: string;
-}
+/** Estructura de los niveles/grados/secciones disponibles */
+interface NivelOpt  { id: string; nombre: string; }
+interface GradoOpt  { id: string; nombre: string; nivelId: string; }
+interface SeccionOpt { id: string; nombre: string; gradoId: string; aulaId: number; }
 
 @Component({
   selector: 'app-docente-asistencia',
@@ -41,21 +41,74 @@ export class DocenteAsistenciaComponent implements OnInit, OnDestroy {
   aulaSeleccionada: number | null = null;
   docenteId = 1;
 
-  aulas: AulaSimple[] = [];
+  // ── Selectores en cascada: Nivel → Grado → Sección ─────────────────────────
+  // TODO: reemplazar con llamada a GET /api/v1/aulas/estructura
+  nivelSeleccionado:   string | null = null;
+  gradoSeleccionado:   string | null = null;
+  seccionSeleccionada: string | null = null;
+
+  readonly niveles: NivelOpt[] = [
+    { id: 'primaria',   nombre: 'Primaria' },
+    { id: 'secundaria', nombre: 'Secundaria' },
+  ];
+
+  readonly todosGrados: GradoOpt[] = [
+    { id: '1p', nombre: '1er Grado',  nivelId: 'primaria' },
+    { id: '2p', nombre: '2do Grado',  nivelId: 'primaria' },
+    { id: '3p', nombre: '3er Grado',  nivelId: 'primaria' },
+    { id: '4p', nombre: '4to Grado',  nivelId: 'primaria' },
+    { id: '5p', nombre: '5to Grado',  nivelId: 'primaria' },
+    { id: '6p', nombre: '6to Grado',  nivelId: 'primaria' },
+    { id: '1s', nombre: '1ro',        nivelId: 'secundaria' },
+    { id: '2s', nombre: '2do',        nivelId: 'secundaria' },
+    { id: '3s', nombre: '3ro',        nivelId: 'secundaria' },
+    { id: '4s', nombre: '4to',        nivelId: 'secundaria' },
+    { id: '5s', nombre: '5to',        nivelId: 'secundaria' },
+  ];
+
+  readonly todasSecciones: SeccionOpt[] = [
+    { id: 's1p1a', nombre: 'Sección A', gradoId: '1p', aulaId: 10 },
+    { id: 's1p1b', nombre: 'Sección B', gradoId: '1p', aulaId: 11 },
+    { id: 's2p1a', nombre: 'Sección A', gradoId: '2p', aulaId: 12 },
+    { id: 's3p1a', nombre: 'Sección A', gradoId: '3p', aulaId: 13 },
+    { id: 's4p1a', nombre: 'Sección A', gradoId: '4p', aulaId: 14 },
+    { id: 's5p1a', nombre: 'Sección A', gradoId: '5p', aulaId: 15 },
+    { id: 's6p1a', nombre: 'Sección A', gradoId: '6p', aulaId: 16 },
+    { id: 's1s1a', nombre: 'Sección A', gradoId: '1s', aulaId: 1 },
+    { id: 's1s1b', nombre: 'Sección B', gradoId: '1s', aulaId: 2 },
+    { id: 's2s1a', nombre: 'Sección A', gradoId: '2s', aulaId: 3 },
+    { id: 's3s1a', nombre: 'Sección A', gradoId: '3s', aulaId: 4 },
+    { id: 's4s1a', nombre: 'Sección A', gradoId: '4s', aulaId: 5 },
+    { id: 's5s1a', nombre: 'Sección A', gradoId: '5s', aulaId: 6 },
+  ];
+
+  /** Grados filtrados según el nivel seleccionado */
+  get gradosFiltrados(): GradoOpt[] {
+    if (!this.nivelSeleccionado) return [];
+    return this.todosGrados.filter(g => g.nivelId === this.nivelSeleccionado);
+  }
+
+  /** Secciones filtradas según el grado seleccionado */
+  get seccionesFiltradas(): SeccionOpt[] {
+    if (!this.gradoSeleccionado) return [];
+    return this.todasSecciones.filter(s => s.gradoId === this.gradoSeleccionado);
+  }
+
+  aulas: NivelOpt[] = []; // mantenido por compatibilidad (no se usa con cascada)
   alumnos: AlumnoLista[] = [];
 
   readonly estadosRapidos: { valor: EstadoAsistencia; label: string; emoji: string }[] = [
-    { valor: 'ASISTIO',   label: 'Asistió',  emoji: '✅' },
-    { valor: 'FALTA',     label: 'Falta',    emoji: '❌' },
-    { valor: 'TARDANZA',  label: 'Tardanza', emoji: '⏰' },
-    { valor: 'LICENCIA',  label: 'Licencia', emoji: '📋' },
+    { valor: 'ASISTIO',     label: 'Presente',    emoji: '✅' },
+    { valor: 'FALTA',       label: 'Falta',        emoji: '❌' },
+    { valor: 'TARDANZA',    label: 'Tardanza',     emoji: '⏰' },
+    { valor: 'JUSTIFICADO', label: 'Justificado',  emoji: '📝' },
+    { valor: 'LICENCIA',    label: 'Licencia',     emoji: '📋' },
   ];
 
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
     this.verificarConexion();
-    this.cargarAulas();
   }
 
   ngOnDestroy(): void {
@@ -69,15 +122,28 @@ export class DocenteAsistenciaComponent implements OnInit, OnDestroy {
     window.addEventListener('offline', () => this.modoOffline.set(true));
   }
 
-  private cargarAulas(): void {
-    this.aulas = [
-      { id: 1, descripcion: '1ro A – Secundaria (2025)' },
-      { id: 2, descripcion: '1ro B – Secundaria (2025)' },
-      { id: 3, descripcion: '2do A – Secundaria (2025)' },
-      { id: 4, descripcion: '3ro A – Secundaria (2025)' },
-      { id: 5, descripcion: '4to A – Secundaria (2025)' },
-      { id: 6, descripcion: '5to A – Secundaria (2025)' },
-    ];
+
+  // ── Cascada: cambios en selectores ───────────────────────────────────────────
+  onNivelChange(): void {
+    this.gradoSeleccionado   = null;
+    this.seccionSeleccionada = null;
+    this.aulaSeleccionada    = null;
+    this.alumnos = [];
+  }
+
+  onGradoChange(): void {
+    this.seccionSeleccionada = null;
+    this.aulaSeleccionada    = null;
+    this.alumnos = [];
+  }
+
+  onSeccionChange(): void {
+    // Buscar el aulaId correspondiente a la sección seleccionada
+    const seccion = this.todasSecciones.find(s => s.id === this.seccionSeleccionada);
+    this.aulaSeleccionada = seccion ? seccion.aulaId : null;
+    if (this.aulaSeleccionada) {
+      this.cargarAlumnosDelAula();
+    }
   }
 
   onAulaChange(): void {
@@ -131,11 +197,26 @@ export class DocenteAsistenciaComponent implements OnInit, OnDestroy {
   marcarEstado(alumnoId: number, estado: EstadoAsistencia): void {
     const alumno = this.alumnos.find(a => a.id === alumnoId);
     if (!alumno) return;
+    // Si el alumno tiene permiso academia y se marca TARDANZA, cambia a PERMISO_ACADEMIA
     if (estado === 'TARDANZA' && alumno.tienePermisoAcademia) {
       alumno.estado = 'PERMISO_ACADEMIA';
     } else {
       alumno.estado = estado;
     }
+  }
+
+  /**
+   * Determina si el botón FALTA debe estar deshabilitado para un alumno.
+   * Regla: si tiene permiso de academia y su hora de entrada aún no llegó,
+   * no corresponde marcarlo como Falta.
+   */
+  debeDeshabilitarFalta(alumno: AlumnoLista): boolean {
+    if (!alumno.tienePermisoAcademia || !alumno.horaEntradaAcademia) return false;
+    const ahora = new Date();
+    const [h, m] = alumno.horaEntradaAcademia.split(':').map(Number);
+    const horaAcademia = new Date();
+    horaAcademia.setHours(h, m, 0, 0);
+    return ahora < horaAcademia; // si no llegó su hora, deshabilitar FALTA
   }
 
   marcarTodos(estado: EstadoAsistencia): void {

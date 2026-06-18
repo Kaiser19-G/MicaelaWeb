@@ -56,11 +56,18 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div class="director-avatar">D</div>
+      <div class="director-avatar">{{ directorInicial() }}</div>
       <div class="director-info">
-        <span class="director-name">Director</span>
+        <span class="director-name">{{ directorNombre() }}</span>
         <span class="director-school">I.E. Micaela Bastidas</span>
       </div>
+      <button class="btn-logout" (click)="logout()" title="Cerrar sesión">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
     </div>
   </aside>
 
@@ -204,6 +211,45 @@
           <span class="prog-label">Atrasadas</span>
         </div>
       </div>
+    </div>
+
+    <!-- ── ALERTAS: Alumnos con +3 faltas consecutivas ────────────────── -->
+    <div class="card card-alertas-faltas" style="margin-top: 1rem;">
+      <div class="alertas-faltas-header">
+        <div>
+          <h3 class="card-title">⚠️ Alumnos con Faltas Excesivas</h3>
+          <p class="card-sub">Alumnos con 3 o más faltas consecutivas – Requieren seguimiento</p>
+        </div>
+        <span class="alertas-faltas-count">{{ alertasFaltas().length }} alumnos</span>
+      </div>
+      @if (alertasFaltas().length === 0) {
+        <div class="alertas-faltas-empty">
+          <svg width="32" height="32" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="9 11 12 14 22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <span>Sin alertas activas. ¡Excelente asistencia!</span>
+        </div>
+      }
+      <div class="alertas-faltas-list">
+        @for (alerta of alertasFaltas(); track alerta.alumnoId) {
+          <div class="alerta-falta-row">
+            <div class="alerta-falta-info">
+              <span class="alerta-falta-nombre">{{ alerta.nombreAlumno }}</span>
+              <span class="alerta-falta-sub">ID Alumno: {{ alerta.alumnoId }}</span>
+            </div>
+            <div class="alerta-falta-badge-wrap">
+              <span class="alerta-falta-badge"
+                [class.badge-critico]="alerta.totalFaltas >= 5"
+                [class.badge-alto]="alerta.totalFaltas >= 4 && alerta.totalFaltas < 5"
+                [class.badge-alerta]="alerta.totalFaltas === 3">
+                {{ alerta.totalFaltas }} faltas
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+      <!-- TODO: conectar a GET /api/v1/asistencias/alertas/faltas-excesivas -->
     </div>
     }
 

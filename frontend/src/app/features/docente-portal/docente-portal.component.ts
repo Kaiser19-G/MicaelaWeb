@@ -4,6 +4,12 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../../core/services/auth.service';
+import {
+  NotaService,
+  FilaNota,
+  ESCALA_LITERAL_OPCIONES,
+  EscalaLiteral
+} from '../../core/services/nota.service';
 
 export type TabCurso = 'silabo' | 'contenido' | 'evaluaciones' | 'tareas' | 'notas' | 'asistencia';
 export type SidebarNav = 'cursos' | 'asistencia' | 'notas' | 'configuracion';
@@ -48,6 +54,10 @@ export interface ActividadBimestre {
 export class DocentePortalComponent implements OnInit {
 
   public authService = inject(AuthService);
+  private notaService = inject(NotaService);
+
+  // Exponemos la constante al template
+  readonly escalaLiteralOpciones = ESCALA_LITERAL_OPCIONES;
 
   readonly sidebarNav = signal<SidebarNav>('cursos');
   readonly cursosVista = signal<CursosVista>('lista');
@@ -97,8 +107,77 @@ export class DocentePortalComponent implements OnInit {
 
   readonly semanaActualMock = signal(1); // Para habilitar los botones en la semana 1
 
-  // MOCK DE ALUMNOS PARA ASISTENCIA
+  // MOCK DE ALUMNOS PARA ASISTENCIA (modal)
   alumnosMock: AlumnoMock[] = [];
+
+  // ── Tab NOTAS: estado y lógica ────────────────────────────────────────────
+  filasNotas: FilaNota[] = [];
+  bimestreActivo = 1;
+  guardandoNotas = signal(false);
+  notasGuardadasExito = signal(false);
+  errorNotasSinEvidencia = signal(false);
+
+  /** Carga (o recarga) las filas de notas para el curso y bimestre activo */
+  cargarFilasNotas(): void {
+    const curso = this.cursoActivo();
+    if (!curso) return;
+    // TODO: reemplazar con this.notaService.obtenerNotasCurso(curso.id, this.bimestreActivo)
+    const alumnosMock = [
+      { id: 101, nombre: 'QUISPE MAMANI, Juan' },
+      { id: 102, nombre: 'GARCÍA SILVA, Ana María' },
+      { id: 103, nombre: 'CONDORI LÓPEZ, Luis' },
+      { id: 104, nombre: 'TORRES CRUZ, Carlos' },
+      { id: 105, nombre: 'ROJAS PEÑA, Sofía' },
+    ];
+    this.filasNotas = this.notaService.construirFilasSimuladas(alumnosMock, curso.grado);
+  }
+
+  /** Marca la fila como modificada al cambiar la nota */
+  onNotaChange(fila: FilaNota): void {
+    fila.modificado = true;
+  }
+
+  /** Captura el archivo seleccionado para evidencia */
+  onArchivoSeleccionado(evento: Event, fila: FilaNota): void {
+    const input = evento.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    fila.archivoPendiente = input.files[0];
+    fila.conEvidencia     = true;
+    fila.modificado       = true;
+  }
+
+  /** Valida y guarda todas las notas del bimestre */
+  guardarNotas(): void {
+    // Validar: toda nota registrada debe tener evidencia
+    const sinEvidencia = this.filasNotas.some(
+      f => f.modificado && !f.conEvidencia
+    );
+    if (sinEvidencia) {
+      this.errorNotasSinEvidencia.set(true);
+      setTimeout(() => this.errorNotasSinEvidencia.set(false), 4000);
+      return;
+    }
+    this.guardandoNotas.set(true);
+    this.errorNotasSinEvidencia.set(false);
+    // TODO: llamar a notaService.registrarNotasLote() cuando el backend esté disponible
+    // Por ahora simulamos éxito:
+    setTimeout(() => {
+      this.guardandoNotas.set(false);
+      this.notasGuardadasExito.set(true);
+      setTimeout(() => this.notasGuardadasExito.set(false), 3000);
+    }, 800);
+  }
+
+  /** Returns true si una nota literal es válida */
+  notaLiteralValida(fila: FilaNota): boolean {
+    return fila.tipoEscala === 'LITERAL' && !!fila.notaLiteral;
+  }
+
+  /** Returns true si una nota vigesimal está en rango */
+  notaVigesimalValida(fila: FilaNota): boolean {
+    return fila.tipoEscala === 'VIGESIMAL' &&
+      this.notaService.validarVigesimal(fila.notaVigesimal);
+  }
   
   // FORMULARIO NUEVA TAREA
   nuevaTarea = {
@@ -122,6 +201,8 @@ export class DocentePortalComponent implements OnInit {
     this.cursoActivo.set(curso);
     this.cursosVista.set('detalle');
     this.tabCurso.set('contenido');
+    // Pre-cargar filas de notas para el curso seleccionado
+    this.cargarFilasNotas();
   }
 
   volverALista(): void {

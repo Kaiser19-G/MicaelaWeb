@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardService, DashboardKpi, AlertaDashboard } from '../../core/services/dashboard.service';
 import { DocenteService, DocenteResponse } from '../../core/services/docente.service';
+import { AsistenciaService, AlertaFalta } from '../../core/services/asistencia.service';
 
 // ── Tipos prueba ──────────────────────────────────────────────────────────────────
 export type TabDirector = 'panel' | 'administracion' | 'docentes' | 'calidad' | 'mensajes';
@@ -82,12 +83,21 @@ export class AdminDashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private dashboardService = inject(DashboardService);
   private docenteService = inject(DocenteService);
+  private asistenciaService = inject(AsistenciaService);
 
   // ── Signals ─────────────────────────────────────────────────────────────
   readonly tabActiva = signal<TabDirector>('panel');
   readonly cargando = signal(true);
   readonly busquedaExpediente = signal('');
   readonly errorConexion = signal(false);
+
+  // ── Nombre del director desde el token JWT ────────────────────────────
+  readonly directorNombre = computed(() =>
+    this.authService.getUsuarioActual()?.username ?? 'Director'
+  );
+  readonly directorInicial = computed(() =>
+    (this.authService.getUsuarioActual()?.username ?? 'D')[0]?.toUpperCase() ?? 'D'
+  );
 
   // ── KPIs Institucionales (desde API real) ─────────────────────────────────
   readonly kpis = signal({
@@ -98,6 +108,14 @@ export class AdminDashboardComponent implements OnInit {
     presentesHoy: 0,
     faltasHoy: 0,
   });
+
+  // ── Alertas: alumnos con +3 faltas consecutivas ───────────────────────
+  // TODO: reemplazar con llamada real a GET /api/v1/asistencias/alertas/faltas-excesivas
+  readonly alertasFaltas = signal<AlertaFalta[]>([
+    { alumnoId: 1, nombreAlumno: 'QUISPE FLORES, María Fernanda',  totalFaltas: 5 },
+    { alumnoId: 4, nombreAlumno: 'MENDOZA CCALLO, Carlos Alberto', totalFaltas: 4 },
+    { alumnoId: 7, nombreAlumno: 'CCOICA HUAYTA, Valeria Sophia',  totalFaltas: 3 },
+  ]);
 
   readonly asistenciaSemanal: { dia: string; alumnos: number; docentes: number }[] = [
     { dia: 'Lun', alumnos: 0, docentes: 0 },
@@ -119,7 +137,17 @@ export class AdminDashboardComponent implements OnInit {
   ];
 
   // ── Administración ─────────────────────────────────────────────
-  expedientes: ExpedienteAlumno[] = [];
+  // TODO: reemplazar con llamada a GET /api/v1/alumnos (con paginación)
+  expedientes: ExpedienteAlumno[] = [
+    { id: 1,  nombre: 'QUISPE FLORES, María Fernanda',  dni: '12345678', grado: '5to A – Secundaria', documentos: ['ok', 'ok', 'warn'], nee: false },
+    { id: 2,  nombre: 'PAREDES HUANCA, José Luis',      dni: '23456789', grado: '5to A – Secundaria', documentos: ['ok', 'ok', 'ok'],  nee: false },
+    { id: 3,  nombre: 'TORRES RAMOS, Ana Lucía',        dni: '34567890', grado: '4to A – Secundaria', documentos: ['ok', 'warn', 'error'], nee: true },
+    { id: 4,  nombre: 'MENDOZA CCALLO, Carlos Alberto', dni: '45678901', grado: '4to A – Secundaria', documentos: ['ok', 'ok', 'ok'],  nee: false },
+    { id: 5,  nombre: 'GARCIA PAUCAR, Luciana Isabel',  dni: '56789012', grado: '3ro B – Secundaria', documentos: ['error', 'warn', 'ok'], nee: false },
+    { id: 6,  nombre: 'VILCA MAMANI, Diego Alejandro',  dni: '67890123', grado: '3ro B – Secundaria', documentos: ['ok', 'ok', 'ok'],  nee: false },
+    { id: 7,  nombre: 'CCOICA HUAYTA, Valeria Sophia',  dni: '78901234', grado: '2do A – Primaria',   documentos: ['ok', 'warn', 'ok'], nee: true },
+    { id: 8,  nombre: 'LLERENA QUISPE, Rodrigo Mateo',  dni: '89012345', grado: '2do A – Primaria',   documentos: ['ok', 'ok', 'ok'],  nee: false },
+  ];
   busquedaText = '';
 
   readonly expedientesFiltrados = computed(() => {
@@ -154,8 +182,19 @@ export class AdminDashboardComponent implements OnInit {
   );
 
   // ── Mensajes ───────────────────────────────────────────────────
-  circulares: CircularOficial[] = [];
-  reuniones: Reunion[] = [];
+  // TODO: reemplazar con llamada a GET /api/v1/circulares
+  circulares: CircularOficial[] = [
+    { id: 1, titulo: 'Cronograma de Evaluaciones – Bimestre 2', estado: 'enviado',  fecha: '2026-06-10', destinatarios: 540 },
+    { id: 2, titulo: 'Jornada de Reflexión Pedagógica',          estado: 'enviado',  fecha: '2026-06-05', destinatarios: 68  },
+    { id: 3, titulo: 'Actividades del Día del Logro',            estado: 'borrador', fecha: '2026-06-14', destinatarios: 0   },
+    { id: 4, titulo: 'Reunión de APAFA – Julio 2026',            estado: 'borrador', fecha: '2026-06-15', destinatarios: 0   },
+  ];
+  // TODO: reemplazar con llamada a GET /api/v1/reuniones
+  reuniones: Reunion[] = [
+    { id: 1, padre: 'Sr. Jorge Quispe',   estudiante: 'QUISPE FLORES, María',   fecha: '2026-06-16', hora: '10:00', motivo: 'Bajo rendimiento – Matemática', estado: 'confirmada' },
+    { id: 2, padre: 'Sra. Carmen Torres', estudiante: 'TORRES RAMOS, Ana',      fecha: '2026-06-17', hora: '11:30', motivo: 'Documentos pendientes de entrega', estado: 'pendiente' },
+    { id: 3, padre: 'Sr. Luis Vilca',     estudiante: 'VILCA MAMANI, Diego',    fecha: '2026-06-18', hora: '09:00', motivo: 'Seguimiento a faltas de asistencia', estado: 'pendiente' },
+  ];
 
   readonly estadisticasComunicacion = {
     circularesEnviadas: 12,
@@ -211,6 +250,9 @@ export class AdminDashboardComponent implements OnInit {
     this.errorConexion.set(false);
 
     // ─ 1. KPIs principales del Dashboard ────────────────────────────────────
+    // NOTA: Los datos simulados (expedientes, circulares, reuniones, alertasFaltas)
+    // ya están declarados arriba como arrays constantes.
+    // Se reemplazarán por llamadas HTTP cuando el backend esté disponible.
     this.dashboardService.obtenerKpis().subscribe({
       next: (kpi) => {
         this.kpis.set({
