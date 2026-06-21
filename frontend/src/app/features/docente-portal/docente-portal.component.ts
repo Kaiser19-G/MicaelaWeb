@@ -11,37 +11,58 @@ import {
   EscalaLiteral
 } from '../../core/services/nota.service';
 
-export type TabCurso = 'silabo' | 'contenido' | 'evaluaciones' | 'tareas' | 'notas' | 'asistencia';
+export type TabCurso = 'contenido' | 'tareas' | 'notas' | 'asistencia';
 export type SidebarNav = 'cursos' | 'asistencia' | 'notas' | 'configuracion';
 export type CursosVista = 'lista' | 'detalle';
+export type EstadoAsistencia = 'ASISTIO' | 'FALTA' | 'TARDANZA' | 'JUSTIFICADO';
 
 export interface CursoCard {
   id: number;
   nombre: string;
   codigo: string;
   grado: string;
+  seccion: string;
   modalidad: 'Presencial' | 'Virtual';
   color: string;
   icono: string;
+  estudiantes: number;
+  bimestreActual: number;
+  semanaActual: number;
+  totalSemanas: number;
+  horario: string;
 }
 
 export interface AlumnoMock {
   id: number;
   nombre: string;
+  codigo: string;
   permisoAcademia: boolean;
-  estado: string; // 'ASISTIO', 'FALTA', 'TARDANZA'
+  horarioEspecial?: string;
+  nee: boolean;
+  estado: EstadoAsistencia;
 }
 
-export type EstadoActividad = 'entregada' | 'vencida' | 'por_entregar' | 'no_revisado';
+export interface TareaItem {
+  id: string;
+  tipo: 'tarea' | 'avance';
+  titulo: string;
+  descripcion: string;
+  fechaLimite: string;
+  puntaje: number;
+}
 
-export interface ActividadBimestre {
-  tipo: 'tarea' | 'evaluacion' | 'material';
-  esCalificada: boolean;
-  subtipo: string;
-  nombre: string;
-  estado: EstadoActividad;
-  desde: string;
-  hasta: string;
+export interface SemanaData {
+  numero: number;
+  label: string;
+  temas: string[];
+  asistenciaRegistrada: boolean;
+  tareas: TareaItem[];
+}
+
+export interface BimestreData {
+  numero: number;
+  label: string;
+  semanas: SemanaData[];
 }
 
 @Component({
@@ -56,7 +77,6 @@ export class DocentePortalComponent implements OnInit {
   public authService = inject(AuthService);
   private notaService = inject(NotaService);
 
-  // Exponemos la constante al template
   readonly escalaLiteralOpciones = ESCALA_LITERAL_OPCIONES;
 
   readonly sidebarNav = signal<SidebarNav>('cursos');
@@ -64,130 +84,111 @@ export class DocentePortalComponent implements OnInit {
   readonly tabCurso = signal<TabCurso>('contenido');
   readonly cursoActivo = signal<CursoCard | null>(null);
   readonly anioActual = signal(new Date().getFullYear());
-  
+
   readonly modalAsistenciaVisible = signal(false);
   readonly modalTareaVisible = signal(false);
-  readonly semanaSeleccionada = signal(1);
+  readonly semanaSeleccionada = signal<SemanaData | null>(null);
+
+  searchQuery = '';
 
   private bimestresExpandidos = signal<number[]>([1]);
 
   readonly usuarioNombre = computed(() =>
     this.authService.getUsuarioActual()?.username ?? 'Docente'
   );
-  
+
   readonly usuarioInicial = computed(() =>
     (this.authService.getUsuarioActual()?.username ?? 'D')[0]?.toUpperCase() ?? 'D'
   );
 
   readonly cursos: CursoCard[] = [
-    { id: 1, nombre: 'Matemática', codigo: '5to-A', grado: '5to Secundaria - Secc. A', modalidad: 'Presencial', color: '#fde8d8', icono: 'math' },
-    { id: 2, nombre: 'Matemática', codigo: '5to-B', grado: '5to Secundaria - Secc. B', modalidad: 'Presencial', color: '#fde8d8', icono: 'math' },
-    { id: 3, nombre: 'Física',     codigo: '4to-A', grado: '4to Secundaria - Secc. A', modalidad: 'Presencial', color: '#d9f5e0', icono: 'science' },
-    { id: 4, nombre: 'Física',     codigo: '4to-B', grado: '4to Secundaria - Secc. B', modalidad: 'Presencial', color: '#d9f5e0', icono: 'science' },
+    {
+      id: 1, nombre: 'Matemática', codigo: 'MAT-5A', grado: '5to Primaria',
+      seccion: '5°A', modalidad: 'Presencial', color: '#2563EB',
+      icono: 'math', estudiantes: 28, bimestreActual: 2,
+      semanaActual: 5, totalSemanas: 20, horario: 'Lun, Mié, Vie 8:00 - 9:00'
+    },
+    {
+      id: 2, nombre: 'Comunicación', codigo: 'COM-5A', grado: '5to Primaria',
+      seccion: '5°A', modalidad: 'Presencial', color: '#10B981',
+      icono: 'comm', estudiantes: 28, bimestreActual: 2,
+      semanaActual: 5, totalSemanas: 20, horario: 'Mar, Jue 8:00 - 9:30'
+    },
+    {
+      id: 3, nombre: 'Ciencia y Tecnología', codigo: 'CYT-4B', grado: '4to Primaria',
+      seccion: '4°B', modalidad: 'Presencial', color: '#7C3AED',
+      icono: 'science', estudiantes: 25, bimestreActual: 2,
+      semanaActual: 4, totalSemanas: 20, horario: 'Lun, Mié 10:00 - 11:00'
+    },
+    {
+      id: 4, nombre: 'Personal Social', codigo: 'PS-4B', grado: '4to Primaria',
+      seccion: '4°B', modalidad: 'Presencial', color: '#F59E0B',
+      icono: 'default', estudiantes: 25, bimestreActual: 2,
+      semanaActual: 4, totalSemanas: 20, horario: 'Mar, Jue 10:00 - 11:30'
+    },
   ];
 
   readonly cursoTabs: { id: TabCurso; label: string }[] = [
-    { id: 'contenido',    label: 'Contenido' },
-    { id: 'tareas',       label: 'Tareas Enviadas' },
-    { id: 'notas',        label: 'Calificaciones' },
-    { id: 'asistencia',   label: 'Registro Asistencia' },
+    { id: 'contenido',  label: 'Contenido' },
+    { id: 'tareas',     label: 'Tareas' },
+    { id: 'notas',      label: 'Calificaciones' },
+    { id: 'asistencia', label: 'Asistencia' },
   ];
 
-  readonly bimestres = [
-    {
-      numero: 1, nombre: 'Bimestre 1', periodo: 'Mar – May',
-      semanas: [
-        { numero: 1, actividades: [] as ActividadBimestre[] },
-        { numero: 2, actividades: [] as ActividadBimestre[] },
-        { numero: 3, actividades: [] as ActividadBimestre[] },
-      ]
-    },
-    { numero: 2, nombre: 'Bimestre 2', periodo: 'Jun – Jul', semanas: [{ numero: 4, actividades: [] as ActividadBimestre[] }] }
-  ];
+  bimestres: BimestreData[] = [];
 
-  readonly semanaActualMock = signal(1); // Para habilitar los botones en la semana 1
-
-  // MOCK DE ALUMNOS PARA ASISTENCIA (modal)
+  // ── Asistencia ────────────────────────────────────────────────────────────
   alumnosMock: AlumnoMock[] = [];
+  asistenciaStats = { presentes: 0, tardanzas: 0, faltas: 0, justificados: 0 };
 
-  // ── Tab NOTAS: estado y lógica ────────────────────────────────────────────
+  // ── Tarea form ────────────────────────────────────────────────────────────
+  nuevaTarea = {
+    tipo: 'tarea' as 'tarea' | 'avance',
+    titulo: '',
+    descripcion: '',
+    fechaLimite: '',
+    puntaje: 10
+  };
+
+  // ── Notas ─────────────────────────────────────────────────────────────────
   filasNotas: FilaNota[] = [];
   bimestreActivo = 1;
   guardandoNotas = signal(false);
   notasGuardadasExito = signal(false);
   errorNotasSinEvidencia = signal(false);
 
-  /** Carga (o recarga) las filas de notas para el curso y bimestre activo */
-  cargarFilasNotas(): void {
-    const curso = this.cursoActivo();
-    if (!curso) return;
-    // TODO: reemplazar con this.notaService.obtenerNotasCurso(curso.id, this.bimestreActivo)
-    const alumnosMock = [
-      { id: 101, nombre: 'QUISPE MAMANI, Juan' },
-      { id: 102, nombre: 'GARCÍA SILVA, Ana María' },
-      { id: 103, nombre: 'CONDORI LÓPEZ, Luis' },
-      { id: 104, nombre: 'TORRES CRUZ, Carlos' },
-      { id: 105, nombre: 'ROJAS PEÑA, Sofía' },
-    ];
-    this.filasNotas = this.notaService.construirFilasSimuladas(alumnosMock, curso.grado);
-  }
-
-  /** Marca la fila como modificada al cambiar la nota */
-  onNotaChange(fila: FilaNota): void {
-    fila.modificado = true;
-  }
-
-  /** Captura el archivo seleccionado para evidencia */
-  onArchivoSeleccionado(evento: Event, fila: FilaNota): void {
-    const input = evento.target as HTMLInputElement;
-    if (!input.files?.length) return;
-    fila.archivoPendiente = input.files[0];
-    fila.conEvidencia     = true;
-    fila.modificado       = true;
-  }
-
-  /** Valida y guarda todas las notas del bimestre */
-  guardarNotas(): void {
-    // Validar: toda nota registrada debe tener evidencia
-    const sinEvidencia = this.filasNotas.some(
-      f => f.modificado && !f.conEvidencia
+  // ── Computeds ─────────────────────────────────────────────────────────────
+  get cursosFiltrados(): CursoCard[] {
+    const q = this.searchQuery.toLowerCase().trim();
+    if (!q) return this.cursos;
+    return this.cursos.filter(c =>
+      c.nombre.toLowerCase().includes(q) ||
+      c.grado.toLowerCase().includes(q) ||
+      c.codigo.toLowerCase().includes(q)
     );
-    if (sinEvidencia) {
-      this.errorNotasSinEvidencia.set(true);
-      setTimeout(() => this.errorNotasSinEvidencia.set(false), 4000);
-      return;
-    }
-    this.guardandoNotas.set(true);
-    this.errorNotasSinEvidencia.set(false);
-    // TODO: llamar a notaService.registrarNotasLote() cuando el backend esté disponible
-    // Por ahora simulamos éxito:
-    setTimeout(() => {
-      this.guardandoNotas.set(false);
-      this.notasGuardadasExito.set(true);
-      setTimeout(() => this.notasGuardadasExito.set(false), 3000);
-    }, 800);
   }
 
-  /** Returns true si una nota literal es válida */
-  notaLiteralValida(fila: FilaNota): boolean {
-    return fila.tipoEscala === 'LITERAL' && !!fila.notaLiteral;
+  get hayAlumnosConPermiso(): boolean {
+    return this.alumnosMock.some(a => a.permisoAcademia);
   }
 
-  /** Returns true si una nota vigesimal está en rango */
-  notaVigesimalValida(fila: FilaNota): boolean {
-    return fila.tipoEscala === 'VIGESIMAL' &&
-      this.notaService.validarVigesimal(fila.notaVigesimal);
+  get progresoSemanas(): number {
+    const curso = this.cursoActivo();
+    if (!curso) return 0;
+    return Math.round((curso.semanaActual / curso.totalSemanas) * 100);
   }
-  
-  // FORMULARIO NUEVA TAREA
-  nuevaTarea = {
-      titulo: '',
-      descripcion: '',
-      fechaLimite: ''
-  };
+
+  get bimestreLabel(): string {
+    const labels = ['', 'Primer', 'Segundo', 'Tercer', 'Cuarto'];
+    const cur = this.cursoActivo();
+    return cur ? (labels[cur.bimestreActual] ?? '') + ' Bimestre' : '';
+  }
 
   ngOnInit(): void {
+    this.bimestres = this.buildBimestres();
   }
+
+  // ── Navegación ────────────────────────────────────────────────────────────
 
   setSidebarNav(nav: SidebarNav): void {
     this.sidebarNav.set(nav);
@@ -201,7 +202,7 @@ export class DocentePortalComponent implements OnInit {
     this.cursoActivo.set(curso);
     this.cursosVista.set('detalle');
     this.tabCurso.set('contenido');
-    // Pre-cargar filas de notas para el curso seleccionado
+    this.bimestresExpandidos.set([curso.bimestreActual]);
     this.cargarFilasNotas();
   }
 
@@ -227,48 +228,188 @@ export class DocentePortalComponent implements OnInit {
     return this.bimestresExpandidos().includes(num);
   }
 
-  getEstadoLabel(estado: string): string {
-    const mapa: Record<string, string> = {
-      entregada: 'Entregada', vencida: 'Vencida',
-      por_entregar: 'Por entregar', no_revisado: 'No revisado',
-    };
-    return mapa[estado] || estado;
+  // ── Modales ───────────────────────────────────────────────────────────────
+
+  abrirModalAsistencia(semana: SemanaData): void {
+    this.semanaSeleccionada.set(semana);
+    this.alumnosMock = [
+      { id: 1,  nombre: 'Alarcón Huanca, Rosa',       codigo: '2026001', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+      { id: 2,  nombre: 'Cárdenas López, Miguel',     codigo: '2026002', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+      { id: 3,  nombre: 'Chávez Quispe, Lucía',       codigo: '2026003', permisoAcademia: true,  nee: true,   horarioEspecial: '2:30 PM', estado: 'ASISTIO' },
+      { id: 4,  nombre: 'Flores Torres, Andrés',      codigo: '2026004', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+      { id: 5,  nombre: 'García Mamani, Sofía',       codigo: '2026005', permisoAcademia: false, nee: true,   estado: 'ASISTIO' },
+      { id: 6,  nombre: 'Huanca Ramos, Diego',        codigo: '2026006', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+      { id: 7,  nombre: 'Jiménez Soto, Valentina',    codigo: '2026007', permisoAcademia: true,  nee: false,  horarioEspecial: '1:30 PM', estado: 'ASISTIO' },
+      { id: 8,  nombre: 'López Cruz, Sebastián',      codigo: '2026008', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+      { id: 9,  nombre: 'Mamani Condori, Camila',     codigo: '2026009', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+      { id: 10, nombre: 'Quispe Vargas, Mateo',       codigo: '2026010', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+      { id: 11, nombre: 'Ramos Ticona, Isabella',     codigo: '2026011', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+      { id: 12, nombre: 'Rivera Puma, Emilio',        codigo: '2026012', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+    ];
+    this.recalcularStats();
+    this.modalAsistenciaVisible.set(true);
   }
 
-  // ── Modales ──────────────────────────────────────────────
-  
-  abrirModalAsistencia(curso: CursoCard, semana: number): void {
-      this.semanaSeleccionada.set(semana);
-      this.alumnosMock = [
-          { id: 101, nombre: 'Quispe Mamani, Juan Perez', permisoAcademia: true, estado: 'ASISTIO' },
-          { id: 102, nombre: 'García Silva, Ana María', permisoAcademia: false, estado: 'ASISTIO' },
-          { id: 103, nombre: 'Condori López, Luis', permisoAcademia: false, estado: 'ASISTIO' },
-          { id: 104, nombre: 'Torres Cruz, Carlos', permisoAcademia: true, estado: 'ASISTIO' },
-          { id: 105, nombre: 'Rojas Peña, Sofia', permisoAcademia: false, estado: 'ASISTIO' },
-      ];
-      this.modalAsistenciaVisible.set(true);
-  }
-
-  abrirModalTarea(curso: CursoCard, semana: number): void {
-      this.semanaSeleccionada.set(semana);
-      this.nuevaTarea = { titulo: '', descripcion: '', fechaLimite: '' };
-      this.modalTareaVisible.set(true);
+  abrirModalTarea(semana: SemanaData): void {
+    this.semanaSeleccionada.set(semana);
+    this.nuevaTarea = { tipo: 'tarea', titulo: '', descripcion: '', fechaLimite: '', puntaje: 10 };
+    this.modalTareaVisible.set(true);
   }
 
   cerrarModales(): void {
-      this.modalAsistenciaVisible.set(false);
-      this.modalTareaVisible.set(false);
+    this.modalAsistenciaVisible.set(false);
+    this.modalTareaVisible.set(false);
+  }
+
+  setEstadoAlumno(alumno: AlumnoMock, estado: EstadoAsistencia): void {
+    alumno.estado = estado;
+    this.recalcularStats();
+  }
+
+  marcarTodos(estado: EstadoAsistencia): void {
+    this.alumnosMock.forEach(a => a.estado = estado);
+    this.recalcularStats();
+  }
+
+  recalcularStats(): void {
+    this.asistenciaStats = {
+      presentes:    this.alumnosMock.filter(a => a.estado === 'ASISTIO').length,
+      tardanzas:    this.alumnosMock.filter(a => a.estado === 'TARDANZA').length,
+      faltas:       this.alumnosMock.filter(a => a.estado === 'FALTA').length,
+      justificados: this.alumnosMock.filter(a => a.estado === 'JUSTIFICADO').length,
+    };
   }
 
   guardarAsistencia(): void {
-      console.log('Guardando asistencia...', this.alumnosMock);
-      alert('Asistencia guardada con éxito.');
-      this.cerrarModales();
+    const semana = this.semanaSeleccionada();
+    if (semana) semana.asistenciaRegistrada = true;
+    console.log('Guardando asistencia...', this.alumnosMock);
+    this.cerrarModales();
   }
 
   guardarTarea(): void {
-      console.log('Guardando tarea...', this.nuevaTarea);
-      alert('Tarea "' + this.nuevaTarea.titulo + '" creada con éxito.');
-      this.cerrarModales();
+    const semana = this.semanaSeleccionada();
+    if (semana && this.nuevaTarea.titulo.trim()) {
+      semana.tareas.push({
+        id: 't_' + Date.now(),
+        tipo: this.nuevaTarea.tipo,
+        titulo: this.nuevaTarea.titulo,
+        descripcion: this.nuevaTarea.descripcion,
+        fechaLimite: this.nuevaTarea.fechaLimite,
+        puntaje: this.nuevaTarea.puntaje
+      });
+    }
+    this.cerrarModales();
+  }
+
+  // ── Notas ─────────────────────────────────────────────────────────────────
+
+  cargarFilasNotas(): void {
+    const curso = this.cursoActivo();
+    if (!curso) return;
+    const alumnosMock = [
+      { id: 101, nombre: 'QUISPE MAMANI, Juan' },
+      { id: 102, nombre: 'GARCÍA SILVA, Ana María' },
+      { id: 103, nombre: 'CONDORI LÓPEZ, Luis' },
+      { id: 104, nombre: 'TORRES CRUZ, Carlos' },
+      { id: 105, nombre: 'ROJAS PEÑA, Sofía' },
+    ];
+    this.filasNotas = this.notaService.construirFilasSimuladas(alumnosMock, curso.grado);
+  }
+
+  onNotaChange(fila: FilaNota): void { fila.modificado = true; }
+
+  onArchivoSeleccionado(evento: Event, fila: FilaNota): void {
+    const input = evento.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    fila.archivoPendiente = input.files[0];
+    fila.conEvidencia     = true;
+    fila.modificado       = true;
+  }
+
+  notaLiteralValida(fila: FilaNota): boolean {
+    return fila.tipoEscala === 'LITERAL' && !!fila.notaLiteral;
+  }
+
+  notaVigesimalValida(fila: FilaNota): boolean {
+    return fila.tipoEscala === 'VIGESIMAL' &&
+      this.notaService.validarVigesimal(fila.notaVigesimal);
+  }
+
+  guardarNotas(): void {
+    const sinEvidencia = this.filasNotas.some(f => f.modificado && !f.conEvidencia);
+    if (sinEvidencia) {
+      this.errorNotasSinEvidencia.set(true);
+      setTimeout(() => this.errorNotasSinEvidencia.set(false), 4000);
+      return;
+    }
+    this.guardandoNotas.set(true);
+    this.errorNotasSinEvidencia.set(false);
+    setTimeout(() => {
+      this.guardandoNotas.set(false);
+      this.notasGuardadasExito.set(true);
+      setTimeout(() => this.notasGuardadasExito.set(false), 3000);
+    }, 800);
+  }
+
+  // ── Bimestres (datos) ─────────────────────────────────────────────────────
+
+  private buildBimestres(): BimestreData[] {
+    return [
+      {
+        numero: 1, label: 'Primer Bimestre',
+        semanas: [
+          { numero: 1,  label: 'Semana 01', temas: ['Presentación del curso', 'Diagnóstico inicial', 'Acuerdos de convivencia'], asistenciaRegistrada: true,  tareas: [{ id: 't1', tipo: 'tarea',  titulo: 'Ficha de diagnóstico',  descripcion: 'Completar la ficha de exploración de conocimientos previos.', fechaLimite: '14 Mar 2026', puntaje: 5 }] },
+          { numero: 2,  label: 'Semana 02', temas: ['Unidad 1 – Tema 1', 'Actividades de exploración', 'Ejercicios prácticos'], asistenciaRegistrada: true,  tareas: [] },
+          { numero: 3,  label: 'Semana 03', temas: ['Unidad 1 – Tema 2', 'Resolución de problemas'], asistenciaRegistrada: true,  tareas: [{ id: 't2', tipo: 'avance', titulo: 'Avance Proyecto 1', descripcion: 'Presentar esquema inicial del proyecto integrador.', fechaLimite: '28 Mar 2026', puntaje: 10 }] },
+          { numero: 4,  label: 'Semana 04', temas: ['Consolidación Unidad 1', 'Evaluación formativa'], asistenciaRegistrada: true,  tareas: [] },
+          { numero: 5,  label: 'Semana 05', temas: ['Inicio Unidad 2', 'Nuevos conceptos clave'], asistenciaRegistrada: false, tareas: [] },
+        ]
+      },
+      {
+        numero: 2, label: 'Segundo Bimestre',
+        semanas: [
+          { numero: 6,  label: 'Semana 06', temas: ['Repaso general', 'Retroalimentación bimestre anterior'], asistenciaRegistrada: true,  tareas: [] },
+          { numero: 7,  label: 'Semana 07', temas: ['Unidad 3 – Introducción', 'Material de lectura'], asistenciaRegistrada: true,  tareas: [] },
+          { numero: 8,  label: 'Semana 08', temas: ['Unidad 3 – Desarrollo', 'Trabajo colaborativo'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 9,  label: 'Semana 09', temas: ['Aplicación práctica', 'Resolución grupal'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 10, label: 'Semana 10', temas: ['Evaluación de proceso', 'Cierre parcial'], asistenciaRegistrada: false, tareas: [] },
+        ]
+      },
+      {
+        numero: 3, label: 'Tercer Bimestre',
+        semanas: [
+          { numero: 11, label: 'Semana 11', temas: ['Unidad 4 – Apertura'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 12, label: 'Semana 12', temas: ['Desarrollo conceptual'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 13, label: 'Semana 13', temas: ['Talleres de profundización'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 14, label: 'Semana 14', temas: ['Evaluación bimestral'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 15, label: 'Semana 15', temas: ['Retroalimentación y mejora'], asistenciaRegistrada: false, tareas: [] },
+        ]
+      },
+      {
+        numero: 4, label: 'Cuarto Bimestre',
+        semanas: [
+          { numero: 16, label: 'Semana 16', temas: ['Proyecto final – Inicio'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 17, label: 'Semana 17', temas: ['Proyecto final – Desarrollo'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 18, label: 'Semana 18', temas: ['Exposición de proyectos'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 19, label: 'Semana 19', temas: ['Evaluación final'], asistenciaRegistrada: false, tareas: [] },
+          { numero: 20, label: 'Semana 20', temas: ['Clausura y entrega de libretas'], asistenciaRegistrada: false, tareas: [] },
+        ]
+      }
+    ];
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  esSemanaActual(semana: SemanaData): boolean {
+    return semana.numero === (this.cursoActivo()?.semanaActual ?? -1);
+  }
+
+  colorForCurso(color: string): string {
+    return color;
+  }
+
+  colorLight(hex: string): string {
+    return hex + '1a'; // 10% opacity
   }
 }

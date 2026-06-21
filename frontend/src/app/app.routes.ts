@@ -46,18 +46,6 @@ export const routes: Routes = [
     title: 'Panel del Director – I.E. Micaela Bastidas'
   },
 
-  // ── Vista Docente – Asistencia ──────────────────────────────────────
-  {
-    path: 'docente/asistencia',
-    loadComponent: () =>
-      import('./features/docente-asistencia/docente-asistencia.component').then(
-        m => m.DocenteAsistenciaComponent
-      ),
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['DOCENTE', 'DIRECTOR'] },
-    title: 'Control de Asistencia – I.E. Micaela Bastidas'
-  },
-
   // ── Portal Docente ──────────────────────────────────────────────────
   {
     path: 'docente/portal',

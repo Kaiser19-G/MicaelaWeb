@@ -1,366 +1,542 @@
 <div class="portal-layout">
-  
-    <!-- ── SIDEBAR ─────────────────────────────────────────────────────────── -->
-    <aside class="sidebar-dark">
-      <div class="sidebar-logo">MB</div>
-      <nav class="sidebar-nav">
-        <button class="sidebar-item" [class.active]="sidebarNav() === 'cursos'" (click)="setSidebarNav('cursos')">
-          <div class="active-indicator"></div>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-          </svg>
-          <span class="sidebar-label">Mis Cursos</span>
-        </button>
-      </nav>
-      
-      <div class="sidebar-bottom">
-        <div class="sidebar-avatar">{{ usuarioInicial() }}</div>
-        <button class="sidebar-item" (click)="authService.logout()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-    </aside>
-  
-    <!-- ── MAIN AREA ───────────────────────────────────────────────────────── -->
-    <main class="main-area">
-      
-      <!-- HEADER GLOBAL -->
-      <header class="top-header">
-        <h1 class="header-title">Portal Docente</h1>
-        <div class="header-right">
-          <div class="header-user">
-            <span class="header-greeting">Hola, {{ usuarioNombre() }}</span>
-            <span class="header-role">Docente</span>
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────────────────── -->
+  <aside class="sidebar-dark">
+    <div class="sidebar-logo">MB</div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-item" [class.active]="sidebarNav() === 'cursos'" (click)="setSidebarNav('cursos')" title="Mis Cursos">
+        <div class="active-indicator"></div>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+        </svg>
+        <span class="sidebar-label">Cursos</span>
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-avatar" [title]="usuarioNombre()">{{ usuarioInicial() }}</div>
+      <button class="sidebar-item" (click)="authService.logout()" title="Cerrar sesión">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="sidebar-label">Salir</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ────────────────────────────────────────────────────────────── -->
+  <main class="main-area">
+
+    <!-- TOP HEADER -->
+    <header class="top-header">
+      <div class="header-left">
+        <ng-container *ngIf="cursosVista() === 'lista'">
+          <div class="header-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
           </div>
-          <div class="header-avatar">{{ usuarioInicial() }}</div>
-        </div>
-      </header>
-  
-      <!-- ── VISTA: LISTA DE CURSOS ──────────────────────────────────────── -->
-      <div class="content-scroll" *ngIf="cursosVista() === 'lista'">
-        <div class="periodo-label">
-          <span class="periodo-year">{{ anioActual() }}</span>
-          <span class="periodo-sep">|</span>
-          <span class="periodo-name">Periodo Escolar</span>
-        </div>
-  
-        <div class="cursos-grid">
-          <!-- Iterate over teacher courses -->
-          <div class="curso-card" *ngFor="let curso of cursos" (click)="abrirCurso(curso)" tabindex="0">
-            <div class="card-thumb" [style.background]="curso.color">
-              <div class="card-illustration">
-                <!-- SVG Icon placeholders based on curso.icono -->
-                <svg *ngIf="curso.icono === 'math'" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>
-                <svg *ngIf="curso.icono === 'comm'" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                <svg *ngIf="curso.icono === 'science'" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6"></path><path d="M10 4v5l-4 8v2h12v-2l-4-8V4"></path><path d="M6 14h12"></path></svg>
-                <svg *ngIf="curso.icono === 'default'" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-              </div>
-            </div>
-            
-            <div class="card-body">
-              <h3 class="card-nombre">{{ curso.nombre }}</h3>
-              <div class="card-codigo">{{ curso.grado }}</div>
-              
-              <div class="card-docente">
-                <span class="badge-presencial">{{ curso.modalidad }}</span>
-                <span class="docente-nombre">{{ curso.codigo }}</span>
-              </div>
-            </div>
+          <div>
+            <h1 class="header-title">Mis Cursos</h1>
+            <p class="header-period">{{ anioActual() }} · Periodo Escolar</p>
           </div>
-        </div>
-      </div>
-  
-      <!-- ── VISTA: DETALLE DEL CURSO ────────────────────────────────────── -->
-      <div class="content-wrapper" *ngIf="cursosVista() === 'detalle' && cursoActivo()">
-        
-        <div class="breadcrumb-bar">
-          <button class="back-btn" (click)="volverALista()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </ng-container>
+        <ng-container *ngIf="cursosVista() === 'detalle' && cursoActivo()">
+          <button class="back-btn-header" (click)="volverALista()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             Mis Cursos
           </button>
           <span class="breadcrumb-sep">/</span>
-          <span class="breadcrumb-curso">{{ cursoActivo()!.nombre }} - {{ cursoActivo()!.grado }}</span>
-          <span class="badge-presencial">{{ cursoActivo()!.modalidad }}</span>
-        </div>
-  
-        <div class="course-tabs">
-          <button *ngFor="let tab of cursoTabs" 
-                  class="course-tab" 
-                  [class.active]="tabCurso() === tab.id"
-                  (click)="setTabCurso(tab.id)">
-            {{ tab.label }}
-          </button>
-        </div>
-  
-        <div class="tab-body">
-          
-          <!-- TAB: CONTENIDO -->
-          <div *ngIf="tabCurso() === 'contenido'">
-            
-            <h2 class="bimestres-header">Contenido del Curso</h2>
-  
-            <div class="bimestre-block" *ngFor="let bim of bimestres">
-              <button class="bimestre-header" (click)="toggleBimestre(bim.numero)">
-                <div class="bimestre-title">
-                  <div class="bimestre-indicator"></div>
-                  {{ bim.nombre }}
-                  <span class="bimestre-periodo">({{ bim.periodo }})</span>
-                </div>
-                <svg class="chevron" [class.rotated]="esBimestreExpandido(bim.numero)" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
-  
-              <div class="bimestre-body" *ngIf="esBimestreExpandido(bim.numero)">
-                <div class="semana-block" *ngFor="let sem of bim.semanas">
-                  <div class="semana-header">
-                    <span>Semana {{ sem.numero }}</span>
-                    <div class="semana-actions" *ngIf="bim.numero === 1 && sem.numero === semanaActualMock()">
-                        <button class="btn-semana-action btn-asistencia" (click)="abrirModalAsistencia(cursoActivo()!, sem.numero)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5.5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                            Tomar Asistencia
-                        </button>
-                        <button class="btn-semana-action btn-tarea" (click)="abrirModalTarea(cursoActivo()!, sem.numero)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                            Crear Tarea
-                        </button>
-                    </div>
-                  </div>
-                  
-                  <div *ngIf="sem.actividades.length === 0" class="semana-vacia">
-                    No hay actividades registradas en esta semana.
-                  </div>
-  
-                  <div class="actividad-card" *ngFor="let act of sem.actividades">
-                    <div class="actividad-icon">
-                      <svg *ngIf="act.tipo === 'tarea'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                      <svg *ngIf="act.tipo === 'evaluacion'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                      <svg *ngIf="act.tipo === 'material'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
-                    </div>
-                    <div class="actividad-info">
-                      <span class="actividad-subtipo">{{ act.subtipo }}</span>
-                      <h4 class="actividad-nombre">{{ act.nombre }}</h4>
-                      <div class="actividad-fechas">
-                        <span><strong>Desde:</strong> {{ act.desde }}</span>
-                        <span><strong>Hasta:</strong> {{ act.hasta }}</span>
-                      </div>
-                    </div>
-                    <div class="actividad-actions">
-                        <button class="btn-actividad" *ngIf="act.tipo === 'tarea'">Ver Entregas</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="header-curso-info">
+            <div class="header-curso-dot" [style.background]="cursoActivo()!.color"></div>
+            <h1 class="header-title">{{ cursoActivo()!.nombre }}</h1>
+            <span class="badge-seccion">{{ cursoActivo()!.seccion }}</span>
           </div>
-  
-          <!-- TAB: NOTAS – Registro de Calificaciones -->
-          <div *ngIf="tabCurso() === 'notas'" class="notas-container">
+        </ng-container>
+      </div>
+      <div class="header-right">
+        <div class="header-user">
+          <span class="header-greeting">{{ usuarioNombre() }}</span>
+          <span class="header-role">Docente</span>
+        </div>
+        <div class="header-avatar">{{ usuarioInicial() }}</div>
+      </div>
+    </header>
 
-            <!-- Encabezado del módulo de notas -->
-            <div class="notas-header">
+    <!-- ════════════════════════════════════════════════
+         VISTA: LISTA DE CURSOS
+    ════════════════════════════════════════════════ -->
+    <div class="content-scroll" *ngIf="cursosVista() === 'lista'">
+
+      <!-- Search bar -->
+      <div class="search-bar-wrap">
+        <div class="search-bar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input
+            id="search-cursos"
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Buscar curso o grado..."
+            class="search-input"
+          />
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-chip">
+          <span class="stat-num">{{ cursos.length }}</span>
+          <span class="stat-label">Cursos</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-num">{{ anioActual() }}</span>
+          <span class="stat-label">Periodo</span>
+        </div>
+        <div class="stat-chip success">
+          <span class="stat-num">4</span>
+          <span class="stat-label">Bimestres</span>
+        </div>
+      </div>
+
+      <!-- Grid de cursos -->
+      <div class="cursos-grid" *ngIf="cursosFiltrados.length > 0; else noResultados">
+        <div class="curso-card"
+             *ngFor="let curso of cursosFiltrados"
+             (click)="abrirCurso(curso)"
+             tabindex="0" role="button"
+             [attr.aria-label]="'Abrir ' + curso.nombre">
+
+          <!-- Thumb -->
+          <div class="card-thumb" [ngStyle]="{'background': 'linear-gradient(135deg, ' + curso.color + ' 0%, ' + curso.color + 'cc 100%)'}">
+            <div class="card-icon-wrap">
+              <!-- Matemática -->
+              <svg *ngIf="curso.icono === 'math'" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+              <!-- Comunicación -->
+              <svg *ngIf="curso.icono === 'comm'" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <!-- Ciencia -->
+              <svg *ngIf="curso.icono === 'science'" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"><path d="M9 4h6"/><path d="M10 4v5l-4 8v2h12v-2l-4-8V4"/><path d="M6 14h12"/></svg>
+              <!-- Default libro -->
+              <svg *ngIf="curso.icono === 'default'" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+            </div>
+            <!-- Badge bimestre actual -->
+            <span class="card-bim-badge">{{ ['','1er','2do','3er','4to'][curso.bimestreActual] }} Bim</span>
+          </div>
+
+          <!-- Body -->
+          <div class="card-body">
+            <div class="card-top-row">
               <div>
-                <h2 class="notas-title">Registro de Calificaciones</h2>
-                <p class="notas-sub">
-                  {{ cursoActivo()?.nombre }} – {{ cursoActivo()?.grado }}
-                  &nbsp;·&nbsp;
-                  <span class="escala-badge"
-                    [class.escala-literal]="filasNotas.length > 0 && filasNotas[0].tipoEscala === 'LITERAL'"
-                    [class.escala-vigesimal]="filasNotas.length > 0 && filasNotas[0].tipoEscala === 'VIGESIMAL'">
-                    {{ (filasNotas.length > 0 && filasNotas[0].tipoEscala === 'LITERAL') ? 'Escala Literal (AD/A/B/C)' : 'Escala Vigesimal (0–20)' }}
-                  </span>
-                </p>
+                <h3 class="card-nombre">{{ curso.nombre }}</h3>
+                <p class="card-grado">{{ curso.grado }} · {{ curso.seccion }}</p>
               </div>
-              <!-- Selector de bimestre -->
-              <div class="bimestre-selector">
-                <label class="bim-label">Bimestre</label>
-                <div class="bim-btns">
-                  <button *ngFor="let b of [1,2,3,4]"
-                    class="bim-btn"
-                    [class.active]="bimestreActivo === b"
-                    (click)="bimestreActivo = b; cargarFilasNotas()">
-                    {{ b }}
-                  </button>
+              <span class="card-code">{{ curso.codigo }}</span>
+            </div>
+
+            <!-- Progreso de semanas -->
+            <div class="semanas-progress">
+              <div class="progress-labels">
+                <span>Semana {{ curso.semanaActual }}/{{ curso.totalSemanas }}</span>
+                <span class="progress-pct">{{ ((curso.semanaActual / curso.totalSemanas) * 100) | number:'1.0-0' }}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="(curso.semanaActual / curso.totalSemanas) * 100" [style.background]="curso.color"></div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="card-footer">
+              <span class="card-info-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                {{ curso.estudiantes }} alumnos
+              </span>
+              <span class="card-info-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                {{ curso.horario }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noResultados>
+        <div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <p>No se encontraron cursos para "<strong>{{ searchQuery }}</strong>"</p>
+        </div>
+      </ng-template>
+
+    </div><!-- /content-scroll -->
+
+    <!-- ════════════════════════════════════════════════
+         VISTA: DETALLE DEL CURSO
+    ════════════════════════════════════════════════ -->
+    <div class="content-wrapper" *ngIf="cursosVista() === 'detalle' && cursoActivo()">
+
+      <!-- Info strip del curso -->
+      <div class="curso-info-strip" [style.border-left-color]="cursoActivo()!.color">
+        <div class="strip-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          {{ cursoActivo()!.estudiantes }} alumnos
+        </div>
+        <div class="strip-sep">·</div>
+        <div class="strip-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          {{ cursoActivo()!.horario }}
+        </div>
+        <div class="strip-sep">·</div>
+        <div class="strip-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Semana {{ cursoActivo()!.semanaActual }}/{{ cursoActivo()!.totalSemanas }}
+        </div>
+        <!-- Mini progress -->
+        <div class="strip-progress">
+          <div class="strip-progress-fill"
+               [style.width.%]="(cursoActivo()!.semanaActual / cursoActivo()!.totalSemanas) * 100"
+               [style.background]="cursoActivo()!.color">
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="course-tabs">
+        <button *ngFor="let tab of cursoTabs"
+                class="course-tab"
+                [class.active]="tabCurso() === tab.id"
+                (click)="setTabCurso(tab.id)">
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <div class="tab-body">
+
+        <!-- ────────────── TAB: CONTENIDO (Bimestres/Semanas) ────────────── -->
+        <div *ngIf="tabCurso() === 'contenido'">
+
+          <div class="bimestre-block" *ngFor="let bim of bimestres">
+            <button class="bimestre-header" (click)="toggleBimestre(bim.numero)" [attr.aria-expanded]="esBimestreExpandido(bim.numero)">
+              <div class="bimestre-title">
+                <div class="bimestre-num-badge">{{ bim.numero }}</div>
+                <span>{{ bim.label }}</span>
+                <span class="bim-sems-count">{{ bim.semanas.length }} semanas</span>
+              </div>
+              <div class="bimestre-header-right">
+                <!-- Indicador de semana actual -->
+                <span class="bim-current-badge" *ngIf="cursoActivo()!.bimestreActual === bim.numero">Actual</span>
+                <svg class="chevron" [class.rotated]="esBimestreExpandido(bim.numero)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </button>
+
+            <div class="bimestre-body" *ngIf="esBimestreExpandido(bim.numero)">
+              <div class="semana-block" *ngFor="let sem of bim.semanas" [class.semana-actual]="esSemanaActual(sem)">
+
+                <div class="semana-header">
+                  <div class="semana-label-group">
+                    <!-- Badge de semana actual -->
+                    <span class="semana-actual-dot" *ngIf="esSemanaActual(sem)" [style.background]="cursoActivo()!.color"></span>
+                    <span class="semana-label-text" [class.text-actual]="esSemanaActual(sem)">{{ sem.label }}</span>
+                    <span *ngIf="esSemanaActual(sem)" class="tag-semana-actual">Esta semana</span>
+                    <!-- Asistencia badge -->
+                    <span class="asis-badge ok" *ngIf="sem.asistenciaRegistrada">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      Asistencia
+                    </span>
+                    <span class="asis-badge pending" *ngIf="!sem.asistenciaRegistrada">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      Pendiente
+                    </span>
+                  </div>
+
+                  <!-- Acciones: solo en la semana actual -->
+                  <div class="semana-actions" *ngIf="esSemanaActual(sem)">
+                    <button class="btn-semana-action btn-asistencia" (click)="abrirModalAsistencia(sem)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5.5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                      Asistencia
+                    </button>
+                    <button class="btn-semana-action btn-tarea" (click)="abrirModalTarea(sem)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                      Tarea / Avance
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Temas de la semana -->
+                <div class="temas-list" *ngIf="sem.temas.length > 0">
+                  <span class="tema-chip" *ngFor="let tema of sem.temas">{{ tema }}</span>
+                </div>
+
+                <!-- Tareas/Avances de la semana -->
+                <div class="tareas-list" *ngIf="sem.tareas.length > 0">
+                  <div class="tarea-item" *ngFor="let t of sem.tareas" [class.avance]="t.tipo === 'avance'">
+                    <div class="tarea-icon" [class.avance-icon]="t.tipo === 'avance'">
+                      <svg *ngIf="t.tipo === 'tarea'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <svg *ngIf="t.tipo === 'avance'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                    <div class="tarea-info">
+                      <span class="tarea-tipo">{{ t.tipo === 'tarea' ? 'Tarea' : 'Avance de Proyecto' }}</span>
+                      <span class="tarea-titulo">{{ t.titulo }}</span>
+                    </div>
+                    <div class="tarea-meta">
+                      <span class="tarea-fecha">{{ t.fechaLimite }}</span>
+                      <span class="tarea-pts">{{ t.puntaje }} pts</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /semana-block -->
+            </div><!-- /bimestre-body -->
+          </div><!-- /bimestre-block -->
+
+        </div><!-- /tab contenido -->
+
+        <!-- ────────────── TAB: NOTAS ────────────── -->
+        <div *ngIf="tabCurso() === 'notas'" class="notas-container">
+          <div class="notas-header">
+            <div>
+              <h2 class="notas-title">Registro de Calificaciones</h2>
+              <p class="notas-sub">
+                {{ cursoActivo()?.nombre }} – {{ cursoActivo()?.grado }}
+                &nbsp;·&nbsp;
+                <span class="escala-badge"
+                  [class.escala-literal]="filasNotas.length > 0 && filasNotas[0].tipoEscala === 'LITERAL'"
+                  [class.escala-vigesimal]="filasNotas.length > 0 && filasNotas[0].tipoEscala === 'VIGESIMAL'">
+                  {{ (filasNotas.length > 0 && filasNotas[0].tipoEscala === 'LITERAL') ? 'Escala Literal AD/A/B/C' : 'Escala Vigesimal 0–20' }}
+                </span>
+              </p>
+            </div>
+            <div class="bimestre-selector">
+              <label class="bim-label">Bimestre</label>
+              <div class="bim-btns">
+                <button *ngFor="let b of [1,2,3,4]" [id]="'bim-btn-' + b"
+                  class="bim-btn" [class.active]="bimestreActivo === b"
+                  (click)="bimestreActivo = b; cargarFilasNotas()">{{ b }}</button>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="errorNotasSinEvidencia()" class="alerta-evidencia">⚠️ <strong>Evidencia requerida:</strong> Adjunta un archivo para cada nota modificada.</div>
+          <div *ngIf="notasGuardadasExito()" class="alerta-exito">✅ Notas del Bimestre {{ bimestreActivo }} guardadas.</div>
+          <div class="notas-table-wrap">
+            <table class="notas-table">
+              <thead><tr><th>N°</th><th>Alumno</th><th>Nota</th><th>Evidencia</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let fila of filasNotas; let i = index" [class.fila-modificada]="fila.modificado">
+                  <td class="td-num">{{ i + 1 }}</td>
+                  <td class="td-alumno">{{ fila.nombreAlumno }}</td>
+                  <td class="td-nota">
+                    <select *ngIf="fila.tipoEscala === 'LITERAL'" class="nota-select nota-literal" [(ngModel)]="fila.notaLiteral" (change)="onNotaChange(fila)">
+                      <option [value]="undefined" disabled>–</option>
+                      <option *ngFor="let op of escalaLiteralOpciones" [value]="op">{{ op }}</option>
+                    </select>
+                    <input *ngIf="fila.tipoEscala === 'VIGESIMAL'" type="number" class="nota-input nota-vigesimal" [(ngModel)]="fila.notaVigesimal" (ngModelChange)="onNotaChange(fila)" min="0" max="20" step="1" placeholder="0–20"/>
+                  </td>
+                  <td class="td-evidencia">
+                    <label class="btn-evidencia" [class.con-archivo]="fila.conEvidencia">
+                      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      {{ fila.conEvidencia ? (fila.archivoPendiente?.name ?? 'Adjuntada') : 'Adjuntar' }}
+                      <input type="file" accept="image/*,.pdf" style="display:none" (change)="onArchivoSeleccionado($event, fila)"/>
+                    </label>
+                  </td>
+                  <td class="td-estado">
+                    <span *ngIf="!fila.modificado" class="estado-badge estado-sin-cambios">Sin cambios</span>
+                    <span *ngIf="fila.modificado && !fila.conEvidencia" class="estado-badge estado-falta-evidencia">Falta evidencia</span>
+                    <span *ngIf="fila.modificado && fila.conEvidencia" class="estado-badge estado-listo">✓ Listo</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="notas-footer">
+            <p class="notas-footer-nota">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              No se puede cerrar un bimestre sin evidencia para cada nota.
+            </p>
+            <button id="btn-guardar-notas" class="btn-guardar-notas" [disabled]="guardandoNotas()" (click)="guardarNotas()">
+              <span *ngIf="guardandoNotas()" class="spinner-sm"></span>
+              {{ guardandoNotas() ? 'Guardando…' : 'Guardar Notas – Bimestre ' + bimestreActivo }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ────────────── TAB: TAREAS ────────────── -->
+        <div *ngIf="tabCurso() === 'tareas'" class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <p>Bandeja de tareas entregadas.<br><span>Disponible próximamente.</span></p>
+        </div>
+
+        <!-- ────────────── TAB: ASISTENCIA ────────────── -->
+        <div *ngIf="tabCurso() === 'asistencia'" class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5.5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/></svg>
+          <p>Historial de asistencias del curso.<br><span>Disponible próximamente.</span></p>
+        </div>
+
+      </div><!-- /tab-body -->
+    </div><!-- /content-wrapper -->
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: TOMAR ASISTENCIA
+══════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalAsistenciaVisible()" (click)="cerrarModales()">
+  <div class="modal-dialog modal-asistencia" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-header-info">
+        <h2 id="modal-asistencia-title">Tomar Asistencia</h2>
+        <p class="modal-subtitle">{{ cursoActivo()?.nombre }} · {{ semanaSeleccionada()?.label }} · {{ cursoActivo()?.seccion }}</p>
+      </div>
+      <button id="btn-close-modal-asistencia" class="btn-close" (click)="cerrarModales()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Estadísticas en tiempo real -->
+    <div class="asis-stats-bar">
+      <div class="asis-stat present">
+        <span class="asis-stat-num">{{ asistenciaStats.presentes }}</span>
+        <span class="asis-stat-label">Presentes</span>
+      </div>
+      <div class="asis-stat tardy">
+        <span class="asis-stat-num">{{ asistenciaStats.tardanzas }}</span>
+        <span class="asis-stat-label">Tardanzas</span>
+      </div>
+      <div class="asis-stat absent">
+        <span class="asis-stat-num">{{ asistenciaStats.faltas }}</span>
+        <span class="asis-stat-label">Faltas</span>
+      </div>
+      <div class="asis-stat justified">
+        <span class="asis-stat-num">{{ asistenciaStats.justificados }}</span>
+        <span class="asis-stat-label">Justif.</span>
+      </div>
+    </div>
+
+    <!-- Acción rápida: marcar todos -->
+    <div class="quick-actions">
+      <span class="quick-label">Marcar todos:</span>
+      <button class="quick-btn qbtn-present" (click)="marcarTodos('ASISTIO')">✓ Presentes</button>
+      <button class="quick-btn qbtn-tardy"   (click)="marcarTodos('TARDANZA')">⏱ Tardanza</button>
+    </div>
+
+    <!-- Banner RN-01 -->
+    <div class="rn01-banner" *ngIf="hayAlumnosConPermiso">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Alumnos con Permiso de Academia: la opción <strong>Falta</strong> está oculta hasta su hora de ingreso.
+    </div>
+
+    <div class="modal-body">
+      <table class="asistencia-table">
+        <thead>
+          <tr>
+            <th style="width:36px">N°</th>
+            <th>Alumno</th>
+            <th>Asistencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let alumno of alumnosMock; let i = index" [class.row-permiso]="alumno.permisoAcademia">
+            <td class="td-num">{{ i + 1 }}</td>
+            <td>
+              <div class="alumno-cell">
+                <span class="alumno-nombre">{{ alumno.nombre }}</span>
+                <div class="alumno-badges">
+                  <span *ngIf="alumno.permisoAcademia" class="permiso-badge">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Academia {{ alumno.horarioEspecial }}
+                  </span>
+                  <span *ngIf="alumno.nee" class="nee-badge">NEE</span>
                 </div>
               </div>
-            </div>
-
-            <!-- Alertas de validación -->
-            <div *ngIf="errorNotasSinEvidencia()" class="alerta-evidencia">
-              ⚠️ <strong>Evidencia requerida:</strong> Debes adjuntar una evidencia para cada nota que modifiques antes de guardar.
-            </div>
-            <div *ngIf="notasGuardadasExito()" class="alerta-exito">
-              ✅ Notas guardadas exitosamente.
-            </div>
-
-            <!-- Tabla de notas -->
-            <div class="notas-table-wrap">
-              <table class="notas-table">
-                <thead>
-                  <tr>
-                    <th>N°</th>
-                    <th>Alumno</th>
-                    <th>Nota</th>
-                    <th>Evidencia</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let fila of filasNotas; let i = index"
-                    [class.fila-modificada]="fila.modificado">
-
-                    <td class="td-num">{{ i + 1 }}</td>
-
-                    <td class="td-alumno">{{ fila.nombreAlumno }}</td>
-
-                    <!-- Nota según escala del curso -->
-                    <td class="td-nota">
-                      <!-- Escala LITERAL: AD / A / B / C -->
-                      <select *ngIf="fila.tipoEscala === 'LITERAL'"
-                        class="nota-select nota-literal"
-                        [(ngModel)]="fila.notaLiteral"
-                        (change)="onNotaChange(fila)">
-                        <option [value]="undefined" disabled>–</option>
-                        <option *ngFor="let op of escalaLiteralOpciones" [value]="op">{{ op }}</option>
-                      </select>
-
-                      <!-- Escala VIGESIMAL: 0–20 -->
-                      <input *ngIf="fila.tipoEscala === 'VIGESIMAL'"
-                        type="number"
-                        class="nota-input nota-vigesimal"
-                        [(ngModel)]="fila.notaVigesimal"
-                        (ngModelChange)="onNotaChange(fila)"
-                        min="0" max="20" step="1"
-                        placeholder="0–20" />
-                    </td>
-
-                    <!-- Evidencia -->
-                    <td class="td-evidencia">
-                      <label class="btn-evidencia" [class.con-archivo]="fila.conEvidencia">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                          <polyline points="17 8 12 3 7 8"/>
-                          <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                        {{ fila.conEvidencia ? fila.archivoPendiente?.name ?? 'Adjuntada' : 'Adjuntar' }}
-                        <input type="file" accept="image/*,.pdf"
-                          style="display:none"
-                          (change)="onArchivoSeleccionado($event, fila)" />
-                      </label>
-                    </td>
-
-                    <!-- Estado de la fila -->
-                    <td class="td-estado">
-                      <span *ngIf="!fila.modificado" class="estado-badge estado-sin-cambios">Sin cambios</span>
-                      <span *ngIf="fila.modificado && !fila.conEvidencia" class="estado-badge estado-falta-evidencia">Falta evidencia</span>
-                      <span *ngIf="fila.modificado && fila.conEvidencia" class="estado-badge estado-listo">Listo</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Botón de guardar -->
-            <div class="notas-footer">
-              <p class="notas-footer-nota">
-                💡 <strong>Importante:</strong> No se puede cerrar un bimestre sin adjuntar evidencia para cada nota registrada.
-              </p>
-              <button class="btn-guardar-notas"
-                [disabled]="guardandoNotas()"
-                (click)="guardarNotas()">
-                <span *ngIf="guardandoNotas()" class="spinner-sm"></span>
-                {{ guardandoNotas() ? 'Guardando…' : '💾 Guardar Notas del Bimestre ' + bimestreActivo }}
-              </button>
-            </div>
-            <!-- TODO: conectar a POST /api/v1/notas y POST /api/v1/evidencias/upload -->
-          </div>
-
-          <!-- TAB: ASISTENCIA (WIP) -->
-          <div *ngIf="tabCurso() === 'asistencia'">
-            <div class="empty-state">
-               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5.5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-               <p>Registro histórico de asistencias del curso.</p>
-            </div>
-         </div>
-  
-        </div>
-      </div>
-    </main>
-  </div>
-  
-  <!-- ── MODAL: TOMAR ASISTENCIA ───────────────────────────────────────────── -->
-  <div class="modal-backdrop" *ngIf="modalAsistenciaVisible()">
-      <div class="modal-dialog">
-          <div class="modal-header">
-              <h2>Tomar Asistencia - {{ cursoActivo()?.nombre }} (Semana {{ semanaSeleccionada() }})</h2>
-              <button class="btn-close" (click)="cerrarModales()">&times;</button>
-          </div>
-          <div class="modal-body">
-              <table class="asistencia-table">
-                  <thead>
-                      <tr>
-                          <th>N°</th>
-                          <th>Alumno</th>
-                          <th>Estado de Asistencia</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      <tr *ngFor="let alumno of alumnosMock; let i = index">
-                          <td>{{ i + 1 }}</td>
-                          <td>
-                              {{ alumno.nombre }}
-                              <span *ngIf="alumno.permisoAcademia" class="permiso-badge">Permiso 1:30 PM</span>
-                          </td>
-                          <td>
-                              <div class="radio-group">
-                                  <label class="radio-label presente">
-                                      <input type="radio" [name]="'asis_' + alumno.id" value="ASISTIO" [(ngModel)]="alumno.estado"> Presente
-                                  </label>
-                                  <label class="radio-label falta">
-                                      <input type="radio" [name]="'asis_' + alumno.id" value="FALTA" [(ngModel)]="alumno.estado"> Falta
-                                  </label>
-                                  <label class="radio-label tardanza">
-                                      <input type="radio" [name]="'asis_' + alumno.id" value="TARDANZA" [(ngModel)]="alumno.estado"> Tardanza
-                                  </label>
-                              </div>
-                          </td>
-                      </tr>
-                  </tbody>
-              </table>
-          </div>
-          <div class="modal-footer">
-              <button class="btn-secondary" (click)="cerrarModales()">Cancelar</button>
-              <button class="btn-primary" (click)="guardarAsistencia()">Guardar Asistencia</button>
-          </div>
-      </div>
-  </div>
-
-  <!-- ── MODAL: CREAR TAREA ───────────────────────────────────────────── -->
-  <div class="modal-backdrop" *ngIf="modalTareaVisible()">
-    <div class="modal-dialog" style="max-width: 500px;">
-        <div class="modal-header">
-            <h2>Crear Tarea - {{ cursoActivo()?.nombre }} (Semana {{ semanaSeleccionada() }})</h2>
-            <button class="btn-close" (click)="cerrarModales()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label>Título de la Tarea</label>
-                <input type="text" [(ngModel)]="nuevaTarea.titulo" placeholder="Ej: Ejercicios de Ecuaciones">
-            </div>
-            <div class="form-group">
-                <label>Descripción</label>
-                <textarea [(ngModel)]="nuevaTarea.descripcion" placeholder="Instrucciones para el alumno..."></textarea>
-            </div>
-            <div class="form-group">
-                <label>Fecha y Hora Límite</label>
-                <input type="datetime-local" [(ngModel)]="nuevaTarea.fechaLimite">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-secondary" (click)="cerrarModales()">Cancelar</button>
-            <button class="btn-primary" (click)="guardarTarea()">Crear Tarea</button>
-        </div>
+            </td>
+            <td>
+              <div class="radio-pill-group">
+                <label class="radio-pill present" [class.selected]="alumno.estado === 'ASISTIO'" (click)="setEstadoAlumno(alumno, 'ASISTIO')">
+                  <input type="radio" [name]="'asis_' + alumno.id" value="ASISTIO" [(ngModel)]="alumno.estado" style="display:none">
+                  ✓ Presente
+                </label>
+                <label class="radio-pill tardy" [class.selected]="alumno.estado === 'TARDANZA'" (click)="setEstadoAlumno(alumno, 'TARDANZA')">
+                  <input type="radio" [name]="'asis_' + alumno.id" value="TARDANZA" [(ngModel)]="alumno.estado" style="display:none">
+                  ⏱ Tardanza
+                </label>
+                <!-- RN-01: Ocultar Falta si tiene permiso de academia -->
+                <label class="radio-pill absent" [class.selected]="alumno.estado === 'FALTA'" (click)="setEstadoAlumno(alumno, 'FALTA')" *ngIf="!alumno.permisoAcademia">
+                  <input type="radio" [name]="'asis_' + alumno.id" value="FALTA" [(ngModel)]="alumno.estado" style="display:none">
+                  ✕ Falta
+                </label>
+                <label class="radio-pill justified" [class.selected]="alumno.estado === 'JUSTIFICADO'" (click)="setEstadoAlumno(alumno, 'JUSTIFICADO')">
+                  <input type="radio" [name]="'asis_' + alumno.id" value="JUSTIFICADO" [(ngModel)]="alumno.estado" style="display:none">
+                  J Justif.
+                </label>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+
+    <div class="modal-footer">
+      <button id="btn-cancelar-asistencia" class="btn-secondary" (click)="cerrarModales()">Cancelar</button>
+      <button id="btn-guardar-asistencia" class="btn-primary" (click)="guardarAsistencia()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Guardar Asistencia
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: CREAR TAREA / AVANCE
+══════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalTareaVisible()" (click)="cerrarModales()">
+  <div class="modal-dialog modal-tarea" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-info">
+        <h2 id="modal-tarea-title">Nueva Tarea / Avance</h2>
+        <p class="modal-subtitle">{{ cursoActivo()?.nombre }} · {{ semanaSeleccionada()?.label }}</p>
+      </div>
+      <button id="btn-close-modal-tarea" class="btn-close" (click)="cerrarModales()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Tipo de actividad -->
+      <div class="form-group">
+        <label>Tipo de actividad</label>
+        <div class="tipo-selector">
+          <label class="tipo-option" [class.selected]="nuevaTarea.tipo === 'tarea'">
+            <input type="radio" [(ngModel)]="nuevaTarea.tipo" value="tarea" style="display:none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Tarea
+          </label>
+          <label class="tipo-option" [class.selected]="nuevaTarea.tipo === 'avance'">
+            <input type="radio" [(ngModel)]="nuevaTarea.tipo" value="avance" style="display:none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Avance de Proyecto
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="tarea-titulo">Título</label>
+        <input id="tarea-titulo" type="text" [(ngModel)]="nuevaTarea.titulo" placeholder="Ej: Ejercicios de Ecuaciones Lineales">
+      </div>
+      <div class="form-group">
+        <label for="tarea-descripcion">Descripción / Instrucciones</label>
+        <textarea id="tarea-descripcion" [(ngModel)]="nuevaTarea.descripcion" placeholder="Describe qué deben hacer los alumnos..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tarea-fecha">Fecha límite</label>
+          <input id="tarea-fecha" type="datetime-local" [(ngModel)]="nuevaTarea.fechaLimite">
+        </div>
+        <div class="form-group" style="flex: 0 0 120px">
+          <label for="tarea-puntaje">Puntaje</label>
+          <input id="tarea-puntaje" type="number" [(ngModel)]="nuevaTarea.puntaje" min="1" max="20" placeholder="10">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-cancelar-tarea" class="btn-secondary" (click)="cerrarModales()">Cancelar</button>
+      <button id="btn-crear-tarea" class="btn-primary" (click)="guardarTarea()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Crear {{ nuevaTarea.tipo === 'avance' ? 'Avance' : 'Tarea' }}
+      </button>
+    </div>
+  </div>
 </div>
