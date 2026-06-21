@@ -40,7 +40,7 @@ export const RoleGuard: CanActivateFn = (route) => {
   // Usuario autenticado pero sin el rol requerido → redirige a su portal
   const portalPorRol: Record<string, string> = {
     DIRECTOR: '/admin-dashboard',
-    DOCENTE:  '/docente/asistencia',
+    DOCENTE:  '/docente/portal',
     ALUMNO:   '/alumno/portal',
   };
   router.navigate([portalPorRol[usuario.rol] ?? '/login']);

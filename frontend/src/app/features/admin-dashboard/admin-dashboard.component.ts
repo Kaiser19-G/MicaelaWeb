@@ -215,7 +215,7 @@ export class AdminDashboardComponent implements OnInit {
   // ── Navegación ─────────────────────────────────────────────────
   setTab(tab: TabDirector): void { this.tabActiva.set(tab); }
 
-  irAVistaDocente(): void { this.router.navigate(['/docente/asistencia']); }
+  irAVistaDocente(): void { this.router.navigate(['/docente/portal']); }
   irAVistaAlumno(): void { this.router.navigate(['/alumno/portal']); }
 
   logout(): void { this.authService.logout(); }
