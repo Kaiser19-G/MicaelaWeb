@@ -1,9 +1,11 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../../core/services/auth.service';
+import { SyncService } from '../../core/services/sync.service';
 import {
   NotaService,
   FilaNota,
@@ -76,6 +78,10 @@ export class DocentePortalComponent implements OnInit {
 
   public authService = inject(AuthService);
   private notaService = inject(NotaService);
+  public syncService = inject(SyncService);
+
+  readonly isOnline = toSignal(this.syncService.isOnline$, { initialValue: navigator.onLine });
+  readonly pendingCount = toSignal(this.syncService.pendingCount$, { initialValue: 0 });
 
   readonly escalaLiteralOpciones = ESCALA_LITERAL_OPCIONES;
 
@@ -230,22 +236,30 @@ export class DocentePortalComponent implements OnInit {
 
   // ── Modales ───────────────────────────────────────────────────────────────
 
-  abrirModalAsistencia(semana: SemanaData): void {
+  async abrirModalAsistencia(semana: SemanaData): Promise<void> {
     this.semanaSeleccionada.set(semana);
-    this.alumnosMock = [
-      { id: 1,  nombre: 'Alarcón Huanca, Rosa',       codigo: '2026001', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-      { id: 2,  nombre: 'Cárdenas López, Miguel',     codigo: '2026002', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-      { id: 3,  nombre: 'Chávez Quispe, Lucía',       codigo: '2026003', permisoAcademia: true,  nee: true,   horarioEspecial: '2:30 PM', estado: 'ASISTIO' },
-      { id: 4,  nombre: 'Flores Torres, Andrés',      codigo: '2026004', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-      { id: 5,  nombre: 'García Mamani, Sofía',       codigo: '2026005', permisoAcademia: false, nee: true,   estado: 'ASISTIO' },
-      { id: 6,  nombre: 'Huanca Ramos, Diego',        codigo: '2026006', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-      { id: 7,  nombre: 'Jiménez Soto, Valentina',    codigo: '2026007', permisoAcademia: true,  nee: false,  horarioEspecial: '1:30 PM', estado: 'ASISTIO' },
-      { id: 8,  nombre: 'López Cruz, Sebastián',      codigo: '2026008', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-      { id: 9,  nombre: 'Mamani Condori, Camila',     codigo: '2026009', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-      { id: 10, nombre: 'Quispe Vargas, Mateo',       codigo: '2026010', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-      { id: 11, nombre: 'Ramos Ticona, Isabella',     codigo: '2026011', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-      { id: 12, nombre: 'Rivera Puma, Emilio',        codigo: '2026012', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-    ];
+    const aulaId = this.cursoActivo()?.id ?? 1;
+
+    let cache = await this.syncService.getAlumnosCache(aulaId);
+    if (!cache || cache.length === 0) {
+      cache = [
+        { id: 1,  nombre: 'Alarcón Huanca, Rosa',       codigo: '2026001', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+        { id: 2,  nombre: 'Cárdenas López, Miguel',     codigo: '2026002', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+        { id: 3,  nombre: 'Chávez Quispe, Lucía',       codigo: '2026003', permisoAcademia: true,  nee: true,   horarioEspecial: '2:30 PM', estado: 'ASISTIO' },
+        { id: 4,  nombre: 'Flores Torres, Andrés',      codigo: '2026004', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+        { id: 5,  nombre: 'García Mamani, Sofía',       codigo: '2026005', permisoAcademia: false, nee: true,   estado: 'ASISTIO' },
+        { id: 6,  nombre: 'Huanca Ramos, Diego',        codigo: '2026006', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+        { id: 7,  nombre: 'Jiménez Soto, Valentina',    codigo: '2026007', permisoAcademia: true,  nee: false,  horarioEspecial: '1:30 PM', estado: 'ASISTIO' },
+        { id: 8,  nombre: 'López Cruz, Sebastián',      codigo: '2026008', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+        { id: 9,  nombre: 'Mamani Condori, Camila',     codigo: '2026009', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+        { id: 10, nombre: 'Quispe Vargas, Mateo',       codigo: '2026010', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+        { id: 11, nombre: 'Ramos Ticona, Isabella',     codigo: '2026011', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+        { id: 12, nombre: 'Rivera Puma, Emilio',        codigo: '2026012', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
+      ];
+      await this.syncService.saveAlumnosCache(aulaId, cache);
+    }
+    
+    this.alumnosMock = cache;
     this.recalcularStats();
     this.modalAsistenciaVisible.set(true);
   }
@@ -280,10 +294,27 @@ export class DocentePortalComponent implements OnInit {
     };
   }
 
-  guardarAsistencia(): void {
+  async guardarAsistencia(): Promise<void> {
     const semana = this.semanaSeleccionada();
     if (semana) semana.asistenciaRegistrada = true;
-    console.log('Guardando asistencia...', this.alumnosMock);
+    
+    const aulaId = this.cursoActivo()?.id ?? 1;
+    const docenteId = 1; // Simulate authService ID
+    
+    const registros: any[] = this.alumnosMock.map(a => ({
+      alumnoId: a.id,
+      estado: a.estado,
+      justificacion: ''
+    }));
+
+    if (!this.isOnline()) {
+      console.log('Modo OFFLINE: Guardando asistencia en IndexedDB...', registros);
+      await this.syncService.queueAsistencia(aulaId, new Date().toISOString().split('T')[0], docenteId, registros);
+    } else {
+      console.log('Modo ONLINE: Guardando asistencia en backend...', registros);
+      // Aqui iria AsistenciaService.registrarAsistenciaLote
+    }
+
     this.cerrarModales();
   }
 
