@@ -58,4 +58,10 @@ public interface MatriculaService {
     List<Alumno> listarPorAula(Long aulaId, Integer anioAcademico);
 
     Alumno actualizarPermisoAcademia(Long alumnoId, boolean tienePermiso, String horaEntrada);
+
+    // ── CRUD de la entidad Matricula (Sprint 5) ─────────────────────────────
+    List<com.colegio.bastidas.dto.MatriculaDto> listarPorAnio(Integer anio);
+    com.colegio.bastidas.dto.MatriculaDto crearMatricula(com.colegio.bastidas.dto.MatriculaDto dto);
+    com.colegio.bastidas.dto.MatriculaDto actualizarMatricula(Long id, com.colegio.bastidas.dto.MatriculaDto dto);
+    void eliminarMatricula(Long id);
 }

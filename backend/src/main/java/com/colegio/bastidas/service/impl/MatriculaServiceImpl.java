@@ -32,6 +32,7 @@ public class MatriculaServiceImpl implements MatriculaService {
 
     private final AlumnoRepository alumnoRepository;
     private final SupabaseStorageService storageService;
+    private final com.colegio.bastidas.repository.MatriculaRepository matriculaEntityRepository;
 
     // ── matricularAlumno ──────────────────────────────────────────────────
     @Override
@@ -183,5 +184,66 @@ public class MatriculaServiceImpl implements MatriculaService {
     // ── Utilidades Privadas ────────────────────────────────────────────────
     private String generarCodigoEstudiante(String dni, Integer anio) {
         return String.format("IE-MB-%d-%s", anio, dni);
+    }
+
+    // ── CRUD de la entidad Matricula (Sprint 5) ─────────────────────────────
+
+    @Override
+    public List<com.colegio.bastidas.dto.MatriculaDto> listarPorAnio(Integer anio) {
+        return matriculaEntityRepository.findByAnioEscolar(anio).stream()
+                .map(this::mapToDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public com.colegio.bastidas.dto.MatriculaDto crearMatricula(com.colegio.bastidas.dto.MatriculaDto dto) {
+        if (matriculaEntityRepository.existsByAlumnoIdAndAnioEscolar(dto.getAlumnoId(), dto.getAnioEscolar())) {
+            throw new IllegalArgumentException("El alumno ya está matriculado en el año " + dto.getAnioEscolar());
+        }
+
+        Alumno alumno = alumnoRepository.findById(dto.getAlumnoId())
+                .orElseThrow(() -> new IllegalArgumentException("Alumno no encontrado con ID: " + dto.getAlumnoId()));
+
+        com.colegio.bastidas.model.Matricula matricula = com.colegio.bastidas.model.Matricula.builder()
+                .alumno(alumno)
+                .grado(dto.getGrado())
+                .seccion(dto.getSeccion())
+                .anioEscolar(dto.getAnioEscolar())
+                .estado(dto.getEstado() != null ? dto.getEstado() : com.colegio.bastidas.model.Matricula.EstadoMatricula.ACTIVO)
+                .build();
+
+        return mapToDto(matriculaEntityRepository.save(matricula));
+    }
+
+    @Override
+    public com.colegio.bastidas.dto.MatriculaDto actualizarMatricula(Long id, com.colegio.bastidas.dto.MatriculaDto dto) {
+        com.colegio.bastidas.model.Matricula matricula = matriculaEntityRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Matrícula no encontrada"));
+
+        matricula.setGrado(dto.getGrado());
+        matricula.setSeccion(dto.getSeccion());
+        if (dto.getEstado() != null) {
+            matricula.setEstado(dto.getEstado());
+        }
+
+        return mapToDto(matriculaEntityRepository.save(matricula));
+    }
+
+    @Override
+    public void eliminarMatricula(Long id) {
+        matriculaEntityRepository.deleteById(id);
+    }
+
+    private com.colegio.bastidas.dto.MatriculaDto mapToDto(com.colegio.bastidas.model.Matricula matricula) {
+        com.colegio.bastidas.dto.MatriculaDto dto = new com.colegio.bastidas.dto.MatriculaDto();
+        dto.setId(matricula.getId());
+        dto.setAlumnoId(matricula.getAlumno().getId());
+        dto.setNombreAlumno(matricula.getAlumno().getNombres() + " " + matricula.getAlumno().getApellidos());
+        dto.setCodigoAlumno(matricula.getAlumno().getCodigoEstudiante());
+        dto.setGrado(matricula.getGrado());
+        dto.setSeccion(matricula.getSeccion());
+        dto.setAnioEscolar(matricula.getAnioEscolar());
+        dto.setEstado(matricula.getEstado());
+        return dto;
     }
 }
