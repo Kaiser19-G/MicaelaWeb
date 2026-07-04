@@ -12,19 +12,45 @@ import {
   ESCALA_LITERAL_OPCIONES,
   EscalaLiteral
 } from '../../core/services/nota.service';
+import { DocenteService } from '../../core/services/docente.service';
+import { CalificacionService } from '../../core/services/calificacion.service';
+import { MaterialService } from '../../core/services/material.service';
+import { AlumnoService } from '../../core/services/alumno.service';
+import { AsistenciaService } from '../../core/services/asistencia.service';
+import { TareaService } from '../../core/services/tarea.service';
 
 export type TabCurso = 'contenido' | 'tareas' | 'notas' | 'asistencia';
-export type SidebarNav = 'cursos' | 'asistencia' | 'notas' | 'configuracion';
+export type SidebarNav = 'cursos' | 'asistencia' | 'notas' | 'configuracion' | 'horario';
 export type CursosVista = 'lista' | 'detalle';
-export type EstadoAsistencia = 'ASISTIO' | 'FALTA' | 'TARDANZA' | 'JUSTIFICADO';
+
+export interface Tarea {
+  id: string;
+  tipo: 'tarea' | 'avance';
+  titulo: string;
+  descripcion: string;
+  fechaLimite: string;
+  puntaje: number;
+  tipoCalificacion?: string;
+}
+
+export interface SemanaData {
+  numero: number;
+  label: string;
+  temas: string[];
+  asistenciaRegistrada: boolean;
+  calificacionDiariaRegistrada?: boolean;
+  tareas: Tarea[];
+  recursos?: any[];
+}
 
 export interface CursoCard {
   id: number;
+  aulaId?: number;
   nombre: string;
   codigo: string;
   grado: string;
   seccion: string;
-  modalidad: 'Presencial' | 'Virtual';
+  modalidad: string;
   color: string;
   icono: string;
   estudiantes: number;
@@ -34,14 +60,17 @@ export interface CursoCard {
   horario: string;
 }
 
+export type EstadoAsistencia = 'ASISTIO' | 'TARDANZA' | 'FALTA' | 'JUSTIFICADO' | 'TARDANZA_JUSTIFICADA';
+
 export interface AlumnoMock {
   id: number;
   nombre: string;
   codigo: string;
   permisoAcademia: boolean;
-  horarioEspecial?: string;
   nee: boolean;
+  horarioEspecial?: string;
   estado: EstadoAsistencia;
+  calificacionDiaria?: string;
 }
 
 export interface TareaItem {
@@ -53,13 +82,7 @@ export interface TareaItem {
   puntaje: number;
 }
 
-export interface SemanaData {
-  numero: number;
-  label: string;
-  temas: string[];
-  asistenciaRegistrada: boolean;
-  tareas: TareaItem[];
-}
+// removed duplicate
 
 export interface BimestreData {
   numero: number;
@@ -79,6 +102,12 @@ export class DocentePortalComponent implements OnInit {
   public authService = inject(AuthService);
   private notaService = inject(NotaService);
   public syncService = inject(SyncService);
+  private docenteService = inject(DocenteService);
+  private calificacionService = inject(CalificacionService);
+  private materialService = inject(MaterialService);
+  private alumnoService = inject(AlumnoService);
+  private asistenciaService = inject(AsistenciaService);
+  private tareaService = inject(TareaService);
 
   readonly isOnline = toSignal(this.syncService.isOnline$, { initialValue: navigator.onLine });
   readonly pendingCount = toSignal(this.syncService.pendingCount$, { initialValue: 0 });
@@ -93,6 +122,10 @@ export class DocentePortalComponent implements OnInit {
 
   readonly modalAsistenciaVisible = signal(false);
   readonly modalTareaVisible = signal(false);
+  readonly modalCalificacionVisible = signal(false);
+  readonly modalExitoVisible = signal(false);
+  readonly mensajeExito = signal("");
+  readonly esError = signal(false);
   readonly semanaSeleccionada = signal<SemanaData | null>(null);
 
   searchQuery = '';
@@ -107,32 +140,7 @@ export class DocentePortalComponent implements OnInit {
     (this.authService.getUsuarioActual()?.username ?? 'D')[0]?.toUpperCase() ?? 'D'
   );
 
-  readonly cursos: CursoCard[] = [
-    {
-      id: 1, nombre: 'Matemática', codigo: 'MAT-5A', grado: '5to Primaria',
-      seccion: '5°A', modalidad: 'Presencial', color: '#2563EB',
-      icono: 'math', estudiantes: 28, bimestreActual: 2,
-      semanaActual: 5, totalSemanas: 20, horario: 'Lun, Mié, Vie 8:00 - 9:00'
-    },
-    {
-      id: 2, nombre: 'Comunicación', codigo: 'COM-5A', grado: '5to Primaria',
-      seccion: '5°A', modalidad: 'Presencial', color: '#10B981',
-      icono: 'comm', estudiantes: 28, bimestreActual: 2,
-      semanaActual: 5, totalSemanas: 20, horario: 'Mar, Jue 8:00 - 9:30'
-    },
-    {
-      id: 3, nombre: 'Ciencia y Tecnología', codigo: 'CYT-4B', grado: '4to Primaria',
-      seccion: '4°B', modalidad: 'Presencial', color: '#7C3AED',
-      icono: 'science', estudiantes: 25, bimestreActual: 2,
-      semanaActual: 4, totalSemanas: 20, horario: 'Lun, Mié 10:00 - 11:00'
-    },
-    {
-      id: 4, nombre: 'Personal Social', codigo: 'PS-4B', grado: '4to Primaria',
-      seccion: '4°B', modalidad: 'Presencial', color: '#F59E0B',
-      icono: 'default', estudiantes: 25, bimestreActual: 2,
-      semanaActual: 4, totalSemanas: 20, horario: 'Mar, Jue 10:00 - 11:30'
-    },
-  ];
+  readonly cursos = signal<CursoCard[]>([]);
 
   readonly cursoTabs: { id: TabCurso; label: string }[] = [
     { id: 'contenido',  label: 'Contenido' },
@@ -148,12 +156,14 @@ export class DocentePortalComponent implements OnInit {
   asistenciaStats = { presentes: 0, tardanzas: 0, faltas: 0, justificados: 0 };
 
   // ── Tarea form ────────────────────────────────────────────────────────────
-  nuevaTarea = {
+  nuevaTarea: Tarea = {
+    id: '',
     tipo: 'tarea' as 'tarea' | 'avance',
     titulo: '',
     descripcion: '',
     fechaLimite: '',
-    puntaje: 10
+    puntaje: 10,
+    tipoCalificacion: 'numeros'
   };
 
   // ── Notas ─────────────────────────────────────────────────────────────────
@@ -166,11 +176,11 @@ export class DocentePortalComponent implements OnInit {
   // ── Computeds ─────────────────────────────────────────────────────────────
   get cursosFiltrados(): CursoCard[] {
     const q = this.searchQuery.toLowerCase().trim();
-    if (!q) return this.cursos;
-    return this.cursos.filter(c =>
+    if (!q) return this.cursos();
+    return this.cursos().filter(c =>
       c.nombre.toLowerCase().includes(q) ||
       c.grado.toLowerCase().includes(q) ||
-      c.codigo.toLowerCase().includes(q)
+      c.seccion.toLowerCase().includes(q)
     );
   }
 
@@ -178,10 +188,14 @@ export class DocentePortalComponent implements OnInit {
     return this.alumnosMock.some(a => a.permisoAcademia);
   }
 
-  get progresoSemanas(): number {
-    const curso = this.cursoActivo();
-    if (!curso) return 0;
-    return Math.round((curso.semanaActual / curso.totalSemanas) * 100);
+  get totalEstudiantes(): number {
+    return this.cursos().reduce((acc, c) => acc + c.estudiantes, 0);
+  }
+
+  get progresoGeneral(): number {
+    const cur = this.cursoActivo();
+    if (!cur) return 0;
+    return Math.round((cur.semanaActual / cur.totalSemanas) * 100);
   }
 
   get bimestreLabel(): string {
@@ -190,8 +204,54 @@ export class DocentePortalComponent implements OnInit {
     return cur ? (labels[cur.bimestreActual] ?? '') + ' Bimestre' : '';
   }
 
+  cargandoCursos = signal<boolean>(false);
+
   ngOnInit(): void {
     this.bimestres = this.buildBimestres();
+    this.cargarCursosDocente();
+  }
+  
+  cargarCursosDocente(): void {
+    const usuario = this.authService.getUsuarioActual();
+    if (usuario && usuario.id) {
+      this.cargandoCursos.set(true);
+      this.docenteService.obtenerCursos(usuario.id).subscribe({
+        next: (cursosAsignados: any[]) => {
+          const colors = ['#2563EB', '#10B981', '#7C3AED', '#F59E0B', '#EF4444'];
+          const mappedCursos: CursoCard[] = cursosAsignados.map((ca, i) => ({
+            id: ca.id,
+            aulaId: ca.aula.id,
+            nombre: ca.areaCurricular,
+            codigo: `${ca.areaCurricular.substring(0,3).toUpperCase()}-${ca.aula.grado[0]}${ca.aula.seccion}`,
+            grado: `${ca.aula.grado} ${ca.aula.nivel}`,
+            seccion: `${ca.aula.grado[0]}°${ca.aula.seccion}`,
+            modalidad: 'Presencial',
+            color: colors[i % colors.length],
+            icono: this.getIconForArea(ca.areaCurricular),
+            estudiantes: 0,
+            bimestreActual: 2,
+            semanaActual: 5,
+            totalSemanas: 20,
+            horario: 'Por definir'
+          }));
+          this.cursos.set(mappedCursos);
+          this.cargandoCursos.set(false);
+        },
+        error: (err: any) => {
+          console.error('Error al cargar cursos', err);
+          this.cargandoCursos.set(false);
+        }
+      });
+    }
+  }
+
+  getIconForArea(area: string): string {
+    const a = area.toLowerCase();
+    if (a.includes('matem')) return 'math';
+    if (a.includes('comunic')) return 'comm';
+    if (a.includes('cienc')) return 'science';
+    if (a.includes('ingl')) return 'language';
+    return 'default';
   }
 
   // ── Navegación ────────────────────────────────────────────────────────────
@@ -209,7 +269,54 @@ export class DocentePortalComponent implements OnInit {
     this.cursosVista.set('detalle');
     this.tabCurso.set('contenido');
     this.bimestresExpandidos.set([curso.bimestreActual]);
-    this.cargarFilasNotas();
+    
+    this.alumnoService.listarPorAula(curso.aulaId ?? 1).subscribe({
+      next: (alumnos) => {
+        this.alumnosMock = alumnos.map(a => ({
+          id: a.id,
+          nombre: a.nombreCompleto,
+          codigo: a.codigoEstudiante,
+          permisoAcademia: a.tienePermisoAcademia,
+          nee: false,
+          estado: 'FALTA' as EstadoAsistencia
+        }));
+        curso.estudiantes = alumnos.length;
+        this.cargarFilasNotas();
+      }
+    });
+
+    // Cargar tareas persistidas del backend para todas las semanas
+    this.cargarTareasYMateriales(curso.id);
+  }
+
+  cargarTareasYMateriales(cursoAsignadoId: number): void {
+    // Reconstruir bimestres frescos primero
+    this.bimestres = this.buildBimestres();
+    // Cargar tareas semana por semana
+    this.bimestres.forEach(bim => {
+      bim.semanas.forEach(sem => {
+        this.tareaService.obtenerTareasPorCursoYSemana(cursoAsignadoId, sem.numero).subscribe({
+          next: (tareas: any[]) => {
+            sem.tareas = tareas.map(t => ({
+              id: t.id?.toString() || '',
+              tipo: 'tarea' as 'tarea' | 'avance',
+              titulo: t.titulo,
+              descripcion: t.descripcion || '',
+              fechaLimite: t.fechaLimite ? t.fechaLimite.split('T')[0] : '',
+              puntaje: 10
+            }));
+          },
+          error: () => {} // Silenciar errores individuales de semana
+        });
+
+        this.materialService.obtenerMateriales(cursoAsignadoId, sem.numero).subscribe({
+          next: (materiales: any[]) => {
+            sem.recursos = materiales;
+          },
+          error: () => {}
+        });
+      });
+    });
   }
 
   volverALista(): void {
@@ -234,45 +341,80 @@ export class DocentePortalComponent implements OnInit {
     return this.bimestresExpandidos().includes(num);
   }
 
-  // ── Modales ───────────────────────────────────────────────────────────────
+  cerrarModales(): void {
+    this.modalAsistenciaVisible.set(false);
+    this.modalTareaVisible.set(false);
+    this.modalCalificacionVisible.set(false);
+  }
 
-  async abrirModalAsistencia(semana: SemanaData): Promise<void> {
+  mostrarExito(mensaje: string, error: boolean = false): void {
+    this.esError.set(error);
+    this.mensajeExito.set(mensaje);
+    this.modalExitoVisible.set(true);
+    setTimeout(() => {
+      this.modalExitoVisible.set(false);
+      if (!error) this.cerrarModales();
+    }, 3000);
+  }
+
+  abrirModalAsistencia(semana: SemanaData): void {
     this.semanaSeleccionada.set(semana);
-    const aulaId = this.cursoActivo()?.id ?? 1;
+    const aulaId = this.cursoActivo()?.aulaId ?? 1;
+    const fechaSemana = this.fechaDeSemana(semana.numero);
 
-    let cache = await this.syncService.getAlumnosCache(aulaId);
-    if (!cache || cache.length === 0) {
-      cache = [
-        { id: 1,  nombre: 'Alarcón Huanca, Rosa',       codigo: '2026001', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-        { id: 2,  nombre: 'Cárdenas López, Miguel',     codigo: '2026002', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-        { id: 3,  nombre: 'Chávez Quispe, Lucía',       codigo: '2026003', permisoAcademia: true,  nee: true,   horarioEspecial: '2:30 PM', estado: 'ASISTIO' },
-        { id: 4,  nombre: 'Flores Torres, Andrés',      codigo: '2026004', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-        { id: 5,  nombre: 'García Mamani, Sofía',       codigo: '2026005', permisoAcademia: false, nee: true,   estado: 'ASISTIO' },
-        { id: 6,  nombre: 'Huanca Ramos, Diego',        codigo: '2026006', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-        { id: 7,  nombre: 'Jiménez Soto, Valentina',    codigo: '2026007', permisoAcademia: true,  nee: false,  horarioEspecial: '1:30 PM', estado: 'ASISTIO' },
-        { id: 8,  nombre: 'López Cruz, Sebastián',      codigo: '2026008', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-        { id: 9,  nombre: 'Mamani Condori, Camila',     codigo: '2026009', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-        { id: 10, nombre: 'Quispe Vargas, Mateo',       codigo: '2026010', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-        { id: 11, nombre: 'Ramos Ticona, Isabella',     codigo: '2026011', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-        { id: 12, nombre: 'Rivera Puma, Emilio',        codigo: '2026012', permisoAcademia: false, nee: false,  estado: 'ASISTIO' },
-      ];
-      await this.syncService.saveAlumnosCache(aulaId, cache);
-    }
-    
-    this.alumnosMock = cache;
-    this.recalcularStats();
-    this.modalAsistenciaVisible.set(true);
+    this.asistenciaService.obtenerAsistenciaAula(aulaId, fechaSemana).subscribe({
+      next: (asistencias) => {
+        if (asistencias.length > 0) {
+          semana.asistenciaRegistrada = true;
+          this.alumnosMock.forEach(a => {
+            const asis = asistencias.find((reg: any) => reg.alumno.id === a.id);
+            if (asis) {
+              a.estado = asis.estado as any;
+            }
+          });
+        } else {
+          semana.asistenciaRegistrada = false;
+          this.alumnosMock.forEach(a => a.estado = 'FALTA' as any);
+        }
+        this.recalcularStats();
+        this.modalAsistenciaVisible.set(true);
+      },
+      error: () => {
+        this.alumnosMock.forEach(a => a.estado = 'FALTA' as any);
+        this.recalcularStats();
+        this.modalAsistenciaVisible.set(true);
+      }
+    });
   }
 
   abrirModalTarea(semana: SemanaData): void {
     this.semanaSeleccionada.set(semana);
-    this.nuevaTarea = { tipo: 'tarea', titulo: '', descripcion: '', fechaLimite: '', puntaje: 10 };
+    this.nuevaTarea = { 
+      id: '', 
+      tipo: 'tarea', 
+      titulo: '', 
+      descripcion: '', 
+      fechaLimite: '', 
+      puntaje: 10,
+      tipoCalificacion: 'numeros' 
+    };
     this.modalTareaVisible.set(true);
   }
 
-  cerrarModales(): void {
-    this.modalAsistenciaVisible.set(false);
-    this.modalTareaVisible.set(false);
+  abrirModalCalificacion(semana: SemanaData): void {
+    if (!semana.asistenciaRegistrada) {
+      this.mostrarExito('Error: Primero tome la asistencia de los alumnos para calificarlos.', true);
+      return;
+    }
+    this.semanaSeleccionada.set(semana);
+    this.alumnosMock.forEach(a => {
+      if (a.estado === 'FALTA') {
+        a.calificacionDiaria = 'NP';
+      } else {
+        a.calificacionDiaria = '';
+      }
+    });
+    this.modalCalificacionVisible.set(true);
   }
 
   setEstadoAlumno(alumno: AlumnoMock, estado: EstadoAsistencia): void {
@@ -294,43 +436,144 @@ export class DocentePortalComponent implements OnInit {
     };
   }
 
-  async guardarAsistencia(): Promise<void> {
+  /** Calcula la fecha real (lunes de esa semana del año académico actual). */
+  private fechaDeSemana(numeroSemana: number): string {
+    // El año escolar en Perú empieza la primera semana de marzo
+    const inicioAnioEscolar = new Date(new Date().getFullYear(), 2, 3); // 3 de marzo
+    const diasOffset = (numeroSemana - 1) * 7;
+    const fecha = new Date(inicioAnioEscolar.getTime() + diasOffset * 24 * 60 * 60 * 1000);
+    return fecha.toISOString().split('T')[0];
+  }
+
+  /** Retorna el id del perfil (Docente) del usuario autenticado. */
+  private getDocenteId(): number {
+    const u = this.authService.getUsuarioActual();
+    return u?.perfilId ?? u?.id ?? 1;
+  }
+
+  guardandoAsistencia = signal<boolean>(false);
+  guardarAsistencia(): void {
     const semana = this.semanaSeleccionada();
-    if (semana) semana.asistenciaRegistrada = true;
+    const aulaId = this.cursoActivo()?.aulaId ?? 1;
+    const docenteId = this.getDocenteId();
+    const fechaSemana = this.fechaDeSemana(semana?.numero || 1);
     
-    const aulaId = this.cursoActivo()?.id ?? 1;
-    const docenteId = 1; // Simulate authService ID
-    
-    const registros: any[] = this.alumnosMock.map(a => ({
+    const asistencias = this.alumnosMock.map(a => ({
       alumnoId: a.id,
-      estado: a.estado,
-      justificacion: ''
+      estado: a.estado as any,
+      observacion: ''
     }));
 
-    if (!this.isOnline()) {
-      console.log('Modo OFFLINE: Guardando asistencia en IndexedDB...', registros);
-      await this.syncService.queueAsistencia(aulaId, new Date().toISOString().split('T')[0], docenteId, registros);
-    } else {
-      console.log('Modo ONLINE: Guardando asistencia en backend...', registros);
-      // Aqui iria AsistenciaService.registrarAsistenciaLote
-    }
+    this.guardandoAsistencia.set(true);
+    this.asistenciaService.registrarAsistenciaLote(aulaId, fechaSemana, docenteId, asistencias).subscribe({
+      next: () => {
+        if (semana) semana.asistenciaRegistrada = true;
+        this.guardandoAsistencia.set(false);
+        this.mostrarExito('Asistencia registrada correctamente');
+      },
+      error: (err: any) => {
+        console.error('Error al guardar asistencias:', err);
+        this.guardandoAsistencia.set(false);
+        this.mostrarExito('Error: Hubo un problema al guardar la asistencia', true);
+      }
+    });
+  }
 
-    this.cerrarModales();
+  guardandoCalificacionDiaria = signal<boolean>(false);
+  opcionesCalificacionDiaria = ['AD', 'A', 'B', 'C', 'NP'];
+  
+  setCalificacionDiaria(alumno: AlumnoMock, calificacion: string): void {
+    alumno.calificacionDiaria = calificacion;
+  }
+  
+  guardarCalificacionDiaria(): void {
+    const semana = this.semanaSeleccionada();
+    if (!semana) return;
+    
+    const cursoAsignadoId = this.cursoActivo()?.id ?? 1;
+    const docenteId = this.getDocenteId();
+    
+    const calificaciones = this.alumnosMock
+      .filter(a => a.calificacionDiaria)
+      .map(a => ({
+        alumnoId: a.id,
+        calificacion: a.calificacionDiaria!
+      }));
+      
+    this.guardandoCalificacionDiaria.set(true);
+    this.calificacionService.guardarLote(cursoAsignadoId, semana.numero, docenteId, calificaciones).subscribe({
+      next: () => {
+        semana.calificacionDiariaRegistrada = true;
+        this.guardandoCalificacionDiaria.set(false);
+        this.mostrarExito('Calificaciones registradas correctamente');
+      },
+      error: (err: any) => {
+        console.error('Error guardando calificaciones diarias', err);
+        this.guardandoCalificacionDiaria.set(false);
+        this.mostrarExito('Error: Hubo un problema al guardar las calificaciones', true);
+      }
+    });
   }
 
   guardarTarea(): void {
     const semana = this.semanaSeleccionada();
     if (semana && this.nuevaTarea.titulo.trim()) {
-      semana.tareas.push({
-        id: 't_' + Date.now(),
-        tipo: this.nuevaTarea.tipo,
-        titulo: this.nuevaTarea.titulo,
-        descripcion: this.nuevaTarea.descripcion,
-        fechaLimite: this.nuevaTarea.fechaLimite,
-        puntaje: this.nuevaTarea.puntaje
+      const cursoId = this.cursoActivo()?.id ?? 1;
+      const docenteId = this.getDocenteId();
+      // Backend espera ISO DATE_TIME: añadimos T00:00:00 si solo es fecha
+      let fechaLimite = this.nuevaTarea.fechaLimite;
+      if (fechaLimite && !fechaLimite.includes('T')) {
+        fechaLimite = fechaLimite + 'T23:59:59';
+      }
+      this.tareaService.crearTarea(
+        cursoId, semana.numero, this.nuevaTarea.titulo, this.nuevaTarea.descripcion,
+        fechaLimite, docenteId
+      ).subscribe({
+        next: (res: any) => {
+          semana.tareas.push({
+            id: res.id?.toString() || 't_' + Date.now(),
+            tipo: this.nuevaTarea.tipo,
+            titulo: this.nuevaTarea.titulo,
+            descripcion: this.nuevaTarea.descripcion,
+            fechaLimite: this.nuevaTarea.fechaLimite,
+            puntaje: this.nuevaTarea.puntaje
+          });
+          this.mostrarExito('Tarea guardada correctamente');
+        },
+        error: (err: any) => {
+          console.error('Error al guardar tarea', err);
+          this.mostrarExito('Error al guardar la tarea', true);
+        }
       });
     }
-    this.cerrarModales();
+  }
+
+  validarTamanioMaterial(event: Event, semana: SemanaData): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      if (file.size > 20 * 1024 * 1024) {
+        this.mostrarExito('Error: El archivo excede el tamaño máximo permitido de 20MB', true);
+        input.value = '';
+      } else {
+        const cursoId = this.cursoActivo()?.id ?? 1;
+        const docenteId = this.getDocenteId();
+        this.materialService.subirMaterial(cursoId, semana.numero, docenteId, file).subscribe({
+          next: () => {
+            this.mostrarExito(`Material subido correctamente a la Semana ${semana.numero}`);
+            input.value = '';
+          },
+          error: (err: any) => {
+            console.error('Error al subir material', err);
+            this.mostrarExito('Error: Hubo un problema al subir el material', true);
+          }
+        });
+      }
+    }
+  }
+
+  getUrlDescarga(material: any): string {
+    return material?.urlArchivo ?? material?.url ?? '';
   }
 
   // ── Notas ─────────────────────────────────────────────────────────────────

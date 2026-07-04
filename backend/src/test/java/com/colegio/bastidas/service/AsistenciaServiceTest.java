@@ -39,7 +39,7 @@ class AsistenciaServiceTest {
         alumnoTest = new Alumno();
         alumnoTest.setId(1L);
         alumnoTest.setNombres("Maria");
-        alumnoTest.setApellidos("Lopez");
+        alumnoTest.setApellidoPaterno("Lopez");
     }
 
     @Test
@@ -48,22 +48,22 @@ class AsistenciaServiceTest {
         Asistencia asistenciaMock = new Asistencia();
         asistenciaMock.setAlumno(alumnoTest);
         asistenciaMock.setFecha(hoy);
-        asistenciaMock.setEstado(Asistencia.EstadoAsistencia.PRESENTE);
+        asistenciaMock.setEstado(Asistencia.EstadoAsistencia.ASISTIO);
 
         when(alumnoRepository.findById(1L)).thenReturn(Optional.of(alumnoTest));
         when(asistenciaRepository.save(any(Asistencia.class))).thenReturn(asistenciaMock);
 
-        Asistencia resultado = asistenciaService.registrarAsistencia(1L, hoy, Asistencia.EstadoAsistencia.PRESENTE, 10L);
+        Asistencia resultado = asistenciaService.registrarAsistencia(1L, hoy, Asistencia.EstadoAsistencia.ASISTIO, 10L);
 
         assertNotNull(resultado);
-        assertEquals(Asistencia.EstadoAsistencia.PRESENTE, resultado.getEstado());
+        assertEquals(Asistencia.EstadoAsistencia.ASISTIO, resultado.getEstado());
         verify(asistenciaRepository, times(1)).save(any(Asistencia.class));
     }
 
     @Test
     void testRegistrarAsistenciaLote() {
         LocalDate hoy = LocalDate.now();
-        AsistenciaService.RegistroAsistenciaDto reg1 = new AsistenciaService.RegistroAsistenciaDto(1L, Asistencia.EstadoAsistencia.PRESENTE, null);
+        AsistenciaService.RegistroAsistenciaDto reg1 = new AsistenciaService.RegistroAsistenciaDto(1L, Asistencia.EstadoAsistencia.ASISTIO, null);
         AsistenciaService.RegistroAsistenciaDto reg2 = new AsistenciaService.RegistroAsistenciaDto(2L, Asistencia.EstadoAsistencia.FALTA, null);
 
         Alumno alumno2 = new Alumno();
@@ -78,7 +78,7 @@ class AsistenciaServiceTest {
 
         assertNotNull(resultados);
         assertEquals(2, resultados.size());
-        assertEquals(Asistencia.EstadoAsistencia.PRESENTE, resultados.get(0).getEstado());
+        assertEquals(Asistencia.EstadoAsistencia.ASISTIO, resultados.get(0).getEstado());
         assertEquals(Asistencia.EstadoAsistencia.FALTA, resultados.get(1).getEstado());
         verify(asistenciaRepository, times(1)).saveAll(anyList());
     }

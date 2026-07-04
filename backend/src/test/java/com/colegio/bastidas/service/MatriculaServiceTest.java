@@ -40,7 +40,7 @@ class MatriculaServiceTest {
     void setUp() {
         alumnoTest = new Alumno();
         alumnoTest.setNombres("Juan");
-        alumnoTest.setApellidos("Pérez");
+        alumnoTest.setApellidoPaterno("Perez");
         alumnoTest.setDni("12345678");
         alumnoTest.setCodigoEstudiante("EST-12345678");
         alumnoTest = alumnoRepository.save(alumnoTest);
@@ -94,6 +94,6 @@ class MatriculaServiceTest {
         List<MatriculaDto> matriculas = matriculaService.listarPorAnio(2026);
         assertFalse(matriculas.isEmpty());
         assertEquals(1, matriculas.size());
-        assertEquals("12345678", matriculas.get(0).getAlumnoDni());
+        assertEquals("12345678", matriculas.get(0).getCodigoAlumno());
     }
 }

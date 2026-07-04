@@ -10,19 +10,23 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tareas")
+@Table(name = "materiales_semana", indexes = {
+    @Index(name = "idx_material_curso", columnList = "curso_asignado_id"),
+    @Index(name = "idx_material_semana", columnList = "curso_asignado_id, semana")
+})
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class Tarea {
+public class MaterialSemana {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @JoinColumn(name = "curso_asignado_id", nullable = false)
     @NotNull
     private CursoAsignado cursoAsignado;
@@ -31,22 +35,18 @@ public class Tarea {
     @NotNull
     private Integer semana;
 
-    @Column(nullable = false, length = 200)
+    @Column(name = "nombre_archivo", nullable = false, length = 200)
     @NotBlank
-    private String titulo;
+    private String nombreArchivo;
 
-    @Column(columnDefinition = "TEXT")
-    private String descripcion;
-
-    @Column(name = "fecha_limite", nullable = false)
-    @NotNull
-    private LocalDateTime fechaLimite;
-
-    @Column(name = "tipo_calificacion", length = 20)
-    private String tipoCalificacion; // "letras" o "numeros"
+    @Column(name = "url_archivo", nullable = false, length = 1000)
+    @NotBlank
+    private String urlArchivo;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @JoinColumn(name = "docente_id", nullable = false)
+    @NotNull
     private Docente docente;
 
     @CreationTimestamp

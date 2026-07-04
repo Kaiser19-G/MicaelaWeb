@@ -56,16 +56,24 @@ public class AsistenciaController {
      */
     @PostMapping("/lote")
     @PreAuthorize("hasAnyRole('DOCENTE', 'DIRECTOR')")
-    public ResponseEntity<List<Asistencia>> registrarLote(
+    public ResponseEntity<Map<String, Object>> registrarLote(
             @RequestParam Long aulaId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
             @RequestParam Long docenteId,
             @RequestBody @Valid List<RegistroAsistenciaDto> registros) {
 
         log.info("POST /asistencias/lote - aula={}, fecha={}, registros={}", aulaId, fecha, registros.size());
+        // Nota: cada registro se guarda en su propia transacción REQUIRES_NEW
+        // (ver AsistenciaRegistroHelper), por lo que las entidades devueltas
+        // pueden traer asociaciones lazy ligadas a una sesión ya cerrada.
+        // Se responde con un resumen en vez de las entidades para evitar
+        // fallos de serialización (LazyInitializationException).
         List<Asistencia> resultado =
             asistenciaService.registrarAsistenciaLote(aulaId, fecha, registros, docenteId);
-        return ResponseEntity.ok(resultado);
+        return ResponseEntity.ok(Map.of(
+            "registrados", resultado.size(),
+            "total", registros.size()
+        ));
     }
 
     /**

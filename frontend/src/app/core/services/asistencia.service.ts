@@ -105,13 +105,13 @@ export class AsistenciaService {
     fecha: string,
     docenteId: number,
     registros: RegistroAsistenciaDto[]
-  ): Observable<Asistencia[]> {
+  ): Observable<{ registrados: number; total: number }> {
     const params = new HttpParams()
       .set('aulaId', aulaId)
       .set('fecha', fecha)
       .set('docenteId', docenteId);
 
-    return this.http.post<Asistencia[]>(`${this.BASE_URL}/lote`, registros, { params });
+    return this.http.post<{ registrados: number; total: number }>(`${this.BASE_URL}/lote`, registros, { params });
   }
 
   // ── Consultas ─────────────────────────────────────────────────────────

@@ -43,8 +43,8 @@ class NotaServiceTest {
         notaTest = new Nota();
         notaTest.setId(10L);
         notaTest.setAlumno(alumnoTest);
-        notaTest.setValorNota(15.0);
-        notaTest.setPeriodo("BIMESTRE_1");
+        notaTest.setCalificacionNumerica(java.math.BigDecimal.valueOf(15.0));
+        notaTest.setPeriodoAcademico("BIMESTRE_1");
     }
 
     @Test
@@ -54,7 +54,7 @@ class NotaServiceTest {
         Nota resultado = notaService.registrarNota(notaTest);
 
         assertNotNull(resultado);
-        assertEquals(15.0, resultado.getValorNota());
+        assertEquals(15.0, resultado.getCalificacionNumerica().doubleValue());
         verify(notaRepository, times(1)).save(notaTest);
     }
 
@@ -77,11 +77,11 @@ class NotaServiceTest {
     @Test
     void testCalcularPromedioFinal() {
         Nota n1 = new Nota();
-        n1.setValorNota(12.0);
+        n1.setCalificacionNumerica(java.math.BigDecimal.valueOf(12.0));
         Nota n2 = new Nota();
-        n2.setValorNota(16.0);
+        n2.setCalificacionNumerica(java.math.BigDecimal.valueOf(16.0));
 
-        when(notaRepository.findByAlumnoIdAndPeriodoAndAnio(1L, "BIMESTRE_1", 2026))
+        when(notaRepository.findByAlumnoIdAndPeriodoAcademicoAndAnioAcademico(1L, "BIMESTRE_1", 2026))
             .thenReturn(List.of(n1, n2));
 
         Double promedio = notaService.calcularPromedioFinal(1L, "BIMESTRE_1", 2026);

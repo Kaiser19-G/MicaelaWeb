@@ -13,6 +13,8 @@ import { Subject, takeUntil, forkJoin } from 'rxjs';
 
 import { AsistenciaService, ResumenAsistencia, Asistencia } from '../../core/services/asistencia.service';
 import { AuthService } from '../../core/services/auth.service';
+import { AlumnoService } from '../../core/services/alumno.service';
+import { MaterialService } from '../../core/services/material.service';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────
 export type TabCurso   = 'silabo' | 'contenido' | 'evaluaciones' | 'tareas' | 'notas' | 'asistencia';
@@ -43,6 +45,7 @@ export interface ActividadBimestre {
   estado: EstadoActividad;
   desde: string;
   hasta: string;
+  url?: string;
 }
 
 export interface SemanaData {
@@ -95,6 +98,8 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
   // ── Inyecciones ───────────────────────────────────────────────────────
   public asistenciaService = inject(AsistenciaService);
   public authService       = inject(AuthService);
+  public alumnoService     = inject(AlumnoService);
+  public materialService   = inject(MaterialService);
 
   // ── Signals ───────────────────────────────────────────────────────────
   readonly sidebarNav       = signal<SidebarNav>('cursos');
@@ -125,16 +130,7 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
   });
 
   // ── Cursos del alumno (datos del colegio) ─────────────────────────────
-  readonly cursos: CursoCard[] = [
-    { id: 1, nombre: 'Matemática',             codigo: '5to-MAT-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. María García',       progreso: 35, color: '#fde8d8', icono: 'math'     },
-    { id: 2, nombre: 'Comunicación',           codigo: '5to-COM-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Carlos Mendoza',     progreso: 42, color: '#d4edfa', icono: 'comm'     },
-    { id: 3, nombre: 'CTA',                    codigo: '5to-CTA-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Ana Torres',         progreso: 28, color: '#d9f5e0', icono: 'science'  },
-    { id: 4, nombre: 'Historia y Geografía',   codigo: '5to-HGE-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Luis Quispe',        progreso: 50, color: '#fde8d8', icono: 'history'  },
-    { id: 5, nombre: 'Inglés',                 codigo: '5to-ING-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Rosa Flores',        progreso: 20, color: '#ede8fd', icono: 'english'  },
-    { id: 6, nombre: 'Educación Física',       codigo: '5to-EDF-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Juan Ramírez',       progreso: 60, color: '#d4edfa', icono: 'sport'    },
-    { id: 7, nombre: 'Arte y Cultura',         codigo: '5to-ART-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Carmen Silva',       progreso: 45, color: '#fdf5d4', icono: 'art'      },
-    { id: 8, nombre: 'Tutoría',               codigo: '5to-TUT-001', grado: '5to Secundaria', modalidad: 'Presencial', docente: 'Prof. Diego Vargas',       progreso: 70, color: '#d9f5e0', icono: 'tutor'    },
-  ];
+  readonly cursos = signal<CursoCard[]>([]);
 
   // ── Tabs del curso ────────────────────────────────────────────────────
   readonly cursoTabs: { id: TabCurso; label: string }[] = [
@@ -147,54 +143,7 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
   ];
 
   // ── Bimestres (contenido del curso) ───────────────────────────────────
-  readonly bimestres: BimestreData[] = [
-    {
-      numero: 1, nombre: 'Bimestre 1', periodo: 'Mar – May',
-      semanas: [
-        {
-          numero: 1, actividades: [
-            { tipo: 'evaluacion', esCalificada: false, subtipo: 'No calificada', nombre: 'Examen de Entrada', estado: 'vencida', desde: '25/03/26 04:20 p.m.', hasta: '25/03/26 06:15 p.m.' },
-            { tipo: 'material',   esCalificada: false, subtipo: 'No calificada', nombre: 'Material PDF Semana 01', estado: 'no_revisado', desde: '25/03/26 08:00 a.m.', hasta: '25/03/26 11:59 p.m.' },
-          ]
-        },
-        {
-          numero: 2, actividades: [
-            { tipo: 'tarea', esCalificada: true, subtipo: 'Calificada – Avance de proyecto final 1', nombre: 'Actividad Nº 01', estado: 'entregada', desde: '01/04/26 05:55 p.m.', hasta: '01/04/26 06:15 p.m.' },
-            { tipo: 'material', esCalificada: false, subtipo: 'No calificada', nombre: 'Material PDF Semana 02', estado: 'no_revisado', desde: '01/04/26 08:00 a.m.', hasta: '07/04/26 11:59 p.m.' },
-          ]
-        },
-        {
-          numero: 3, actividades: [
-            { tipo: 'tarea', esCalificada: true, subtipo: 'Calificada – Avance de proyecto final 1', nombre: 'Actividad Nº 02', estado: 'vencida', desde: '15/04/26 05:26 p.m.', hasta: '15/04/26 06:00 p.m.' },
-          ]
-        },
-        {
-          numero: 4, actividades: [
-            { tipo: 'material', esCalificada: false, subtipo: 'No calificada', nombre: 'Material Semana 04', estado: 'no_revisado', desde: '22/04/26 08:00 a.m.', hasta: '28/04/26 11:59 p.m.' },
-            { tipo: 'evaluacion', esCalificada: false, subtipo: 'No calificada', nombre: 'AppS04', estado: 'no_revisado', desde: '24/04/26 08:00 a.m.', hasta: '28/04/26 11:59 p.m.' },
-          ]
-        },
-      ]
-    },
-    {
-      numero: 2, nombre: 'Bimestre 2', periodo: 'Jun – Jul',
-      semanas: [
-        {
-          numero: 5, actividades: [
-            { tipo: 'material', esCalificada: false, subtipo: 'No calificada', nombre: 'Material SEMANA 05', estado: 'no_revisado', desde: '02/06/26 08:00 a.m.', hasta: '08/06/26 11:59 p.m.' },
-            { tipo: 'evaluacion', esCalificada: true, subtipo: 'Calificada – Avance de proyecto', nombre: 'PRIMER AVANCE DE PROYECTO', estado: 'vencida', desde: '05/06/26 09:00 a.m.', hasta: '05/06/26 11:59 p.m.' },
-          ]
-        },
-        {
-          numero: 6, actividades: [
-            { tipo: 'material', esCalificada: false, subtipo: 'No calificada', nombre: 'Material SEMANA 06', estado: 'no_revisado', desde: '09/06/26 08:00 a.m.', hasta: '15/06/26 11:59 p.m.' },
-          ]
-        },
-      ]
-    },
-    { numero: 3, nombre: 'Bimestre 3', periodo: 'Ago – Sep', semanas: [{ numero: 9, actividades: [] }] },
-    { numero: 4, nombre: 'Bimestre 4', periodo: 'Oct – Nov', semanas: [{ numero: 13, actividades: [] }] },
-  ];
+  readonly bimestres = signal<BimestreData[]>([]);
 
   notas: NotaAlumno[] = [];
   resumenAsistencia: ResumenAsistencia | null = null;
@@ -205,7 +154,50 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
-    this.alumnoId.set(1);
+    const user = this.authService.getUsuarioActual();
+    if (user && user.username) {
+      this.alumnoService.buscarPorDni(user.username).subscribe({
+        next: (alumno) => {
+          this.alumnoId.set(alumno.id);
+          this.alumnoService.obtenerCursos(alumno.id).subscribe({
+            next: (data) => {
+              const colors = ['#fde8d8', '#d4edfa', '#d9f5e0', '#ede8fd', '#fdf5d4'];
+              const cards: CursoCard[] = data.map((ca, i) => {
+                let iconKey = 'book';
+                const area = ca.areaCurricular.toLowerCase();
+                if (area.includes('matem')) iconKey = 'math';
+                else if (area.includes('comunic')) iconKey = 'comm';
+                else if (area.includes('cienc') || area.includes('cta')) iconKey = 'science';
+                else if (area.includes('hist') || area.includes('geog')) iconKey = 'history';
+                else if (area.includes('ingl')) iconKey = 'english';
+                else if (area.includes('física') || area.includes('deport')) iconKey = 'sport';
+                else if (area.includes('arte')) iconKey = 'art';
+                else if (area.includes('tutor')) iconKey = 'tutor';
+
+                let docenteNombre = 'Docente Asignado';
+                if (ca.docente && ca.docente.nombres) {
+                  docenteNombre = `${ca.docente.nombres.split(' ')[0]} ${ca.docente.apellidoPaterno}`;
+                }
+
+                return {
+                  id: ca.id,
+                  nombre: ca.areaCurricular,
+                  codigo: `${ca.areaCurricular.substring(0,3).toUpperCase()}-${ca.aula.grado}${ca.aula.seccion}`,
+                  grado: `${ca.aula.grado} ${ca.aula.nivel}`,
+                  modalidad: 'Presencial',
+                  docente: docenteNombre,
+                  progreso: 0,
+                  color: colors[i % colors.length],
+                  icono: iconKey
+                };
+              });
+              this.cursos.set(cards);
+            }
+          });
+        },
+        error: (err: any) => console.error('Error fetching alumno', err)
+      });
+    }
     this.cargarNotas();
   }
 
@@ -227,6 +219,54 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
     this.cursoActivo.set(curso);
     this.cursosVista.set('detalle');
     this.tabCurso.set('contenido');
+
+    this.cargando.set(true);
+    this.materialService.listarPorCursoAsignado(curso.id).subscribe({
+      next: (materiales: any[]) => {
+        // Build bimestres with materiales
+        const bimestres: BimestreData[] = [
+          { numero: 1, nombre: 'Primer Bimestre', periodo: 'Mar – May', semanas: [] },
+          { numero: 2, nombre: 'Segundo Bimestre', periodo: 'Jun – Jul', semanas: [] },
+          { numero: 3, nombre: 'Tercer Bimestre', periodo: 'Ago – Sep', semanas: [] },
+          { numero: 4, nombre: 'Cuarto Bimestre', periodo: 'Oct – Nov', semanas: [] },
+        ];
+
+        // Initialize 5 weeks per bimestre
+        for (let b = 0; b < 4; b++) {
+          for (let s = 1; s <= 5; s++) {
+            bimestres[b].semanas.push({
+              numero: b * 5 + s,
+              actividades: []
+            });
+          }
+        }
+
+        // Fill materials
+        materiales.forEach((m: any) => {
+          const semana = m.semana;
+          const bimestreIndex = Math.floor((semana - 1) / 5);
+          if (bimestreIndex >= 0 && bimestreIndex < 4) {
+            const semanaData = bimestres[bimestreIndex].semanas.find(s => s.numero === semana);
+            if (semanaData) {
+              semanaData.actividades.push({
+                tipo: 'material',
+                esCalificada: false,
+                subtipo: 'Material de lectura',
+                nombre: m.nombreArchivo,
+                estado: 'no_revisado',
+                desde: m.fechaSubida,
+                hasta: '',
+                url: m.urlArchivo
+              });
+            }
+          }
+        });
+
+        this.bimestres.set(bimestres);
+        this.cargando.set(false);
+      },
+      error: () => this.cargando.set(false)
+    });
   }
 
   volverALista(): void {
@@ -289,7 +329,7 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
 
   getActividadesFiltradas(tipo: 'evaluacion' | 'tarea'): { bimestre: number; semana: number; act: ActividadBimestre }[] {
     const result: { bimestre: number; semana: number; act: ActividadBimestre }[] = [];
-    for (const b of this.bimestres) {
+    for (const b of this.bimestres()) {
       for (const s of b.semanas) {
         for (const a of s.actividades) {
           if (a.tipo === tipo) result.push({ bimestre: b.numero, semana: s.numero, act: a });
@@ -297,6 +337,10 @@ export class AlumnoPortalComponent implements OnInit, OnDestroy {
       }
     }
     return result;
+  }
+
+  tieneTareas(sem: SemanaData): boolean {
+    return sem.actividades.some(a => a.tipo === 'tarea');
   }
 
   // ── Carga de datos ─────────────────────────────────────────────────────

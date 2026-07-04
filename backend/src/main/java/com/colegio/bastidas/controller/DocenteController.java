@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import com.colegio.bastidas.repository.CursoAsignadoRepository;
+import com.colegio.bastidas.model.CursoAsignado;
 
 /**
  * API REST de Docentes.
@@ -30,6 +32,7 @@ import java.util.Map;
 public class DocenteController {
 
     private final DocenteService docenteService;
+    private final CursoAsignadoRepository cursoAsignadoRepository;
 
     /**
      * GET /docentes
@@ -56,9 +59,19 @@ public class DocenteController {
      * Busca un docente por DNI.
      */
     @GetMapping("/dni/{dni}")
-    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN','DOCENTE')")
     public ResponseEntity<DocenteResponseDTO> buscarPorDni(@PathVariable String dni) {
         return ResponseEntity.ok(docenteService.buscarPorDni(dni));
+    }
+
+    /**
+     * GET /docentes/{id}/cursos
+     * Lista los cursos asignados a un docente.
+     */
+    @GetMapping("/{id}/cursos")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN','DOCENTE')")
+    public ResponseEntity<List<CursoAsignado>> obtenerCursosDelDocente(@PathVariable Long id) {
+        return ResponseEntity.ok(cursoAsignadoRepository.findByDocenteId(id));
     }
 
     /**

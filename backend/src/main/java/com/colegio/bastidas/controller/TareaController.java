@@ -21,23 +21,23 @@ public class TareaController {
 
     @PostMapping
     public ResponseEntity<Tarea> crearTarea(
-            @RequestParam Long cursoId,
+            @RequestParam Long cursoAsignadoId,
             @RequestParam Integer semana,
             @RequestParam String titulo,
             @RequestParam(required = false) String descripcion,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaLimite,
             @RequestParam Long docenteId) {
         
-        Tarea tarea = tareaService.crearTarea(cursoId, semana, titulo, descripcion, fechaLimite, docenteId);
+        Tarea tarea = tareaService.crearTarea(cursoAsignadoId, semana, titulo, descripcion, fechaLimite, docenteId);
         return ResponseEntity.ok(tarea);
     }
 
-    @GetMapping("/curso/{cursoId}/semana/{semana}")
+    @GetMapping("/curso/{cursoAsignadoId}/semana/{semana}")
     public ResponseEntity<List<Tarea>> obtenerTareas(
-            @PathVariable Long cursoId,
+            @PathVariable Long cursoAsignadoId,
             @PathVariable Integer semana) {
         
-        return ResponseEntity.ok(tareaService.obtenerTareasPorCursoYSemana(cursoId, semana));
+        return ResponseEntity.ok(tareaService.obtenerTareasPorCursoYSemana(cursoAsignadoId, semana));
     }
 
     @PostMapping("/{tareaId}/entregas")

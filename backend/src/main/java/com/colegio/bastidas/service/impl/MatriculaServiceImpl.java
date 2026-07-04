@@ -238,7 +238,7 @@ public class MatriculaServiceImpl implements MatriculaService {
         com.colegio.bastidas.dto.MatriculaDto dto = new com.colegio.bastidas.dto.MatriculaDto();
         dto.setId(matricula.getId());
         dto.setAlumnoId(matricula.getAlumno().getId());
-        dto.setNombreAlumno(matricula.getAlumno().getNombres() + " " + matricula.getAlumno().getApellidos());
+        dto.setNombreAlumno(matricula.getAlumno().getNombres() + " " + matricula.getAlumno().getApellidoPaterno() + " " + matricula.getAlumno().getApellidoMaterno());
         dto.setCodigoAlumno(matricula.getAlumno().getCodigoEstudiante());
         dto.setGrado(matricula.getGrado());
         dto.setSeccion(matricula.getSeccion());

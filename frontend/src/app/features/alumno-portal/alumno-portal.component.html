@@ -125,7 +125,7 @@
 
         <!-- Grid de cards -->
         <div class="cursos-grid">
-          @for (curso of cursos; track curso.id) {
+          @for (curso of cursos(); track curso.id) {
             <div class="curso-card" (click)="abrirCurso(curso)" role="button" [tabindex]="0"
               (keydown.enter)="abrirCurso(curso)">
               <!-- Thumbnail ilustrado -->
@@ -303,9 +303,9 @@
               <span>Las clases son <strong>presenciales</strong>. Los materiales y evaluaciones están disponibles en esta plataforma.</span>
             </div>
 
-            <div class="bimestres-header"><span>Bimestres del Año Escolar ({{ bimestres.length }})</span></div>
+            <div class="bimestres-header"><span>Bimestres del Año Escolar ({{ bimestres().length }})</span></div>
 
-            @for (bim of bimestres; track bim.numero) {
+            @for (bim of bimestres(); track bim.numero) {
               <div class="bimestre-block">
                 <button class="bimestre-header" (click)="toggleBimestre(bim.numero)">
                   <div class="bimestre-title">
@@ -367,6 +367,15 @@
                                     Subir Tarea
                                     <input type="file" style="display: none;" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg">
                                   </label>
+                                } @else if (act.tipo === 'material' && act.url) {
+                                  <a [href]="act.url" target="_blank" class="btn-actividad" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; color: white; background-color: #2563eb; padding: 6px 12px; border-radius: 6px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                      <polyline points="7 10 12 15 17 10"></polyline>
+                                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Descargar
+                                  </a>
                                 } @else {
                                   <button class="btn-actividad">→ Ir a la actividad</button>
                                 }
@@ -425,23 +434,49 @@
         <!-- ─ TAB: TAREAS ─ -->
         @if (tabCurso() === 'tareas') {
           <div class="tab-body">
-            <div class="list-header">
-              <h3>Tareas ({{ getActividadesFiltradas('tarea').length }})</h3>
+            <div class="list-header" style="margin-bottom: 20px;">
+              <h3>Bandeja de Tareas</h3>
+              <p style="color: #6b7280; font-size: 13px;">Tareas entregadas y pendientes agrupadas por semana.</p>
             </div>
-            @for (item of getActividadesFiltradas('tarea'); track item.act.nombre) {
-              <div class="actividad-card" style="margin-bottom:8px">
-                <div class="actividad-info">
-                  <span class="actividad-subtipo">{{ item.act.subtipo }}</span>
-                  <span class="actividad-nombre">{{ item.act.nombre }}</span>
-                  <div class="actividad-fechas">
-                    <span>Desde: {{ item.act.desde }}</span>
-                    <span>Hasta: {{ item.act.hasta }}</span>
+            
+            @for (bim of bimestres(); track bim.numero) {
+              @for (sem of bim.semanas; track sem.numero) {
+                @if (tieneTareas(sem)) {
+                  <div class="semana-block" style="background: #fff; margin-bottom: 16px; border-radius: 8px; border: 1px solid #e5e7eb; overflow: hidden;">
+                    <div class="semana-header" style="background: #f9fafb; padding: 12px 20px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 8px;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      Bimestre {{ bim.numero }} – Semana {{ sem.numero }}
+                    </div>
+                    <div class="bimestre-body">
+                      @for (act of sem.actividades; track act.nombre) {
+                        @if (act.tipo === 'tarea') {
+                          <div class="actividad-card" style="border-bottom: 1px solid #f3f4f6; padding: 16px 20px;">
+                            <div class="actividad-icon" style="margin-right: 14px;">
+                              <svg width="18" height="18" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            </div>
+                            <div class="actividad-info">
+                              <span class="actividad-subtipo">{{ act.subtipo }}</span>
+                              <span class="actividad-nombre" style="font-size: 15px;">{{ act.nombre }}</span>
+                              <div class="actividad-fechas" style="margin-top: 4px;">
+                                <span><strong>Desde:</strong> {{ act.desde }}</span>
+                                <span><strong>Hasta:</strong> {{ act.hasta }}</span>
+                              </div>
+                            </div>
+                            <div class="actividad-actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                              <span class="badge-estado" [class]="'badge-' + act.estado">{{ getEstadoLabel(act.estado) }}</span>
+                              <label class="btn-actividad" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 6px; font-weight: 500; font-size: 12px; transition: background 0.2s;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                {{ act.estado === 'entregada' ? 'Actualizar Tarea' : 'Subir Tarea' }}
+                                <input type="file" style="display: none;" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg">
+                              </label>
+                            </div>
+                          </div>
+                        }
+                      }
+                    </div>
                   </div>
-                </div>
-                <span class="badge-estado" [class]="'badge-' + item.act.estado">
-                  {{ getEstadoLabel(item.act.estado) }}
-                </span>
-              </div>
+                }
+              }
             }
           </div>
         }

@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Year;
 import java.util.List;
 
+import com.colegio.bastidas.repository.CursoAsignadoRepository;
+import com.colegio.bastidas.model.CursoAsignado;
+
 /**
  * API REST de Alumnos.
  * Base: {@code /api/v1/alumnos}
@@ -26,6 +29,7 @@ import java.util.List;
 public class AlumnoController {
 
     private final AlumnoService alumnoService;
+    private final CursoAsignadoRepository cursoAsignadoRepository;
 
     /**
      * GET /alumnos?anio=2026
@@ -73,7 +77,7 @@ public class AlumnoController {
      * GET /alumnos/dni/{dni}
      */
     @GetMapping("/dni/{dni}")
-    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN','ALUMNO')")
     public ResponseEntity<AlumnoResponseDTO> buscarPorDni(@PathVariable String dni) {
         return ResponseEntity.ok(alumnoService.buscarPorDni(dni));
     }
@@ -88,6 +92,7 @@ public class AlumnoController {
             @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio) {
         return ResponseEntity.ok(alumnoService.listarConPermisoAcademia(anio));
     }
+
 
     /**
      * POST /alumnos
@@ -110,5 +115,19 @@ public class AlumnoController {
             @PathVariable Long id,
             @Valid @RequestBody AlumnoRequestDTO dto) {
         return ResponseEntity.ok(alumnoService.actualizar(id, dto));
+    }
+
+    /**
+     * GET /alumnos/{id}/cursos
+     * Obtiene los cursos asignados al aula del alumno.
+     */
+    @GetMapping("/{id}/cursos")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN','ALUMNO')")
+    public ResponseEntity<List<CursoAsignado>> obtenerCursosDelAlumno(@PathVariable Long id) {
+        AlumnoResponseDTO alumno = alumnoService.buscarPorId(id);
+        if (alumno.getAulaId() == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        return ResponseEntity.ok(cursoAsignadoRepository.findByAulaId(alumno.getAulaId()));
     }
 }

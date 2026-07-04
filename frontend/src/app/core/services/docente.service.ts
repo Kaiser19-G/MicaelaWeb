@@ -25,6 +25,24 @@ export interface SemaforoConteo {
   retrasados: number;
 }
 
+export interface CursoAsignado {
+  id: number;
+  areaCurricular: string;
+  anioAcademico: number;
+  aula: {
+    id: number;
+    grado: string;
+    seccion: string;
+    nivel: string;
+  };
+  docente?: {
+    nombres: string;
+    apellidoPaterno: string;
+    apellidoMaterno: string;
+    nombreCompleto: string;
+  };
+}
+
 /**
  * Servicio Angular para consumir la API de Docentes.
  * Base: /api/v1/docentes
@@ -56,5 +74,15 @@ export class DocenteService {
   /** Busca un docente por ID. */
   buscarPorId(id: number): Observable<DocenteResponse> {
     return this.http.get<DocenteResponse>(`${this.BASE}/${id}`);
+  }
+
+  /** Busca un docente por su DNI. */
+  buscarPorDni(dni: string): Observable<DocenteResponse> {
+    return this.http.get<DocenteResponse>(`${this.BASE}/dni/${dni}`);
+  }
+
+  /** Obtiene los cursos asignados a un docente */
+  obtenerCursos(id: number): Observable<CursoAsignado[]> {
+    return this.http.get<CursoAsignado[]>(`${this.BASE}/${id}/cursos`);
   }
 }

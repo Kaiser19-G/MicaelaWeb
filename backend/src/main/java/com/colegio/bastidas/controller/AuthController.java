@@ -30,6 +30,8 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final UsuarioRepository usuarioRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final com.colegio.bastidas.repository.DocenteRepository docenteRepository;
+    private final com.colegio.bastidas.repository.AlumnoRepository alumnoRepository;
 
     /**
      * POST /auth/login
@@ -48,13 +50,25 @@ public class AuthController {
         Usuario usuario = usuarioRepository.findByUsername(request.username())
             .orElseThrow();
 
-        return ResponseEntity.ok(Map.of(
-            "token", token,
-            "tipo", "Bearer",
-            "username", usuario.getUsername(),
-            "rol", usuario.getRol().name(),
-            "primerLogin", usuario.getPrimerLogin()
-        ));
+        // Resolver el id del perfil asociado (Docente o Alumno)
+        Long perfilId = null;
+        if (usuario.getRol().name().equals("DOCENTE")) {
+            perfilId = docenteRepository.findByUsuarioId(usuario.getId())
+                .map(d -> d.getId()).orElse(null);
+        } else if (usuario.getRol().name().equals("ALUMNO")) {
+            perfilId = alumnoRepository.findByUsuarioId(usuario.getId())
+                .map(a -> a.getId()).orElse(null);
+        }
+
+        java.util.Map<String, Object> resp = new java.util.HashMap<>();
+        resp.put("token", token);
+        resp.put("tipo", "Bearer");
+        resp.put("id", usuario.getId());
+        resp.put("username", usuario.getUsername());
+        resp.put("rol", usuario.getRol().name());
+        resp.put("primerLogin", usuario.getPrimerLogin());
+        if (perfilId != null) resp.put("perfilId", perfilId);
+        return ResponseEntity.ok(resp);
     }
 
     /**

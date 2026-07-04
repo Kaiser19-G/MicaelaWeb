@@ -20,6 +20,8 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
 
     Optional<Alumno> findByCodigoEstudiante(String codigoEstudiante);
 
+    Optional<Alumno> findByUsuarioId(Long usuarioId);
+
     List<Alumno> findByAulaIdAndEstadoMatricula(Long aulaId, Alumno.EstadoMatricula estado);
 
     List<Alumno> findByAnioAcademicoAndEstadoMatricula(Integer anio, Alumno.EstadoMatricula estado);

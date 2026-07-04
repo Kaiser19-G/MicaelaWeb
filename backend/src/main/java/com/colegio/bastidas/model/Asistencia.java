@@ -119,6 +119,7 @@ public class Asistencia {
         ASISTIO,
         FALTA,
         TARDANZA,
+        TARDANZA_JUSTIFICADA,
         LICENCIA,
         PERMISO_ACADEMIA,
         JUSTIFICADO

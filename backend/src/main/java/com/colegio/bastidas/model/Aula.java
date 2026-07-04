@@ -47,10 +47,12 @@ public class Aula {
     private String aulaReferencia; // "Pabellón A – Aula 201"
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @JoinColumn(name = "docente_principal_id")
     private Docente docentePrincipal;
 
     @OneToMany(mappedBy = "aula", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
     private List<Alumno> alumnos = new ArrayList<>();
 

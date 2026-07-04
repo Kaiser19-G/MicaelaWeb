@@ -11,6 +11,16 @@
         </svg>
         <span class="sidebar-label">Cursos</span>
       </button>
+      <button class="sidebar-item" [class.active]="sidebarNav() === 'horario'" (click)="setSidebarNav('horario')" title="Horario">
+        <div class="active-indicator"></div>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span class="sidebar-label">Horario</span>
+      </button>
     </nav>
     <div class="sidebar-bottom">
       <div class="sidebar-avatar" [title]="usuarioNombre()">{{ usuarioInicial() }}</div>
@@ -101,7 +111,7 @@
       <!-- Stats row -->
       <div class="stats-row">
         <div class="stat-chip">
-          <span class="stat-num">{{ cursos.length }}</span>
+          <span class="stat-num">{{ cursos().length }}</span>
           <span class="stat-label">Cursos</span>
         </div>
         <div class="stat-chip">
@@ -262,22 +272,51 @@
                     </span>
                   </div>
 
-                  <!-- Acciones: solo en la semana actual -->
-                  <div class="semana-actions" *ngIf="esSemanaActual(sem)">
+                  <!-- Acciones: en todas las semanas -->
+                  <div class="semana-actions">
+                    <button class="btn-semana-action btn-asistencia" (click)="abrirModalCalificacion(sem)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                      Calificación Diaria
+                    </button>
                     <button class="btn-semana-action btn-asistencia" (click)="abrirModalAsistencia(sem)">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5.5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                      Asistencia
+                      {{ sem.asistenciaRegistrada ? 'Ver asistencia' : 'Tomar asistencia' }}
                     </button>
                     <button class="btn-semana-action btn-tarea" (click)="abrirModalTarea(sem)">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                       Tarea / Avance
                     </button>
+                    <label class="btn-semana-action btn-tarea" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      Agregar Material
+                      <input type="file" style="display: none;" accept=".pdf,.doc,.docx,.ppt,.pptx" (change)="validarTamanioMaterial($event, sem)">
+                    </label>
                   </div>
                 </div>
 
                 <!-- Temas de la semana -->
                 <div class="temas-list" *ngIf="sem.temas.length > 0">
                   <span class="tema-chip" *ngFor="let tema of sem.temas">{{ tema }}</span>
+                </div>
+
+                <!-- Materiales de la semana -->
+                <div class="materiales-list" *ngIf="sem.recursos && sem.recursos.length > 0" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                  <h4 style="font-size: 13px; font-weight: 600; color: #4b5563; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Materiales y Recursos</h4>
+                  <div class="material-item" *ngFor="let m of sem.recursos" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div class="material-icon" style="color: #3b82f6;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                      </div>
+                      <div>
+                        <div style="font-size: 14px; font-weight: 500; color: #111827;">{{ m.nombreArchivo || m.titulo || 'Archivo' }}</div>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">Semana {{ sem.numero }} · {{ m.fechaSubida || '' }}</div>
+                      </div>
+                    </div>
+                    <a [href]="getUrlDescarga(m)" [download]="m.nombreArchivo || 'archivo'" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: white; border: 1px solid #d1d5db; border-radius: 6px; color: #374151; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Descargar
+                    </a>
+                  </div>
                 </div>
 
                 <!-- Tareas/Avances de la semana -->
@@ -328,7 +367,7 @@
               </div>
             </div>
           </div>
-          <div *ngIf="errorNotasSinEvidencia()" class="alerta-evidencia">⚠️ <strong>Evidencia requerida:</strong> Adjunta un archivo para cada nota modificada.</div>
+          <div *ngIf="errorNotasSinEvidencia()" class="alerta-evidencia">⚠️ <strong>Información:</strong> Faltan evidencias en algunas notas, pero se guardarán de todos modos.</div>
           <div *ngIf="notasGuardadasExito()" class="alerta-exito">✅ Notas del Bimestre {{ bimestreActivo }} guardadas.</div>
           <div class="notas-table-wrap">
             <table class="notas-table">
@@ -472,6 +511,10 @@
                   <input type="radio" [name]="'asis_' + alumno.id" value="TARDANZA" [(ngModel)]="alumno.estado" style="display:none">
                   ⏱ Tardanza
                 </label>
+                <label class="radio-pill justified" [class.selected]="alumno.estado === 'TARDANZA_JUSTIFICADA'" (click)="setEstadoAlumno(alumno, 'TARDANZA_JUSTIFICADA')">
+                  <input type="radio" [name]="'asis_' + alumno.id" value="TARDANZA_JUSTIFICADA" [(ngModel)]="alumno.estado" style="display:none">
+                  ⏱ T. Justificada
+                </label>
                 <!-- RN-01: Ocultar Falta si tiene permiso de academia -->
                 <label class="radio-pill absent" [class.selected]="alumno.estado === 'FALTA'" (click)="setEstadoAlumno(alumno, 'FALTA')" *ngIf="!alumno.permisoAcademia">
                   <input type="radio" [name]="'asis_' + alumno.id" value="FALTA" [(ngModel)]="alumno.estado" style="display:none">
@@ -489,10 +532,70 @@
     </div>
 
     <div class="modal-footer">
-      <button id="btn-cancelar-asistencia" class="btn-secondary" (click)="cerrarModales()">Cancelar</button>
-      <button id="btn-guardar-asistencia" class="btn-primary" (click)="guardarAsistencia()">
+      <button id="btn-cancelar-asistencia" class="btn-secondary" (click)="cerrarModales()" [disabled]="guardandoAsistencia()">Cancelar</button>
+      <button id="btn-guardar-asistencia" class="btn-primary" (click)="guardarAsistencia()" [disabled]="guardandoAsistencia()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        Guardar Asistencia
+        {{ guardandoAsistencia() ? 'Guardando...' : 'Guardar Asistencia' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: CALIFICACIÓN DIARIA
+══════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalCalificacionVisible()" (click)="cerrarModales()">
+  <div class="modal-dialog modal-asistencia" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-info">
+        <h2 id="modal-calificacion-title">Calificación Diaria</h2>
+        <p class="modal-subtitle">{{ cursoActivo()?.nombre }} · {{ semanaSeleccionada()?.label }}</p>
+      </div>
+      <button class="btn-close" (click)="cerrarModales()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <table class="asistencia-table">
+        <thead>
+          <tr>
+            <th style="width:36px">N°</th>
+            <th>Alumno</th>
+            <th>Calificación (Letras)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let alumno of alumnosMock; let i = index">
+            <td class="td-num">{{ i + 1 }}</td>
+            <td>
+              <div class="alumno-cell">
+                <span class="alumno-nombre">{{ alumno.nombre }}</span>
+                <div class="alumno-badges">
+                  <span class="badge-estado" [class]="'badge-' + alumno.estado.toLowerCase()">{{ alumno.estado }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="radio-pill-group">
+                <label *ngFor="let opt of opcionesCalificacionDiaria" class="radio-pill present" 
+                       [class.selected]="alumno.calificacionDiaria === opt" 
+                       (click)="setCalificacionDiaria(alumno, opt)">
+                  <input type="radio" [name]="'calif_' + alumno.id" [value]="opt" [(ngModel)]="alumno.calificacionDiaria" style="display:none">
+                  {{ opt }}
+                </label>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModales()" [disabled]="guardandoCalificacionDiaria()">Cancelar</button>
+      <button class="btn-primary" (click)="guardarCalificacionDiaria()" [disabled]="guardandoCalificacionDiaria()">
+        <svg *ngIf="!guardandoCalificacionDiaria()" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ guardandoCalificacionDiaria() ? 'Guardando...' : 'Guardar Calificación' }}
       </button>
     </div>
   </div>
@@ -529,6 +632,20 @@
           </label>
         </div>
       </div>
+      <!-- Tipo de Calificación (Letras/Números) -->
+      <div class="form-group" style="margin-top: 16px;">
+        <label>Tipo de calificación</label>
+        <div class="tipo-selector" style="gap: 12px; margin-top: 8px;">
+          <label class="tipo-option" [class.selected]="nuevaTarea.tipoCalificacion === 'letras'" style="padding: 8px 12px;">
+            <input type="radio" [(ngModel)]="nuevaTarea.tipoCalificacion" value="letras" style="display:none">
+            Letras (AD - C)
+          </label>
+          <label class="tipo-option" [class.selected]="nuevaTarea.tipoCalificacion === 'numeros'" style="padding: 8px 12px;">
+            <input type="radio" [(ngModel)]="nuevaTarea.tipoCalificacion" value="numeros" style="display:none">
+            Números (0 - 20)
+          </label>
+        </div>
+      </div>
       <div class="form-group">
         <label for="tarea-titulo">Título</label>
         <input id="tarea-titulo" type="text" [(ngModel)]="nuevaTarea.titulo" placeholder="Ej: Ejercicios de Ecuaciones Lineales">
@@ -555,5 +672,31 @@
         Crear {{ nuevaTarea.tipo === 'avance' ? 'Avance' : 'Tarea' }}
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL: ÉXITO / ERROR
+══════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalExitoVisible()" style="z-index: 1050; display: flex; align-items: center; justify-content: center;">
+  <div class="modal-dialog" style="max-width: 400px; text-align: center; padding: 2rem;">
+    <div [ngStyle]="{'background': esError() ? '#fee2e2' : '#e0f2fe', 'color': esError() ? '#ef4444' : '#0ea5e9'}" style="width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+      
+      <!-- Icono de Exito -->
+      <svg *ngIf="!esError()" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      
+      <!-- Icono de Error -->
+      <svg *ngIf="esError()" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+
+    </div>
+    <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem; font-weight: 600; color: #111827;">{{ esError() ? 'Error' : '¡Listo!' }}</h3>
+    <p style="color: #6b7280; font-size: 0.95rem; line-height: 1.4;">{{ mensajeExito() }}</p>
   </div>
 </div>

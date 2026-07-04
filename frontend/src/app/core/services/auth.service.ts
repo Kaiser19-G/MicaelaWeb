@@ -12,12 +12,15 @@ export interface LoginRequest {
 export interface AuthResponse {
   token: string;
   tipo: string;
+  id?: number;
   username: string;
   rol: 'DIRECTOR' | 'DOCENTE' | 'ALUMNO' | 'ADMIN';
   primerLogin: boolean;
 }
 
 export interface UsuarioActual {
+  id?: number;
+  perfilId?: number;  // id del Docente o Alumno (no del Usuario)
   username: string;
   rol: AuthResponse['rol'];
   primerLogin: boolean;
@@ -53,6 +56,8 @@ export class AuthService {
       tap(response => {
         localStorage.setItem(this.TOKEN_KEY, response.token);
         const usuario: UsuarioActual = {
+          id: response.id ?? undefined,
+          perfilId: (response as any).perfilId ?? undefined,
           username:   response.username,
           rol:        response.rol,
           primerLogin: response.primerLogin

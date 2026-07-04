@@ -68,15 +68,18 @@ public class Docente {
 
     // ── Relación con Usuario ──────────────────────────────────────────────
     @OneToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
     // ── Relaciones ────────────────────────────────────────────────────────
     @OneToMany(mappedBy = "docentePrincipal", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
     private List<Aula> aulas = new ArrayList<>();
 
     @OneToMany(mappedBy = "docente", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
     private List<Asistencia> asistenciasRegistradas = new ArrayList<>();
 

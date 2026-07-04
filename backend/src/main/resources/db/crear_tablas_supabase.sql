@@ -83,8 +83,8 @@ CREATE TABLE IF NOT EXISTS asistencias (
     aula_id                     BIGINT REFERENCES aulas(id),
     docente_id                  BIGINT REFERENCES docentes(id),
     fecha                       DATE   NOT NULL,
-    estado                      VARCHAR(20) NOT NULL DEFAULT 'ASISTIO'
-                                CHECK (estado IN ('ASISTIO','FALTA','TARDANZA','LICENCIA','PERMISO_ACADEMIA','JUSTIFICADO')),
+    estado                      VARCHAR(30) NOT NULL DEFAULT 'ASISTIO'
+                                CHECK (estado IN ('ASISTIO','FALTA','TARDANZA','TARDANZA_JUSTIFICADA','LICENCIA','PERMISO_ACADEMIA','JUSTIFICADO')),
     hora_llegada                TIME,
     hora_entrada_turno          TIME,
     minutos_tardanza            INTEGER,
@@ -174,7 +174,90 @@ CREATE TABLE IF NOT EXISTS expediente_documentos (
     created_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ── 9. USUARIO ADMIN INICIAL (para poder hacer login) ────────────────────────
+-- ── 9. MATRICULAS ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS matriculas (
+    id               BIGSERIAL PRIMARY KEY,
+    alumno_id        BIGINT NOT NULL, -- Nota: sin FK física a alumnos en la BD actual (Supabase)
+    grado            VARCHAR(50)  NOT NULL,
+    seccion          VARCHAR(10)  NOT NULL,
+    anio_escolar     INTEGER      NOT NULL CHECK (anio_escolar >= 2000),
+    fecha_matricula  TIMESTAMP WITHOUT TIME ZONE,
+    estado           VARCHAR(20)  CHECK (estado IN ('ACTIVO','RETIRADO','TRASLADADO')),
+    UNIQUE (alumno_id, anio_escolar)
+);
+
+-- ── 10. CURSOS ASIGNADOS (Docente + Aula + Área, por año académico) ──────────
+CREATE TABLE IF NOT EXISTS cursos_asignados (
+    id               BIGSERIAL PRIMARY KEY,
+    docente_id       BIGINT NOT NULL REFERENCES docentes(id) ON DELETE CASCADE,
+    aula_id          BIGINT NOT NULL REFERENCES aulas(id) ON DELETE CASCADE,
+    area_curricular  VARCHAR(100) NOT NULL,
+    anio_academico   INTEGER      NOT NULL,
+    created_at       TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_curso_docente ON cursos_asignados(docente_id);
+CREATE INDEX IF NOT EXISTS idx_curso_aula    ON cursos_asignados(aula_id);
+
+-- ── 11. TAREAS (Tareas / Avances de proyecto por curso y semana) ─────────────
+CREATE TABLE IF NOT EXISTS tareas (
+    id                 BIGSERIAL PRIMARY KEY,
+    curso_asignado_id  BIGINT NOT NULL, -- Nota: sin FK física a cursos_asignados en la BD actual
+    semana             INTEGER      NOT NULL,
+    titulo             VARCHAR(200) NOT NULL,
+    descripcion        TEXT,
+    fecha_limite       TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    tipo_calificacion  VARCHAR(20),
+    docente_id         BIGINT NOT NULL REFERENCES docentes(id) ON DELETE CASCADE,
+    created_at         TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ── 12. ENTREGAS DE TAREA (Subida de evidencia del alumno) ───────────────────
+CREATE TABLE IF NOT EXISTS entregas_tarea (
+    id                  BIGSERIAL PRIMARY KEY,
+    tarea_id            BIGINT NOT NULL REFERENCES tareas(id) ON DELETE CASCADE,
+    alumno_id           BIGINT NOT NULL REFERENCES alumnos(id) ON DELETE CASCADE,
+    archivo_url         TEXT         NOT NULL,
+    nombre_archivo      VARCHAR(255) NOT NULL,
+    fecha_entrega       TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    nota_asignada       NUMERIC(4,2),
+    comentario_docente  TEXT,
+    UNIQUE (tarea_id, alumno_id)
+);
+
+-- ── 13. MATERIALES DE SEMANA (Recursos subidos por el docente) ───────────────
+CREATE TABLE IF NOT EXISTS materiales_semana (
+    id                 BIGSERIAL PRIMARY KEY,
+    curso_asignado_id  BIGINT NOT NULL, -- Nota: sin FK física a cursos_asignados en la BD actual
+    semana             INTEGER      NOT NULL,
+    nombre_archivo     VARCHAR(200) NOT NULL,
+    url_archivo        VARCHAR(1000) NOT NULL,
+    docente_id         BIGINT NOT NULL, -- Nota: sin FK física a docentes en la BD actual
+    created_at         TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_material_curso  ON materiales_semana(curso_asignado_id);
+CREATE INDEX IF NOT EXISTS idx_material_semana ON materiales_semana(curso_asignado_id, semana);
+
+-- ── 14. CALIFICACIONES DIARIAS (Nota rápida por semana, ligada a asistencia) ──
+CREATE TABLE IF NOT EXISTS calificaciones_diarias (
+    id                 BIGSERIAL PRIMARY KEY,
+    alumno_id          BIGINT NOT NULL REFERENCES alumnos(id) ON DELETE CASCADE,
+    docente_id         BIGINT NOT NULL REFERENCES docentes(id) ON DELETE CASCADE,
+    curso_asignado_id  BIGINT NOT NULL REFERENCES cursos_asignados(id),
+    semana             INTEGER     NOT NULL,
+    calificacion       VARCHAR(2)  NOT NULL, -- 'AD','A','B','C','D','NP'
+    created_at         TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_calif_diaria_alumno ON calificaciones_diarias(alumno_id);
+CREATE INDEX IF NOT EXISTS idx_calif_diaria_semana ON calificaciones_diarias(curso_asignado_id, semana);
+
+-- ── 15. USUARIO ADMIN INICIAL (para poder hacer login) ────────────────────────
 -- Contraseña: admin123  (BCrypt hash — cámbiala en producción)
 INSERT INTO usuarios (username, password, email, rol, activo, primer_login)
 VALUES (

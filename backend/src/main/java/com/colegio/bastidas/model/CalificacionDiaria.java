@@ -10,17 +10,30 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tareas")
+@Table(name = "calificaciones_diarias", indexes = {
+    @Index(name = "idx_calif_diaria_alumno", columnList = "alumno_id"),
+    @Index(name = "idx_calif_diaria_semana", columnList = "curso_asignado_id, semana")
+})
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class Tarea {
+public class CalificacionDiaria {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "alumno_id", nullable = false)
+    @NotNull
+    private Alumno alumno;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "docente_id", nullable = false)
+    @NotNull
+    private Docente docente;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curso_asignado_id", nullable = false)
@@ -31,23 +44,9 @@ public class Tarea {
     @NotNull
     private Integer semana;
 
-    @Column(nullable = false, length = 200)
+    @Column(nullable = false, length = 2)
     @NotBlank
-    private String titulo;
-
-    @Column(columnDefinition = "TEXT")
-    private String descripcion;
-
-    @Column(name = "fecha_limite", nullable = false)
-    @NotNull
-    private LocalDateTime fechaLimite;
-
-    @Column(name = "tipo_calificacion", length = 20)
-    private String tipoCalificacion; // "letras" o "numeros"
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "docente_id", nullable = false)
-    private Docente docente;
+    private String calificacion; // "AD", "A", "B", "C", "D", "NP"
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

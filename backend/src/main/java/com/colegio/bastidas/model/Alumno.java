@@ -63,6 +63,7 @@ public class Alumno {
 
     // ── Datos de Matrícula ────────────────────────────────────────────────
     @OneToOne(fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
@@ -108,14 +109,17 @@ public class Alumno {
 
     // ── Relaciones ────────────────────────────────────────────────────────
     @OneToMany(mappedBy = "alumno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
     private List<Asistencia> asistencias = new ArrayList<>();
 
     @OneToMany(mappedBy = "alumno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
     private List<Nota> notas = new ArrayList<>();
 
     @OneToMany(mappedBy = "alumno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Builder.Default
     private List<ExpedienteDocumento> expedienteDocumentos = new ArrayList<>();
 

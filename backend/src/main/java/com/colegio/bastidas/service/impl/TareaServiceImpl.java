@@ -5,6 +5,7 @@ import com.colegio.bastidas.model.Docente;
 import com.colegio.bastidas.model.EntregaTarea;
 import com.colegio.bastidas.model.Tarea;
 import com.colegio.bastidas.repository.AlumnoRepository;
+import com.colegio.bastidas.repository.CursoAsignadoRepository;
 import com.colegio.bastidas.repository.DocenteRepository;
 import com.colegio.bastidas.repository.EntregaTareaRepository;
 import com.colegio.bastidas.repository.TareaRepository;
@@ -33,14 +34,18 @@ public class TareaServiceImpl implements TareaService {
     private final DocenteRepository docenteRepository;
     private final AlumnoRepository alumnoRepository;
     private final SupabaseStorageService storageService;
+    private final CursoAsignadoRepository cursoAsignadoRepository;
 
     @Override
-    public Tarea crearTarea(Long cursoId, Integer semana, String titulo, String descripcion, LocalDateTime fechaLimite, Long docenteId) {
+    public Tarea crearTarea(Long cursoAsignadoId, Integer semana, String titulo, String descripcion, LocalDateTime fechaLimite, Long docenteId) {
         Docente docente = docenteRepository.findById(docenteId)
             .orElseThrow(() -> new IllegalArgumentException("Docente no encontrado"));
 
+        com.colegio.bastidas.model.CursoAsignado cursoAsignado = cursoAsignadoRepository.findById(cursoAsignadoId)
+            .orElseThrow(() -> new IllegalArgumentException("Curso asignado no encontrado"));
+
         Tarea tarea = Tarea.builder()
-            .cursoId(cursoId)
+            .cursoAsignado(cursoAsignado)
             .semana(semana)
             .titulo(titulo)
             .descripcion(descripcion)
@@ -53,8 +58,8 @@ public class TareaServiceImpl implements TareaService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Tarea> obtenerTareasPorCursoYSemana(Long cursoId, Integer semana) {
-        return tareaRepository.findByCursoIdAndSemana(cursoId, semana);
+    public List<Tarea> obtenerTareasPorCursoYSemana(Long cursoAsignadoId, Integer semana) {
+        return tareaRepository.findByCursoAsignadoIdAndSemana(cursoAsignadoId, semana);
     }
 
     @Override

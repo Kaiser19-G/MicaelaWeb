@@ -43,6 +43,7 @@ public class AsistenciaServiceImpl implements AsistenciaService {
     private final AsistenciaRepository asistenciaRepository;
     private final AlumnoRepository alumnoRepository;
     private final DocenteRepository docenteRepository;
+    private final AsistenciaRegistroHelper registroHelper;
 
     // ── registrarAsistencia ────────────────────────────────────────────────
     @Override
@@ -101,16 +102,18 @@ public class AsistenciaServiceImpl implements AsistenciaService {
         List<Asistencia> resultado = new ArrayList<>();
         for (RegistroAsistenciaDto dto : registros) {
             try {
-                Asistencia a = registrarAsistencia(dto.alumnoId(), fecha, dto.estado(), docenteId);
-                if (dto.justificacion() != null) {
-                    a.setJustificacion(dto.justificacion());
-                    a.setTieneJustificacion(true);
-                }
+                // Cada alumno se registra en su propia transacción REQUIRES_NEW
+                Asistencia a = registroHelper.registrarUno(
+                    dto.alumnoId(), fecha, dto.estado(), docenteId, dto.justificacion());
                 resultado.add(a);
+                log.debug("Asistencia registrada: alumno={}, estado={}", dto.alumnoId(), dto.estado());
             } catch (Exception ex) {
-                log.error("Error al registrar asistencia para alumno={}: {}", dto.alumnoId(), ex.getMessage());
+                log.error("Error al registrar asistencia para alumno={}: {}",
+                    dto.alumnoId(), ex.getMessage());
+                // continuar con el siguiente alumno
             }
         }
+        log.info("Lote completado: {}/{} registros exitosos", resultado.size(), registros.size());
         return resultado;
     }
 
