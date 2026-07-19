@@ -11,9 +11,7 @@ import lombok.Data;
 @Data
 public class DocenteRequestDTO {
 
-    @NotBlank(message = "El código de docente es obligatorio")
-    @Size(max = 12)
-    private String codigoDocente;
+    // codigoDocente ya no se recibe: lo genera el backend (ver CodigosGenerator).
 
     @NotBlank(message = "El DNI es obligatorio")
     @Size(min = 8, max = 8, message = "El DNI debe tener exactamente 8 dígitos")

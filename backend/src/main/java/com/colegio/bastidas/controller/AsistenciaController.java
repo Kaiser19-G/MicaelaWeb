@@ -155,6 +155,22 @@ public class AsistenciaController {
     }
 
     /**
+     * GET /asistencias/alertas/faltas-excesivas/global
+     * Igual que el anterior pero para todas las aulas (panel del director).
+     * Acceso: DIRECTOR, ADMIN
+     */
+    @GetMapping("/alertas/faltas-excesivas/global")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
+    public ResponseEntity<List<AlertaFaltaDto>> alertasFaltasExcesivasGlobal(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin,
+            @RequestParam(defaultValue = "3") int minFaltas) {
+
+        return ResponseEntity.ok(
+            asistenciaService.detectarAlumnosConFaltasExcesivasGlobal(inicio, fin, minFaltas));
+    }
+
+    /**
      * GET /asistencias/alumno/{alumnoId}/permiso-academia
      * Verifica el permiso de academia de un alumno.
      */

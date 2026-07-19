@@ -1,23 +1,37 @@
 package com.colegio.bastidas.controller;
 
 import com.colegio.bastidas.dto.MatriculaDto;
+import com.colegio.bastidas.exception.AulaCompletaException;
 import com.colegio.bastidas.service.MatriculaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/matriculas-crud")
-@CrossOrigin(origins = "*")
+@RequestMapping("/matriculas-crud")
+@CrossOrigin(origins = "${app.cors.allowed-origins}", allowCredentials = "true")
+@PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
 public class MatriculaCrudController {
 
     private final MatriculaService matriculaService;
 
     public MatriculaCrudController(MatriculaService matriculaService) {
         this.matriculaService = matriculaService;
+    }
+
+    @ExceptionHandler(AulaCompletaException.class)
+    public ResponseEntity<Map<String, String>> manejarAulaCompleta(AulaCompletaException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> manejarArgumentoInvalido(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 
     @GetMapping("/anio/{anio}")

@@ -59,4 +59,11 @@ export class DashboardService {
   obtenerAlertas(): Observable<AlertaDashboard[]> {
     return this.http.get<AlertaDashboard[]>(`${this.BASE}/alertas`);
   }
+
+  /** Descarga un resumen de los KPIs del panel en Excel. */
+  exportar(anio?: number): Observable<Blob> {
+    let params = new HttpParams();
+    if (anio) params = params.set('anio', anio);
+    return this.http.get(`${this.BASE}/exportar`, { params, responseType: 'blob' });
+  }
 }

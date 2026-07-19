@@ -56,8 +56,8 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div class="director-avatar">{{ directorInicial() }}</div>
-      <div class="director-info">
+      <div class="director-avatar" (click)="abrirModalPerfil()" title="Mi Perfil" style="cursor:pointer;">{{ directorInicial() }}</div>
+      <div class="director-info" (click)="abrirModalPerfil()" style="cursor:pointer;">
         <span class="director-name">{{ directorNombre() }}</span>
         <span class="director-school">I.E. Micaela Bastidas</span>
       </div>
@@ -76,9 +76,12 @@
 
     <!-- ══ TAB: PANEL ═══════════════════════════════════════════════════════ -->
     @if (tabActiva() === 'panel') {
-    <div class="tab-header">
-      <h1 class="tab-title">Panel de Control</h1>
-      <p class="tab-subtitle">Vista estratégica del colegio – Gestión sin papel</p>
+    <div class="tab-header" style="display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <h1 class="tab-title">Panel de Control</h1>
+        <p class="tab-subtitle">Vista estratégica del colegio – Gestión sin papel</p>
+      </div>
+      <button class="btn-outline" (click)="exportarResumenDashboard()">⬇ Exportar Resumen (Excel)</button>
     </div>
 
     <!-- KPIs -->
@@ -174,7 +177,7 @@
           </svg>
         </div>
         <div class="alertas-list">
-          @for (alerta of alertasCentro; track alerta.titulo) {
+          @for (alerta of alertasCentro(); track alerta.titulo) {
           <div class="alerta-item">
             <div class="alerta-text">
               <span class="alerta-titulo">{{ alerta.titulo }}</span>
@@ -249,9 +252,12 @@
 
     <!-- ══ TAB: ADMINISTRACIÓN ══════════════════════════════════════════════ -->
     @if (tabActiva() === 'administracion') {
-    <div class="tab-header">
-      <h1 class="tab-title">Gestión Administrativa</h1>
-      <p class="tab-subtitle">El cerebro del sistema – Documentación digital</p>
+    <div class="tab-header" style="display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <h1 class="tab-title">Gestión Administrativa</h1>
+        <p class="tab-subtitle">El cerebro del sistema – Documentación digital</p>
+      </div>
+      <button class="btn-primary" (click)="abrirModalCrearAlumno()">+ Nuevo Alumno</button>
     </div>
 
     <div class="card">
@@ -270,33 +276,34 @@
           <tr>
             <th>Estudiante</th>
             <th>DNI</th>
-            <th>Grado</th>
+            <th>Aula</th>
             <th>Documentos</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          @for (exp of expedientesFiltrados(); track exp.id) {
+          @for (exp of expedientesFiltrados(); track exp.alumnoId) {
           <tr>
             <td>
-              <span class="student-name">{{ exp.nombre }}</span>
-              @if (exp.nee) { <span class="badge badge-nee">NEE</span> }
+              <span class="student-name">{{ exp.nombreCompleto }}</span>
             </td>
             <td class="text-mono">{{ exp.dni }}</td>
-            <td>{{ exp.grado }}</td>
+            <td>{{ exp.aulaDescripcion || '—' }}</td>
             <td>
               <div class="doc-icons">
-                @for (doc of exp.documentos; track $index) {
-                @if (doc === 'ok') { <span class="doc-icon doc-ok">✓</span> }
-                @if (doc === 'warn') { <span class="doc-icon doc-warn">!</span> }
-                @if (doc === 'error') { <span class="doc-icon doc-error">✗</span> }
-                }
+                <span class="doc-icon" [class.doc-ok]="exp.tieneDni" [class.doc-error]="!exp.tieneDni" title="DNI">D</span>
+                <span class="doc-icon" [class.doc-ok]="exp.tienePartidaNacimiento" [class.doc-error]="!exp.tienePartidaNacimiento" title="Partida de Nacimiento">P</span>
+                <span class="doc-count">{{ exp.totalDocumentos }} archivo(s)</span>
               </div>
             </td>
-            <td>
-              <button class="btn-primary btn-sm">Ver Expediente</button>
+            <td class="actions-cell">
+              <button class="btn-primary btn-sm" (click)="abrirModalExpediente(exp)">Ver Expediente</button>
+              <button class="btn-outline btn-sm" (click)="abrirModalEditarAlumno(exp.alumnoId)">Editar</button>
             </td>
           </tr>
+          }
+          @if (expedientesFiltrados().length === 0) {
+          <tr><td colspan="5" class="text-center empty-state">No hay alumnos matriculados en {{ anioActual }}.</td></tr>
           }
         </tbody>
       </table>
@@ -316,7 +323,7 @@
             <span class="mini-label">Pendientes</span>
           </div>
         </div>
-        <button class="btn-primary" style="margin-top: 1rem; width: 100%;">Ver Matrículas</button>
+        <button class="btn-primary" style="margin-top: 1rem; width: 100%;" [routerLink]="['/matriculas']">Ver Matrículas</button>
       </div>
       <div class="card">
         <h3 class="card-title">Control de Ingresos Especiales</h3>
@@ -338,9 +345,15 @@
 
     <!-- ══ TAB: DOCENTES ════════════════════════════════════════════════════ -->
     @if (tabActiva() === 'docentes') {
-    <div class="tab-header">
-      <h1 class="tab-title">Supervisión Docente</h1>
-      <p class="tab-subtitle">Monitoreo de planificación y evidencias – 68 docentes</p>
+    <div class="tab-header" style="display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <h1 class="tab-title">Supervisión Docente</h1>
+        <p class="tab-subtitle">Monitoreo de planificación y evidencias – 68 docentes</p>
+      </div>
+      <div style="display:flex; gap: 0.75rem;">
+        <button class="btn-outline" (click)="exportarDocentes()">⬇ Exportar (Excel)</button>
+        <button class="btn-primary" (click)="abrirModalCrearDocente()">+ Nuevo Docente</button>
+      </div>
     </div>
 
     <div class="kpi-grid-3">
@@ -383,7 +396,10 @@
         @for (doc of docentesSupervision; track doc.id) {
         <div class="docente-card">
           <div class="docente-card-header">
-            <span class="docente-card-nombre">{{ doc.nombreCompleto }}</span>
+            <span class="docente-card-nombre">
+              {{ doc.nombreCompleto }}
+              <span class="badge badge-danger" *ngIf="!doc.activo">Inactivo</span>
+            </span>
             <span class="docente-estado-icon" [class]="'estado-' + doc.estadoCurricular.toLowerCase()">
               @if (doc.estadoCurricular === 'APROBADO') { ✓ }
               @if (doc.estadoCurricular === 'PENDIENTE') { ⏰ }
@@ -396,6 +412,15 @@
               {{ doc.estadoCurricular | titlecase }}
             </span>
             <span class="evidencias-count">{{ doc.cantidadEvidencias }} evidencias</span>
+          </div>
+          <span class="cursos-count" [class.cursos-count-vacio]="!doc.cantidadCursosAsignados">
+            {{ doc.cantidadCursosAsignados || 0 }} curso(s) asignado(s)
+          </span>
+          <div style="display:flex; gap:6px; margin-top: 8px;">
+            <button class="btn-outline btn-sm" style="flex:1;"
+              (click)="abrirModalAsignarCurso(doc)">Asignar Curso</button>
+            <button class="btn-outline btn-sm" style="flex:1;"
+              (click)="abrirModalEditarDocente(doc)">Editar</button>
           </div>
         </div>
         }
@@ -464,7 +489,7 @@
       <div class="kpi-card">
         <div class="kpi-content">
           <span class="kpi-label">Total Aulas</span>
-          <span class="kpi-value">{{ kpisCalidad.totalAulas }}</span>
+          <span class="kpi-value">{{ kpisCalidad().totalAulas }}</span>
         </div>
         <div class="kpi-icon">
           <svg width="22" height="22" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
@@ -476,7 +501,7 @@
       <div class="kpi-card">
         <div class="kpi-content">
           <span class="kpi-label">Aulas OK</span>
-          <span class="kpi-value success-text">{{ kpisCalidad.aulasOk }}</span>
+          <span class="kpi-value success-text">{{ kpisCalidad().aulasOk }}</span>
         </div>
         <div class="kpi-icon kpi-icon-green">
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -488,7 +513,7 @@
       <div class="kpi-card">
         <div class="kpi-content">
           <span class="kpi-label">Con Advertencias</span>
-          <span class="kpi-value warning-text">{{ kpisCalidad.conAdvertencias }}</span>
+          <span class="kpi-value warning-text">{{ kpisCalidad().conAdvertencias }}</span>
         </div>
         <div class="kpi-icon kpi-icon-yellow">
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -501,7 +526,7 @@
       <div class="kpi-card">
         <div class="kpi-content">
           <span class="kpi-label">Con Errores</span>
-          <span class="kpi-value danger-text">{{ kpisCalidad.conErrores }}</span>
+          <span class="kpi-value danger-text">{{ kpisCalidad().conErrores }}</span>
         </div>
         <div class="kpi-icon kpi-icon-red">
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -517,7 +542,7 @@
       <h3 class="card-title">Validador de Pre-Actas</h3>
       <p class="card-sub">Detecta notas en blanco o inconsistencias antes de la exportación oficial</p>
       <div class="validador-list">
-        @for (aula of aulasValidacion; track aula.nombre) {
+        @for (aula of aulasValidacion(); track aula.aulaId) {
         <div class="validador-row" [class]="'aula-' + aula.estado">
           <div class="validador-indicator" [class]="'indicator-' + aula.estado"></div>
           <div class="validador-content">
@@ -551,10 +576,10 @@
                   aula.inconsistencias }}</strong></span>
             </div>
           </div>
-          @if (aula.estado !== 'ok') {
-          <button class="btn-primary btn-sm">Corregir</button>
-          }
         </div>
+        }
+        @if (aulasValidacion().length === 0) {
+        <p class="card-sub">No hay aulas registradas en {{ anioActual }}.</p>
         }
       </div>
     </div>
@@ -564,13 +589,14 @@
       <div class="validacion-global">
         <div class="validacion-label">
           <span>Notas completas del sistema</span>
-          <span>{{ progresValidacion.completas }} de {{ progresValidacion.total }} ({{ porcentajeValidacion()
+          <span>{{ progresValidacion().completas }} de {{ progresValidacion().total }} ({{ porcentajeValidacion()
             }}%)</span>
         </div>
         <div class="progress-bar-bg">
           <div class="progress-bar-fill" [style.width.%]="porcentajeValidacion()"></div>
         </div>
       </div>
+      @if (registrosPendientesValidacion() > 0) {
       <div class="alert-box alert-warning" style="margin-top: 1rem;">
         <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24">
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -578,9 +604,10 @@
         </svg>
         <div>
           <strong>Validación Previa Requerida</strong>
-          <p>Se detectaron 22 registros pendientes. Por favor, complete todas las notas antes de exportar al SIAGIE.</p>
+          <p>Se detectaron {{ registrosPendientesValidacion() }} registros pendientes entre notas en blanco e inconsistencias. Complete todas las notas antes de exportar al SIAGIE.</p>
         </div>
       </div>
+      }
     </div>
 
     <div class="card card-siagie" style="margin-top: 1rem;">
@@ -616,7 +643,7 @@
     <div class="card">
       <div class="card-header-row">
         <h3 class="card-title">Circulares Oficiales</h3>
-        <button class="btn-primary">
+        <button class="btn-primary" (click)="abrirModalCrearCircular()">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
@@ -626,15 +653,15 @@
           Nueva Circular
         </button>
       </div>
-      <p class="card-sub">Comunicados para padres de familia</p>
+      <p class="card-sub">Comunicados internos — visibles en el sistema para el público indicado</p>
       <div class="circular-list">
-        @for (circ of circulares; track circ.id) {
+        @for (circ of circulares(); track circ.id) {
         <div class="circular-item">
           <div class="circular-info">
             <div class="circular-titulo-row">
               <span class="circular-titulo">{{ circ.titulo }}</span>
-              <span class="badge-circular" [class]="'badge-circ-' + circ.estado">
-                {{ circ.estado === 'enviado' ? 'Enviado' : 'Borrador' }}
+              <span class="badge-circular" [class]="'badge-circ-' + (circ.publicada ? 'enviado' : 'borrador')">
+                {{ circ.publicada ? 'Publicada' : 'Borrador' }}
               </span>
             </div>
             <div class="circular-meta">
@@ -645,29 +672,32 @@
                   <line x1="8" y1="2" x2="8" y2="6" />
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
-                {{ circ.fecha }}
+                {{ circ.fechaPublicacion || circ.createdAt | slice:0:10 }}
               </span>
               <span>
                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                 </svg>
-                {{ circ.destinatarios }} destinatarios
+                {{ circ.dirigidoA }}
               </span>
             </div>
+            <p class="card-sub" style="margin-top: 6px;">{{ circ.contenido }}</p>
           </div>
           <div class="circular-actions">
-            <button class="btn-outline btn-sm">Ver</button>
-            @if (circ.estado === 'borrador') {
+            @if (!circ.publicada) {
             <button class="btn-primary btn-sm" (click)="enviarCircular(circ.id)">
               <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <line x1="22" y1="2" x2="11" y2="13" />
                 <polygon points="22 2 15 22 11 13 2 9 22 2" />
               </svg>
-              Enviar
+              Publicar
             </button>
             }
           </div>
         </div>
+        }
+        @if (circulares().length === 0) {
+        <p class="card-sub">No hay circulares registradas.</p>
         }
       </div>
     </div>
@@ -675,7 +705,7 @@
     <div class="card" style="margin-top: 1rem;">
       <div class="card-header-row">
         <h3 class="card-title">Calendario de Reuniones</h3>
-        <button class="btn-outline">
+        <button class="btn-outline" (click)="abrirModalReunion()">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
@@ -685,18 +715,18 @@
           Agendar Reunión
         </button>
       </div>
-      <p class="card-sub">Citas entre dirección y padres de familia</p>
+      <p class="card-sub">Citas con padres de familia — el mensaje se envía por WhatsApp desde su propio celular</p>
       <div class="reunion-list">
-        @for (reunion of reuniones; track reunion.id) {
+        @for (reunion of reunionesProximas(); track reunion.id) {
         <div class="reunion-item">
           <div class="reunion-info">
             <div class="reunion-header">
-              <span class="reunion-padre">{{ reunion.padre }}</span>
-              <span class="badge-reunion" [class]="'badge-reun-' + reunion.estado">
-                {{ reunion.estado === 'confirmada' ? 'Confirmada' : 'Pendiente' }}
+              <span class="reunion-padre">{{ reunion.nombreApoderado || 'Apoderado no registrado' }}</span>
+              <span class="badge-reunion" [class]="'badge-reun-' + reunion.estado.toLowerCase()">
+                {{ reunion.estado | titlecase }}
               </span>
             </div>
-            <span class="reunion-estudiante" style="color:#2563eb">Estudiante: {{ reunion.estudiante }}</span>
+            <span class="reunion-estudiante" style="color:#2563eb">Estudiante: {{ reunion.nombreAlumno }} ({{ reunion.aulaDescripcion }})</span>
             <div class="reunion-meta">
               <span>
                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -709,15 +739,20 @@
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-                {{ reunion.hora }}
+                {{ reunion.horaInicio }} – {{ reunion.horaFin }}
               </span>
             </div>
             <span class="reunion-motivo">Motivo: {{ reunion.motivo }}</span>
           </div>
-          @if (reunion.estado === 'pendiente') {
-          <button class="btn-success btn-sm" (click)="confirmarReunion(reunion.id)">Confirmar</button>
+          @if (linkWhatsApp(reunion); as link) {
+          <a class="btn-success btn-sm" [href]="link" target="_blank" rel="noopener">Enviar WhatsApp</a>
+          } @else {
+          <span class="reunion-motivo" style="color:#dc2626;">Sin celular registrado</span>
           }
         </div>
+        }
+        @if (reunionesProximas().length === 0) {
+        <p class="card-sub">No hay reuniones agendadas.</p>
         }
       </div>
     </div>
@@ -725,25 +760,599 @@
     <div class="two-col-grid" style="margin-top: 1rem;">
       <div class="card">
         <h3 class="card-title">Próximas Reuniones</h3>
-        @for (r of proximasReuniones; track r.periodo) {
         <div class="proxima-row">
-          <span class="proxima-periodo">{{ r.periodo }}<br><small>{{ r.cantidad === 2 ? '2 reuniones programadas' : '4
-              reuniones totales' }}</small></span>
-          <span class="proxima-num">{{ r.cantidad }}</span>
+          <span class="proxima-periodo">Total agendadas<br><small>desde hoy</small></span>
+          <span class="proxima-num">{{ reunionesProximas().length }}</span>
         </div>
-        }
       </div>
       <div class="card">
         <h3 class="card-title">Estadísticas de Comunicación</h3>
-        <div class="est-row"><span>Circulares enviadas (mes)</span><strong>{{
-            estadisticasComunicacion.circularesEnviadas }}</strong></div>
-        <div class="est-row"><span>Reuniones realizadas (mes)</span><strong>{{
-            estadisticasComunicacion.reunionesRealizadas }}</strong></div>
+        <div class="est-row"><span>Circulares publicadas</span><strong>{{
+            estadisticasComunicacion().circularesEnviadas }}</strong></div>
+        <div class="est-row"><span>Reuniones realizadas</span><strong>{{
+            estadisticasComunicacion().reunionesRealizadas }}</strong></div>
         <div class="est-row"><span>Tasa de respuesta</span><strong class="success-text">{{
-            estadisticasComunicacion.tasaRespuesta }}%</strong></div>
+            estadisticasComunicacion().tasaRespuesta }}%</strong></div>
       </div>
     </div>
     }
 
   </main>
+</div>
+
+<!-- ══ MODAL: Matricular Alumno ═══════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalCrearAlumnoVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Nuevo Alumno</h2>
+      <button class="btn-close" (click)="cerrarModalCrearAlumno()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group col-12">
+          <label>DNI</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoAlumno.dni" maxlength="8" placeholder="8 dígitos">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Apellido Paterno</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoAlumno.apellidoPaterno">
+        </div>
+        <div class="form-group col-6">
+          <label>Apellido Materno</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoAlumno.apellidoMaterno">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nombres</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevoAlumno.nombres">
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Fecha de Nacimiento</label>
+          <input type="date" class="form-control" [(ngModel)]="nuevoAlumno.fechaNacimiento">
+        </div>
+        <div class="form-group col-6">
+          <label>Sexo</label>
+          <select class="form-control" [(ngModel)]="nuevoAlumno.sexo">
+            <option [ngValue]="undefined">Seleccione...</option>
+            <option value="MASCULINO">Masculino</option>
+            <option value="FEMENINO">Femenino</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Año Académico</label>
+        <input type="number" class="form-control" [(ngModel)]="nuevoAlumno.anioAcademico">
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Nombre del Apoderado</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoAlumno.nombreApoderado">
+        </div>
+        <div class="form-group col-6">
+          <label>Celular del Apoderado</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoAlumno.celularApoderado">
+        </div>
+      </div>
+      <small class="form-hint">
+        Se creará automáticamente una cuenta de usuario (usuario = DNI). Para asignarlo a un aula,
+        use "Matrículas" después de crearlo.
+      </small>
+      <div class="error-msg" *ngIf="errorAlumno()">{{ errorAlumno() }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalCrearAlumno()">Cancelar</button>
+      <button class="btn-primary" [disabled]="guardandoAlumno()" (click)="guardarAlumno()">
+        {{ guardandoAlumno() ? 'Guardando...' : 'Registrar Alumno' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Crear Docente ═══════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalCrearDocenteVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Nuevo Docente</h2>
+      <button class="btn-close" (click)="cerrarModalCrearDocente()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group col-12">
+          <label>DNI</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoDocente.dni" maxlength="8" placeholder="8 dígitos">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Apellido Paterno</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoDocente.apellidoPaterno">
+        </div>
+        <div class="form-group col-6">
+          <label>Apellido Materno</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoDocente.apellidoMaterno">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nombres</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevoDocente.nombres">
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Especialidad</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoDocente.especialidad" placeholder="Ej: Matemática">
+        </div>
+        <div class="form-group col-6">
+          <label>Condición</label>
+          <select class="form-control" [(ngModel)]="nuevoDocente.condicion">
+            <option value="NOMBRADO">Nombrado</option>
+            <option value="CONTRATADO">Contratado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Email Institucional</label>
+          <input type="email" class="form-control" [(ngModel)]="nuevoDocente.emailInstitucional">
+        </div>
+        <div class="form-group col-6">
+          <label>Celular</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevoDocente.celular">
+        </div>
+      </div>
+      <small class="form-hint">Se creará automáticamente una cuenta de usuario (usuario = DNI).</small>
+      <div class="error-msg" *ngIf="errorDocente()">{{ errorDocente() }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalCrearDocente()">Cancelar</button>
+      <button class="btn-primary" [disabled]="guardandoDocente()" (click)="guardarDocente()">
+        {{ guardandoDocente() ? 'Guardando...' : 'Registrar Docente' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Editar Alumno ═════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalEditarAlumnoVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Editar Alumno</h2>
+      <button class="btn-close" (click)="cerrarModalEditarAlumno()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group col-12">
+          <label>DNI</label>
+          <input type="text" class="form-control" [value]="formEditarAlumno.dni" disabled>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Apellido Paterno</label>
+          <input type="text" class="form-control" [(ngModel)]="formEditarAlumno.apellidoPaterno">
+        </div>
+        <div class="form-group col-6">
+          <label>Apellido Materno</label>
+          <input type="text" class="form-control" [(ngModel)]="formEditarAlumno.apellidoMaterno">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nombres</label>
+        <input type="text" class="form-control" [(ngModel)]="formEditarAlumno.nombres">
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Nombre del Apoderado</label>
+          <input type="text" class="form-control" [(ngModel)]="formEditarAlumno.nombreApoderado">
+        </div>
+        <div class="form-group col-6">
+          <label>Celular del Apoderado</label>
+          <input type="text" class="form-control" [(ngModel)]="formEditarAlumno.celularApoderado">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email del Apoderado</label>
+        <input type="email" class="form-control" [(ngModel)]="formEditarAlumno.emailApoderado">
+      </div>
+      <div class="form-group">
+        <label>Docente-Tutor</label>
+        <select class="form-control" [(ngModel)]="formEditarAlumno.tutorId">
+          <option [ngValue]="undefined">Sin asignar</option>
+          <option *ngFor="let d of docentesParaTutor()" [ngValue]="d.id">{{ d.nombreCompleto }}</option>
+        </select>
+        <small class="form-hint">Habilita al docente para agendar reuniones por WhatsApp con este apoderado (solo Secundaria).</small>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="formEditarAlumno.tienePermisoAcademia">
+          Tiene permiso de academia pre-universitaria
+        </label>
+      </div>
+      <div class="form-group" *ngIf="formEditarAlumno.tienePermisoAcademia">
+        <label>Hora de entrada a la academia</label>
+        <select class="form-control" [(ngModel)]="formEditarAlumno.horaEntradaAcademia">
+          <option value="13:30">1:30 PM</option>
+          <option value="14:30">2:30 PM</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Estado de Matrícula</label>
+        <select class="form-control" [(ngModel)]="estadoMatriculaEditando">
+          <option value="ACTIVO">Activo</option>
+          <option value="RETIRADO">Retirado</option>
+          <option value="TRASLADADO">Trasladado</option>
+          <option value="EGRESADO">Egresado</option>
+        </select>
+        <small class="form-hint" *ngIf="estadoMatriculaEditando !== 'ACTIVO'">
+          El alumno dejará de aparecer en los listados activos (expediente, asistencia, notas).
+        </small>
+      </div>
+      <div class="error-msg" *ngIf="errorEditarAlumno()">{{ errorEditarAlumno() }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalEditarAlumno()">Cancelar</button>
+      <button class="btn-primary" [disabled]="guardandoEditarAlumno()" (click)="guardarEditarAlumno()">
+        {{ guardandoEditarAlumno() ? 'Guardando...' : 'Guardar Cambios' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Editar Docente ════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalEditarDocenteVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Editar Docente</h2>
+      <button class="btn-close" (click)="cerrarModalEditarDocente()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group col-12">
+          <label>DNI</label>
+          <input type="text" class="form-control" [value]="formEditarDocente.dni" disabled>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Apellido Paterno</label>
+          <input type="text" class="form-control" [(ngModel)]="formEditarDocente.apellidoPaterno">
+        </div>
+        <div class="form-group col-6">
+          <label>Apellido Materno</label>
+          <input type="text" class="form-control" [(ngModel)]="formEditarDocente.apellidoMaterno">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nombres</label>
+        <input type="text" class="form-control" [(ngModel)]="formEditarDocente.nombres">
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Especialidad</label>
+          <input type="text" class="form-control" [(ngModel)]="formEditarDocente.especialidad" placeholder="Ej: Matemática">
+        </div>
+        <div class="form-group col-6">
+          <label>Condición</label>
+          <select class="form-control" [(ngModel)]="formEditarDocente.condicion">
+            <option value="NOMBRADO">Nombrado</option>
+            <option value="CONTRATADO">Contratado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Email Institucional</label>
+          <input type="email" class="form-control" [(ngModel)]="formEditarDocente.emailInstitucional">
+        </div>
+        <div class="form-group col-6">
+          <label>Celular</label>
+          <input type="text" class="form-control" [(ngModel)]="formEditarDocente.celular">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="activoEditandoDocente">
+          Cuenta activa (puede iniciar sesión)
+        </label>
+        <small class="form-hint" *ngIf="!activoEditandoDocente">
+          Al desmarcar, el docente queda dado de baja: no podrá iniciar sesión. Su historial (cursos, notas) se conserva.
+        </small>
+      </div>
+      <div class="error-msg" *ngIf="errorEditarDocente()">{{ errorEditarDocente() }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalEditarDocente()">Cancelar</button>
+      <button class="btn-primary" [disabled]="guardandoEditarDocente()" (click)="guardarEditarDocente()">
+        {{ guardandoEditarDocente() ? 'Guardando...' : 'Guardar Cambios' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Asignar Curso ═══════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalAsignarCursoVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Asignar Curso — {{ docenteParaAsignar()?.nombreCompleto }}</h2>
+      <button class="btn-close" (click)="cerrarModalAsignarCurso()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warning-msg" *ngIf="fueraDePlazoAsignacion">
+        ⚠️ El plazo habitual para asignar cursos del año {{ anioActual }} (15 de marzo) ya pasó.
+        Puede continuar igual — por ejemplo, si se está reemplazando a un docente a mitad de año.
+      </div>
+      <div class="form-group combobox">
+        <label>Aula</label>
+        <input type="text" class="form-control" [(ngModel)]="aulaBusqueda"
+               placeholder="Buscar por grado, sección o nivel..."
+               (focus)="aulaDropdownAbierto.set(true)"
+               (blur)="aulaDropdownAbierto.set(false)"
+               (input)="aulaDropdownAbierto.set(true); nuevaAsignacion.aulaId = 0">
+        <ul class="combobox-dropdown" *ngIf="aulaDropdownAbierto()">
+          <li *ngFor="let a of aulasFiltradas()" (mousedown)="seleccionarAula(a)" class="combobox-item-row">
+            <span>{{ a.descripcion }}</span>
+            <button type="button" class="combobox-delete" title="Eliminar aula (solo si está vacía)"
+              (mousedown)="eliminarAula(a, $event)">🗑️</button>
+          </li>
+          <li class="combobox-empty" *ngIf="aulasFiltradas().length === 0">Sin resultados.</li>
+        </ul>
+        <small class="form-hint" *ngIf="nuevaAsignacion.aulaId === 0">Seleccione un aula de la lista.</small>
+      </div>
+      <div class="form-group" *ngIf="esAulaPrimaria()">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="nuevaAsignacion.comoTutor">
+          Docente-Tutor de Aula (todas las áreas, excepto especialidades)
+        </label>
+        <small class="form-hint">
+          En Primaria, el tutor dicta Matemática, Comunicación, Ciencia y Tecnología, Ciencias Sociales,
+          DPCC y Educación para el Trabajo. Arte, Educación Física, Inglés y Religión se asignan aparte a un especialista.
+        </small>
+      </div>
+      <div class="form-group" *ngIf="!nuevaAsignacion.comoTutor">
+        <label>Área Curricular</label>
+        <select class="form-control" [(ngModel)]="nuevaAsignacion.areaCurricular">
+          <option value="">Seleccione...</option>
+          <option *ngFor="let a of areasCurriculares" [value]="a.nombre">
+            {{ a.nombre }}{{ a.especialista ? ' (especialista)' : '' }}
+          </option>
+        </select>
+      </div>
+      <div class="error-msg" *ngIf="errorCurso()">{{ errorCurso() }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalAsignarCurso()">Cancelar</button>
+      <button class="btn-primary"
+        [disabled]="guardandoCurso() || !nuevaAsignacion.aulaId || (!nuevaAsignacion.comoTutor && !nuevaAsignacion.areaCurricular)"
+        (click)="guardarAsignacionCurso()">
+        {{ guardandoCurso() ? 'Guardando...' : 'Asignar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Credenciales Generadas ═══════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalCredencialesVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>{{ credencialesGeneradas()?.tipo }} registrado con éxito</h2>
+      <button class="btn-close" (click)="cerrarModalCredenciales()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Entregue estas credenciales — se muestran una sola vez. Deberá cambiar la contraseña en su primer ingreso.</p>
+      <div class="credenciales-box">
+        <div class="credencial-row"><span>Usuario</span><strong>{{ credencialesGeneradas()?.username }}</strong></div>
+        <div class="credencial-row"><span>Contraseña inicial</span><strong>{{ credencialesGeneradas()?.password }}</strong></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalCredenciales()">Cerrar</button>
+      <button class="btn-primary" *ngIf="credencialesGeneradas()?.tipo === 'Alumno'" (click)="irAMatriculas()">
+        Ir a Matricular en un Aula →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Ver Expediente Digital ═══════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalExpedienteVisible()">
+  <div class="modal-dialog modal-dialog-lg">
+    <div class="modal-header">
+      <h2>Expediente de {{ alumnoExpediente()?.nombreCompleto }}</h2>
+      <button class="btn-close" (click)="cerrarModalExpediente()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="form-hint">DNI {{ alumnoExpediente()?.dni }} — {{ alumnoExpediente()?.aulaDescripcion || 'sin aula asignada' }}</p>
+      <div class="error-msg" *ngIf="errorExpediente()">{{ errorExpediente() }}</div>
+
+      <div class="loader-container" *ngIf="cargandoDocumentos()"><div class="spinner"></div></div>
+
+      <table class="data-table" *ngIf="!cargandoDocumentos()">
+        <thead>
+          <tr>
+            <th>Documento</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (req of documentosRequeridos; track req.tipo) {
+          <tr>
+            <td>
+              {{ req.etiqueta }}
+              <span class="badge badge-danger" *ngIf="req.obligatorio">Obligatorio</span>
+            </td>
+            <td>
+              @if (documentoDe(req.tipo); as doc) {
+                <span class="badge badge-active">Subido</span>
+              } @else {
+                <span class="badge badge-warning">Falta</span>
+              }
+            </td>
+            <td class="actions-cell">
+              @if (documentoDe(req.tipo); as doc) {
+                <a class="btn-secondary btn-sm" [href]="doc.urlPublica" target="_blank" rel="noopener">Ver PDF</a>
+                <button class="btn-icon text-danger" (click)="eliminarDocumento(doc)" title="Eliminar">🗑️</button>
+              } @else {
+                <label class="btn-primary btn-sm" [class.btn-disabled]="subiendoTipo() === req.tipo">
+                  {{ subiendoTipo() === req.tipo ? 'Subiendo...' : 'Subir PDF' }}
+                  <input type="file" accept="application/pdf" hidden
+                    [disabled]="subiendoTipo() === req.tipo"
+                    (change)="subirDocumento(req.tipo, $any($event.target))">
+                </label>
+              }
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalExpediente()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Mi Perfil ═══════════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalPerfilVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Mi Perfil</h2>
+      <button class="btn-close" (click)="cerrarModalPerfil()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="form-hint">Usuario: {{ perfil()?.username }} — Rol: {{ perfil()?.rol }}</p>
+      <div class="form-group">
+        <label>Nombre completo</label>
+        <input type="text" class="form-control" [(ngModel)]="formPerfil.nombreCompleto" placeholder="Ej: Juan Pérez García">
+      </div>
+      <div class="form-group">
+        <label>Número de WhatsApp / Celular</label>
+        <input type="text" class="form-control" [(ngModel)]="formPerfil.celular" placeholder="Ej: 987654321">
+        <small class="form-hint">No es obligatorio para enviar mensajes a los apoderados — los links de WhatsApp se abren desde su propio celular. Se usa solo para que otros puedan contactarlo.</small>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" class="form-control" [(ngModel)]="formPerfil.email" placeholder="Ej: usuario@bastidas.edu.pe">
+      </div>
+      <div class="error-msg" *ngIf="errorPerfil()">{{ errorPerfil() }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalPerfil()">Cancelar</button>
+      <button class="btn-primary" [disabled]="guardandoPerfil()" (click)="guardarPerfil()">
+        {{ guardandoPerfil() ? 'Guardando...' : 'Guardar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Nueva Circular ══════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalCrearCircularVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Nueva Circular</h2>
+      <button class="btn-close" (click)="cerrarModalCrearCircular()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Título</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevaCircular.titulo" placeholder="Ej: Cronograma de Evaluaciones">
+      </div>
+      <div class="form-group">
+        <label>Contenido</label>
+        <textarea class="form-control" rows="5" [(ngModel)]="nuevaCircular.contenido"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Dirigido a</label>
+        <select class="form-control" [(ngModel)]="nuevaCircular.dirigidoA">
+          <option value="TODOS">Todos</option>
+          <option value="DOCENTES">Docentes</option>
+          <option value="ALUMNOS">Alumnos</option>
+        </select>
+      </div>
+      <small class="form-hint">Se guarda como borrador. Use "Publicar" en la lista para que sea visible.</small>
+      <div class="error-msg" *ngIf="errorCircular()">{{ errorCircular() }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalCrearCircular()">Cancelar</button>
+      <button class="btn-primary" [disabled]="guardandoCircular()" (click)="guardarCircular()">
+        {{ guardandoCircular() ? 'Guardando...' : 'Guardar Borrador' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Agendar Reunión ═══════════════════════════════════════════════ -->
+<div class="modal-backdrop" *ngIf="modalReunionVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Agendar Reunión con Apoderado(s)</h2>
+      <button class="btn-close" (click)="cerrarModalReunion()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="radio" name="tipoReunion" value="individual" [(ngModel)]="nuevaReunion.tipo">
+          Individual (un alumno)
+        </label>
+        <label class="checkbox-label" style="margin-top: 6px;">
+          <input type="radio" name="tipoReunion" value="general" [(ngModel)]="nuevaReunion.tipo">
+          General de aula (todos los apoderados del salón)
+        </label>
+      </div>
+
+      <div class="form-group" *ngIf="nuevaReunion.tipo === 'individual'">
+        <label>DNI del Alumno</label>
+        <div class="search-row">
+          <input type="text" class="form-control" maxlength="8" [(ngModel)]="alumnoReunionBusqueda"
+                 placeholder="8 dígitos" (keyup.enter)="buscarAlumnoReunion()">
+          <button type="button" class="btn-secondary" [disabled]="buscandoAlumnoReunion()" (click)="buscarAlumnoReunion()">
+            {{ buscandoAlumnoReunion() ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+        <div class="alumno-encontrado" *ngIf="alumnoReunionEncontrado() as a">
+          <strong>{{ a.nombreCompleto }}</strong>
+          <span *ngIf="!a.celularApoderado" style="color:#dc2626;"> — Sin celular de apoderado registrado</span>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="nuevaReunion.tipo === 'general'">
+        <label>Aula</label>
+        <select class="form-control" [(ngModel)]="nuevaReunion.aulaId">
+          <option [ngValue]="0">Seleccione...</option>
+          <option *ngFor="let a of aulasDisponibles()" [ngValue]="a.id">{{ a.descripcion }}</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Fecha</label>
+          <input type="date" class="form-control" [(ngModel)]="nuevaReunion.fecha">
+        </div>
+        <div class="form-group col-6">
+          <label>Motivo</label>
+          <input type="text" class="form-control" [(ngModel)]="nuevaReunion.motivo" placeholder="Ej: Rendimiento académico">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Hora inicio</label>
+          <input type="time" class="form-control" [(ngModel)]="nuevaReunion.horaInicio">
+        </div>
+        <div class="form-group col-6">
+          <label>Hora fin</label>
+          <input type="time" class="form-control" [(ngModel)]="nuevaReunion.horaFin">
+        </div>
+      </div>
+
+      <div class="error-msg" *ngIf="errorReunion()">{{ errorReunion() }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalReunion()">Cancelar</button>
+      <button class="btn-primary" [disabled]="guardandoReunion()" (click)="guardarReunion()">
+        {{ guardandoReunion() ? 'Agendando...' : 'Agendar' }}
+      </button>
+    </div>
+  </div>
 </div>

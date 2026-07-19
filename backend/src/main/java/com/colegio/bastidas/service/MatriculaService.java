@@ -18,7 +18,9 @@ public interface MatriculaService {
      * @param alumno     Datos del alumno a matricular
      * @param anioAcademico Año académico destino
      * @return Alumno persistido con código asignado
+     * @deprecated no vincula un Aula ni verifica vacantes. Usar {@link #crearMatricula}.
      */
+    @Deprecated
     Alumno matricularAlumno(Alumno alumno, Integer anioAcademico);
 
     /**
@@ -34,6 +36,22 @@ public interface MatriculaService {
                                      String tipoDocumento);
 
     /**
+     * Lista los documentos del expediente de un alumno.
+     */
+    List<com.colegio.bastidas.dto.expediente.ExpedienteDocumentoResponseDTO> listarDocumentosExpediente(Long alumnoId);
+
+    /**
+     * Elimina un documento del expediente (Supabase Storage + registro).
+     */
+    void eliminarDocumentoExpediente(Long documentoId);
+
+    /**
+     * Resumen del expediente de todos los alumnos activos de un año académico,
+     * para la tabla del Panel de Dirección (una sola consulta agregada, sin N+1).
+     */
+    List<com.colegio.bastidas.dto.expediente.ExpedienteResumenDTO> listarResumenExpedientes(Integer anio);
+
+    /**
      * Verifica que el expediente del alumno esté completo (todos los documentos
      * requeridos cargados y verificados).
      *
@@ -41,6 +59,12 @@ public interface MatriculaService {
      * @return true si el expediente está completo
      */
     boolean verificarExpedienteCompleto(Long alumnoId);
+
+    /**
+     * Cuenta los alumnos activos del año cuyo expediente NO está completo
+     * (matrícula "provisional"). Usa una consulta agregada, no un loop por alumno.
+     */
+    long contarConExpedienteIncompleto(Integer anio);
 
     /**
      * Exporta el consolidado de matrícula en formato Excel compatible con SIAGIE.

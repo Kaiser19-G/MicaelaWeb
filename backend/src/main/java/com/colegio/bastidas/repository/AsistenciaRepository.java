@@ -58,6 +58,22 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         @Param("fin") LocalDate fin,
         @Param("minFaltas") long minFaltas);
 
+    /** Igual que {@link #alumnosConFaltasExcesivas} pero sin filtrar por aula (vista global del director). */
+    @Query("""
+        SELECT a.alumno.id, COUNT(a) as totalFaltas
+        FROM Asistencia a
+        WHERE a.fecha BETWEEN :inicio AND :fin
+        AND a.estado = com.colegio.bastidas.model.Asistencia.EstadoAsistencia.FALTA
+        AND a.tieneJustificacion = false
+        GROUP BY a.alumno.id
+        HAVING COUNT(a) >= :minFaltas
+        ORDER BY totalFaltas DESC
+    """)
+    List<Object[]> alumnosConFaltasExcesivasGlobal(
+        @Param("inicio") LocalDate inicio,
+        @Param("fin") LocalDate fin,
+        @Param("minFaltas") long minFaltas);
+
     /** Registros pendientes de sincronización offline. */
     List<Asistencia> findBySincronizadoOfflineAndDocenteId(
         Boolean sincronizado, Long docenteId);

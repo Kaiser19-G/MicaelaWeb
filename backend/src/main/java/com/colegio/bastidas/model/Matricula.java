@@ -2,7 +2,6 @@ package com.colegio.bastidas.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -29,12 +28,21 @@ public class Matricula {
     @NotNull
     private Alumno alumno;
 
-    @NotBlank
-    @Column(nullable = false, length = 50)
+    /**
+     * Aula asignada al matricular. Fuente de verdad para grado/sección
+     * (ver {@link #grado} y {@link #seccion}, que se rellenan a partir de esta
+     * aula y ya no se aceptan como texto libre del usuario).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "aula_id")
+    private Aula aula;
+
+    /** Derivado de {@link #aula} al matricular; se conserva para no romper lecturas existentes. */
+    @Column(length = 50)
     private String grado;
 
-    @NotBlank
-    @Column(nullable = false, length = 10)
+    /** Derivado de {@link #aula} al matricular; se conserva para no romper lecturas existentes. */
+    @Column(length = 10)
     private String seccion;
 
     @NotNull

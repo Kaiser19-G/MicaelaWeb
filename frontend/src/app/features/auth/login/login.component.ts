@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService, LoginRequest } from '../../../core/services/auth.service';
+import { esPasswordValida, MENSAJE_PASSWORD_INVALIDA } from '../../../core/validators/password-policy.validator';
 
 /** Componente de Login (esqueleto listo para estilizar). */
 @Component({
@@ -46,13 +47,16 @@ import { AuthService, LoginRequest } from '../../../core/services/auth.service';
             <div class="form-group">
               <label for="newPassword">Nueva Contraseña</label>
               <input id="newPassword" type="password" name="newPassword"
-                [(ngModel)]="nuevaPassword" required minlength="6"
-                placeholder="Mínimo 6 caracteres" />
+                [(ngModel)]="nuevaPassword"
+                placeholder="Mínimo 8 caracteres, mayúscula, minúscula y símbolo" />
+              @if (nuevaPassword && !passwordEsValida) {
+                <small class="hint-error">{{ mensajePasswordInvalida }}</small>
+              }
             </div>
             @if (error) {
               <div class="error-msg">{{ error }}</div>
             }
-            <button type="submit" [disabled]="cargando || nuevaPassword.length < 6" class="btn-login">
+            <button type="submit" [disabled]="cargando || !passwordEsValida" class="btn-login">
               {{ cargando ? 'Actualizando...' : 'Cambiar y Continuar' }}
             </button>
           </form>
@@ -105,12 +109,16 @@ import { AuthService, LoginRequest } from '../../../core/services/auth.service';
       border-radius: 8px; font-size: 0.85rem; margin-bottom: 0.75rem;
       border-left: 3px solid #ef4444;
     }
+    .hint-error {
+      display: block; color: #991b1b; font-size: 0.78rem; margin-top: 0.35rem;
+    }
   `]
 })
 export class LoginComponent {
   credenciales: LoginRequest = { username: '', password: '' };
   cargando = false;
   error = '';
+  readonly mensajePasswordInvalida = MENSAJE_PASSWORD_INVALIDA;
   esPrimerLogin = false;
   nuevaPassword = '';
 
@@ -135,7 +143,15 @@ export class LoginComponent {
     });
   }
 
+  get passwordEsValida(): boolean {
+    return esPasswordValida(this.nuevaPassword);
+  }
+
   onChangePassword(): void {
+    if (!this.passwordEsValida) {
+      this.error = this.mensajePasswordInvalida;
+      return;
+    }
     this.cargando = true;
     this.error = '';
     this.authService.changePassword(this.nuevaPassword).subscribe({
@@ -148,8 +164,8 @@ export class LoginComponent {
           this.router.navigate(['/login']);
         }
       },
-      error: () => {
-        this.error = 'Error al cambiar la contraseña. Intente nuevamente.';
+      error: (err) => {
+        this.error = err?.error?.error || 'Error al cambiar la contraseña. Intente nuevamente.';
         this.cargando = false;
       }
     });

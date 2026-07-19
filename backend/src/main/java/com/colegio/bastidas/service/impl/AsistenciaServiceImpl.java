@@ -211,7 +211,21 @@ public class AsistenciaServiceImpl implements AsistenciaService {
                                                                    int minFaltas) {
         List<Object[]> raw = asistenciaRepository
             .alumnosConFaltasExcesivas(aulaId, inicio, fin, minFaltas);
+        return mapAlertaFaltas(raw);
+    }
 
+    // ── detectarAlumnosConFaltasExcesivasGlobal ────────────────────────────
+    @Override
+    @Transactional(readOnly = true)
+    public List<AlertaFaltaDto> detectarAlumnosConFaltasExcesivasGlobal(LocalDate inicio,
+                                                                         LocalDate fin,
+                                                                         int minFaltas) {
+        List<Object[]> raw = asistenciaRepository
+            .alumnosConFaltasExcesivasGlobal(inicio, fin, minFaltas);
+        return mapAlertaFaltas(raw);
+    }
+
+    private List<AlertaFaltaDto> mapAlertaFaltas(List<Object[]> raw) {
         return raw.stream()
             .map(row -> {
                 Long alumnoId = (Long) row[0];

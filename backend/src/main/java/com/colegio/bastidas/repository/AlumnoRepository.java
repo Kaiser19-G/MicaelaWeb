@@ -24,6 +24,8 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
 
     List<Alumno> findByAulaIdAndEstadoMatricula(Long aulaId, Alumno.EstadoMatricula estado);
 
+    long countByAulaIdAndEstadoMatricula(Long aulaId, Alumno.EstadoMatricula estado);
+
     List<Alumno> findByAnioAcademicoAndEstadoMatricula(Integer anio, Alumno.EstadoMatricula estado);
 
     /** Busca alumnos por nombre o DNI (búsqueda parcial, case-insensitive). */
@@ -45,4 +47,27 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
     long contarAlumnosActivosPorAnio(@Param("anio") Integer anio);
 
     boolean existsByDni(String dni);
+
+    /**
+     * Cuenta, en una sola consulta agregada (sin loop por alumno), los alumnos
+     * activos del año que YA tienen su expediente completo (DNI + Partida de
+     * Nacimiento verificados). Usado para derivar "matrícula provisional" sin
+     * recorrer los ~1500 alumnos uno por uno.
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT a.id) FROM Alumno a
+        WHERE a.anioAcademico = :anio
+        AND a.estadoMatricula = com.colegio.bastidas.model.Alumno.EstadoMatricula.ACTIVO
+        AND a.id IN (
+            SELECT e1.alumno.id FROM ExpedienteDocumento e1
+            WHERE e1.tipoDocumento = com.colegio.bastidas.model.ExpedienteDocumento.TipoDocumento.DNI
+            AND e1.estadoVerificacion = com.colegio.bastidas.model.ExpedienteDocumento.EstadoVerificacion.VERIFICADO
+        )
+        AND a.id IN (
+            SELECT e2.alumno.id FROM ExpedienteDocumento e2
+            WHERE e2.tipoDocumento = com.colegio.bastidas.model.ExpedienteDocumento.TipoDocumento.PARTIDA_NACIMIENTO
+            AND e2.estadoVerificacion = com.colegio.bastidas.model.ExpedienteDocumento.EstadoVerificacion.VERIFICADO
+        )
+    """)
+    long contarConExpedienteCompletoPorAnio(@Param("anio") Integer anio);
 }

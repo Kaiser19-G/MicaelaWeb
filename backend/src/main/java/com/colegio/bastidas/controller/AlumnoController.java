@@ -1,5 +1,6 @@
 package com.colegio.bastidas.controller;
 
+import com.colegio.bastidas.dto.alumno.AlumnoCreadoResponseDTO;
 import com.colegio.bastidas.dto.alumno.AlumnoRequestDTO;
 import com.colegio.bastidas.dto.alumno.AlumnoResponseDTO;
 import com.colegio.bastidas.service.AlumnoService;
@@ -100,8 +101,8 @@ public class AlumnoController {
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
-    public ResponseEntity<AlumnoResponseDTO> crear(@Valid @RequestBody AlumnoRequestDTO dto) {
-        AlumnoResponseDTO creado = alumnoService.crear(dto);
+    public ResponseEntity<AlumnoCreadoResponseDTO> crear(@Valid @RequestBody AlumnoRequestDTO dto) {
+        AlumnoCreadoResponseDTO creado = alumnoService.crear(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
@@ -118,6 +119,20 @@ public class AlumnoController {
     }
 
     /**
+     * PATCH /alumnos/{id}/estado?estado=RETIRADO
+     * Da de baja (o reactiva) a un alumno cambiando su estado de matrícula.
+     * Baja lógica: el alumno deja de aparecer en listados activos, pero su
+     * historial (notas, asistencias, expediente) se conserva.
+     */
+    @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
+    public ResponseEntity<AlumnoResponseDTO> actualizarEstado(
+            @PathVariable Long id,
+            @RequestParam String estado) {
+        return ResponseEntity.ok(alumnoService.actualizarEstado(id, estado));
+    }
+
+    /**
      * GET /alumnos/{id}/cursos
      * Obtiene los cursos asignados al aula del alumno.
      */
@@ -129,5 +144,10 @@ public class AlumnoController {
             return ResponseEntity.ok(List.of());
         }
         return ResponseEntity.ok(cursoAsignadoRepository.findByAulaId(alumno.getAulaId()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<java.util.Map<String, String>> manejarArgumentoInvalido(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
     }
 }

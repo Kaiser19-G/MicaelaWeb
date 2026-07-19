@@ -23,6 +23,8 @@ public interface NotaRepository extends JpaRepository<Nota, Long> {
     List<Nota> findByAulaIdAndAreaCurricularAndPeriodoAcademicoAndAnioAcademico(
         Long aulaId, String area, String periodo, Integer anio);
 
+    List<Nota> findByAulaIdAndAnioAcademico(Long aulaId, Integer anio);
+
     /** Promedio del aula por área en un período (para monitor del director). */
     @Query("""
         SELECT AVG(n.calificacionNumerica)

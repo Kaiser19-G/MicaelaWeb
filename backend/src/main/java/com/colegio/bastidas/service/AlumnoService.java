@@ -1,5 +1,6 @@
 package com.colegio.bastidas.service;
 
+import com.colegio.bastidas.dto.alumno.AlumnoCreadoResponseDTO;
 import com.colegio.bastidas.dto.alumno.AlumnoRequestDTO;
 import com.colegio.bastidas.dto.alumno.AlumnoResponseDTO;
 import java.util.List;
@@ -24,11 +25,17 @@ public interface AlumnoService {
     /** Busca un alumno por su DNI. */
     AlumnoResponseDTO buscarPorDni(String dni);
 
-    /** Crea un nuevo alumno y su matrícula. */
-    AlumnoResponseDTO crear(AlumnoRequestDTO dto);
+    /**
+     * Crea un nuevo alumno y aprovisiona automáticamente su cuenta de Usuario
+     * (rol ALUMNO, contraseña inicial predecible que debe cambiar en su primer login).
+     */
+    AlumnoCreadoResponseDTO crear(AlumnoRequestDTO dto);
 
     /** Actualiza datos de un alumno existente. */
     AlumnoResponseDTO actualizar(Long id, AlumnoRequestDTO dto);
+
+    /** Cambia el estado de matrícula (ACTIVO, RETIRADO, TRASLADADO, EGRESADO) — baja lógica. */
+    AlumnoResponseDTO actualizarEstado(Long id, String estado);
 
     /** Retorna la cantidad de alumnos activos en un año académico. */
     long contarActivosPorAnio(Integer anio);

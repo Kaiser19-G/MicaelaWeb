@@ -196,6 +196,22 @@ export class AsistenciaService {
     return this.http.get<AlertaFalta[]>(`${this.BASE_URL}/alertas/faltas-excesivas`, { params });
   }
 
+  /**
+   * Alumnos con faltas excesivas en todas las aulas (Panel del Director).
+   */
+  obtenerAlertasFaltasExcesivasGlobal(
+    inicio: string,
+    fin: string,
+    minFaltas = 3
+  ): Observable<AlertaFalta[]> {
+    const params = new HttpParams()
+      .set('inicio', inicio)
+      .set('fin', fin)
+      .set('minFaltas', minFaltas);
+
+    return this.http.get<AlertaFalta[]>(`${this.BASE_URL}/alertas/faltas-excesivas/global`, { params });
+  }
+
   // ── Persistencia Offline Local ────────────────────────────────────────
 
   /**

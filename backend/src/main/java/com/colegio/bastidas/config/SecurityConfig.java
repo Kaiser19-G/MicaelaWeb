@@ -60,6 +60,11 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                // El reenvío interno de Spring Boot a /error (tras un 404 o una
+                // excepción no manejada) no pasa por JwtAuthFilter (OncePerRequestFilter
+                // se salta el dispatch de tipo ERROR por defecto), así que sin este
+                // permitAll cualquier error real se enmascaraba como 403.
+                .requestMatchers("/error").permitAll()
                 // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()
             )

@@ -108,6 +108,14 @@ public interface AsistenciaService {
                                                             LocalDate fin,
                                                             int minFaltas);
 
+    /**
+     * Igual que {@link #detectarAlumnosConFaltasExcesivas} pero para todas las aulas
+     * de la institución (vista global del panel del Director).
+     */
+    List<AlertaFaltaDto> detectarAlumnosConFaltasExcesivasGlobal(LocalDate inicio,
+                                                                  LocalDate fin,
+                                                                  int minFaltas);
+
     // ── DTOs internos del servicio ─────────────────────────────────────────
     record RegistroAsistenciaDto(Long alumnoId, EstadoAsistencia estado, String justificacion) {}
 

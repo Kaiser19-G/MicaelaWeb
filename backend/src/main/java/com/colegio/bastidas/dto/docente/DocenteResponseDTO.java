@@ -30,6 +30,12 @@ public class DocenteResponseDTO {
     /** Cantidad de evidencias subidas en el período actual */
     private Integer cantidadEvidencias;
 
+    /** Cantidad de cursos (aula + área curricular) asignados al docente */
+    private Integer cantidadCursosAsignados;
+
+    /** Si es falso, el docente fue dado de baja: su cuenta no puede iniciar sesión. */
+    private Boolean activo;
+
     public static DocenteResponseDTO fromEntity(Docente d) {
         return DocenteResponseDTO.builder()
             .id(d.getId())
@@ -43,6 +49,7 @@ public class DocenteResponseDTO {
             .condicion(d.getCondicion() != null ? d.getCondicion().name() : null)
             .emailInstitucional(d.getEmailInstitucional())
             .celular(d.getCelular())
+            .activo(d.getUsuario() != null ? d.getUsuario().getActivo() : true)
             // Los campos de semáforo se calculan en el servicio y se inyectan aparte
             .estadoCurricular("PENDIENTE")
             .cantidadEvidencias(0)

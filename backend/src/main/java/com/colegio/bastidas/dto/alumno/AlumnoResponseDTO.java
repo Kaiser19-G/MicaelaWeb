@@ -39,6 +39,10 @@ public class AlumnoResponseDTO {
     private String celularApoderado;
     private String emailApoderado;
 
+    // ── Tutoría (habilita reuniones vía WhatsApp para el docente-tutor) ───────
+    private Long tutorId;
+    private String tutorNombre;
+
     public static AlumnoResponseDTO fromEntity(Alumno a) {
         return AlumnoResponseDTO.builder()
             .id(a.getId())
@@ -61,6 +65,8 @@ public class AlumnoResponseDTO {
             .nombreApoderado(a.getNombreApoderado())
             .celularApoderado(a.getCelularApoderado())
             .emailApoderado(a.getEmailApoderado())
+            .tutorId(a.getTutor() != null ? a.getTutor().getId() : null)
+            .tutorNombre(a.getTutor() != null ? a.getTutor().getNombreCompleto() : null)
             .build();
     }
 }

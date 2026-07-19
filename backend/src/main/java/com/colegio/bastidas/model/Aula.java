@@ -43,6 +43,11 @@ public class Aula {
     @Column(name = "anio_academico", nullable = false)
     private Integer anioAcademico;
 
+    @Column(nullable = false)
+    @NotNull
+    @Min(1)
+    private Integer capacidad;
+
     @Column(name = "aula_referencia", length = 20)
     private String aulaReferencia; // "Pabellón A – Aula 201"
 

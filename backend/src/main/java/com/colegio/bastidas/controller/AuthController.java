@@ -3,6 +3,7 @@ package com.colegio.bastidas.controller;
 import com.colegio.bastidas.model.Usuario;
 import com.colegio.bastidas.repository.UsuarioRepository;
 import com.colegio.bastidas.security.JwtTokenProvider;
+import com.colegio.bastidas.util.PasswordPolicy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -101,6 +102,10 @@ public class AuthController {
             Authentication authentication,
             @RequestBody ChangePasswordRequest request) {
 
+        if (!PasswordPolicy.esValida(request.newPassword())) {
+            return ResponseEntity.badRequest().body(Map.of("error", PasswordPolicy.mensajeError()));
+        }
+
         String username = authentication.getName();
         Usuario usuario = usuarioRepository.findByUsername(username)
             .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -111,6 +116,45 @@ public class AuthController {
 
         log.info("Usuario {} actualizó su contraseña (primer login completado)", username);
         return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada exitosamente"));
+    }
+
+    /**
+     * GET /auth/perfil
+     * Devuelve los datos de "Mi Perfil" del usuario autenticado.
+     */
+    @GetMapping("/perfil")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<com.colegio.bastidas.dto.usuario.PerfilDTO> obtenerPerfil(Authentication authentication) {
+        Usuario usuario = usuarioRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return ResponseEntity.ok(com.colegio.bastidas.dto.usuario.PerfilDTO.fromEntity(usuario));
+    }
+
+    /**
+     * PUT /auth/perfil
+     * Actualiza el nombre, celular (WhatsApp) y email del usuario autenticado.
+     */
+    @PutMapping("/perfil")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<com.colegio.bastidas.dto.usuario.PerfilDTO> actualizarPerfil(
+            Authentication authentication,
+            @jakarta.validation.Valid @RequestBody com.colegio.bastidas.dto.usuario.PerfilDTO request) {
+
+        Usuario usuario = usuarioRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        usuario.setNombreCompleto(request.getNombreCompleto());
+        usuario.setCelular(request.getCelular());
+        usuario.setEmail(request.getEmail());
+        usuarioRepository.save(usuario);
+
+        log.info("Usuario {} actualizó su perfil", usuario.getUsername());
+        return ResponseEntity.ok(com.colegio.bastidas.dto.usuario.PerfilDTO.fromEntity(usuario));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> manejarArgumentoInvalido(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 
     record LoginRequest(String username, String password) {}

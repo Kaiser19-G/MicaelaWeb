@@ -9,9 +9,7 @@ import lombok.Data;
 @Data
 public class AlumnoRequestDTO {
 
-    @NotBlank(message = "El código de estudiante es obligatorio")
-    @Size(max = 12)
-    private String codigoEstudiante;
+    // codigoEstudiante ya no se recibe: lo genera el backend (ver CodigosGenerator).
 
     @NotBlank(message = "El DNI es obligatorio")
     @Size(min = 8, max = 8, message = "El DNI debe tener exactamente 8 dígitos")
@@ -34,6 +32,9 @@ public class AlumnoRequestDTO {
     private Integer anioAcademico;
 
     private Long aulaId;
+
+    /** Docente-tutor del alumno (habilita reuniones vía WhatsApp para el docente en Secundaria). */
+    private Long tutorId;
 
     // ── Permiso Academia ─────────────────────────────────────────────────────
     private Boolean tienePermisoAcademia = false;

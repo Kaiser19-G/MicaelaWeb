@@ -4,6 +4,16 @@
   min-height: 100%;
 }
 
+.error-msg {
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  border-left: 3px solid #ef4444;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -210,6 +220,24 @@
   margin-top: 0.25rem;
   font-size: 0.75rem;
   color: #94a3b8;
+}
+
+.search-row {
+  display: flex;
+  gap: 0.5rem;
+
+  .form-control { flex: 1; }
+  .btn-secondary { white-space: nowrap; }
+}
+
+.alumno-encontrado {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border-left: 3px solid #2563eb;
 }
 
 .loader-container {

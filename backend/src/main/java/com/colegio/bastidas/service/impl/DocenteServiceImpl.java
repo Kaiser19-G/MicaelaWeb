@@ -1,27 +1,41 @@
 package com.colegio.bastidas.service.impl;
 
+import com.colegio.bastidas.dto.docente.DocenteCreadoResponseDTO;
 import com.colegio.bastidas.dto.docente.DocenteRequestDTO;
 import com.colegio.bastidas.dto.docente.DocenteResponseDTO;
+import com.colegio.bastidas.model.CursoAsignado;
 import com.colegio.bastidas.model.Docente;
+import com.colegio.bastidas.model.Usuario;
+import com.colegio.bastidas.repository.CursoAsignadoRepository;
 import com.colegio.bastidas.repository.DocenteRepository;
+import com.colegio.bastidas.repository.EvidenciaRepository;
+import com.colegio.bastidas.repository.UsuarioRepository;
 import com.colegio.bastidas.service.DocenteService;
+import com.colegio.bastidas.service.ExcelReportService;
+import com.colegio.bastidas.util.CodigosGenerator;
+import com.colegio.bastidas.util.CredencialesGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Implementación del servicio de Docentes.
  *
  * Semáforo Curricular (RN-04):
- *   APROBADO  → El docente ha subido programación anual Y todas las unidades.
- *   PENDIENTE → Subió la programación pero le faltan unidades didácticas.
- *   RETRASADO → No ha subido programación anual (evidencias = 0).
+ *   APROBADO  → {@value #UMBRAL_APROBADO}+ evidencias registradas.
+ *   PENDIENTE → Entre 1 y {@value #UMBRAL_APROBADO}-1 evidencias.
+ *   RETRASADO → Ninguna evidencia registrada.
  *
- * NOTA: La lógica real del semáforo se conectará con la tabla de evidencias
- * en Sprint 5. Por ahora se calcula desde el campo cantidadEvidencias.
+ * NOTA: no existe todavía una entidad de "programación curricular anual /
+ * unidades didácticas" en el modelo de datos — se usa la cantidad de
+ * Evidencia subida por el docente como proxy de su avance, tal como ya
+ * indicaba el comentario original de este archivo ("por ahora se calcula
+ * desde cantidadEvidencias"). Los umbrales son ajustables.
  */
 @Service
 @RequiredArgsConstructor
@@ -29,7 +43,14 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class DocenteServiceImpl implements DocenteService {
 
+    private static final long UMBRAL_APROBADO = 5;
+
     private final DocenteRepository docenteRepository;
+    private final UsuarioProvisioningHelper usuarioProvisioningHelper;
+    private final CursoAsignadoRepository cursoAsignadoRepository;
+    private final EvidenciaRepository evidenciaRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final ExcelReportService excelReportService;
 
     @Override
     public List<DocenteResponseDTO> listarTodos() {
@@ -54,12 +75,17 @@ public class DocenteServiceImpl implements DocenteService {
 
     @Override
     @Transactional
-    public DocenteResponseDTO crear(DocenteRequestDTO dto) {
+    public DocenteCreadoResponseDTO crear(DocenteRequestDTO dto) {
         if (docenteRepository.existsByDni(dto.getDni())) {
             throw new IllegalArgumentException("Ya existe un docente con DNI: " + dto.getDni());
         }
+
+        Usuario usuario = usuarioProvisioningHelper.crearUsuario(
+            dto.getDni(), dto.getApellidoPaterno(), Usuario.Rol.DOCENTE);
+
         Docente docente = Docente.builder()
-            .codigoDocente(dto.getCodigoDocente())
+            .usuario(usuario)
+            .codigoDocente(CodigosGenerator.generarCodigoDocente(dto.getDni()))
             .dni(dto.getDni())
             .apellidoPaterno(dto.getApellidoPaterno())
             .apellidoMaterno(dto.getApellidoMaterno())
@@ -73,7 +99,12 @@ public class DocenteServiceImpl implements DocenteService {
             .build();
         Docente guardado = docenteRepository.save(docente);
         log.info("Docente creado: {} (DNI: {})", guardado.getNombreCompleto(), guardado.getDni());
-        return toDTO(guardado);
+
+        return DocenteCreadoResponseDTO.builder()
+            .docente(toDTO(guardado))
+            .usernameGenerado(usuario.getUsername())
+            .passwordInicial(CredencialesGenerator.generarPasswordInicial(dto.getDni(), dto.getApellidoPaterno()))
+            .build();
     }
 
     @Override
@@ -96,6 +127,23 @@ public class DocenteServiceImpl implements DocenteService {
     }
 
     @Override
+    @Transactional
+    public DocenteResponseDTO actualizarEstadoActivo(Long id, boolean activo) {
+        Docente docente = docenteRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Docente no encontrado con ID: " + id));
+
+        Usuario usuario = docente.getUsuario();
+        if (usuario == null) {
+            throw new IllegalArgumentException("Este docente no tiene una cuenta de usuario asociada.");
+        }
+        usuario.setActivo(activo);
+        usuarioRepository.save(usuario);
+
+        log.info("Docente {} {}", docente.getNombreCompleto(), activo ? "reactivado" : "dado de baja");
+        return toDTO(docente);
+    }
+
+    @Override
     public List<DocenteResponseDTO> obtenerSemaforoCurricular() {
         // Todos los docentes con su estado curricular calculado
         return docenteRepository.findAll().stream()
@@ -105,29 +153,58 @@ public class DocenteServiceImpl implements DocenteService {
 
     @Override
     public long contarPorEstadoCurricular(String estado) {
-        // En Sprint 5 se conectará con la tabla de evidencias/programaciones
         return docenteRepository.findAll().stream()
-            .filter(d -> calcularEstadoCurricular(d).equalsIgnoreCase(estado))
+            .filter(d -> calcularEstadoCurricular(evidenciaRepository.countByDocenteId(d.getId())).equalsIgnoreCase(estado))
             .count();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportarListaConCursos() {
+        String[] columnas = {
+            "CÓDIGO", "DNI", "APELLIDO PATERNO", "APELLIDO MATERNO", "NOMBRES",
+            "ESPECIALIDAD", "CONDICIÓN", "EMAIL INSTITUCIONAL", "CELULAR", "CURSOS ASIGNADOS"
+        };
+
+        List<Object[]> filas = new ArrayList<>();
+        for (Docente d : docenteRepository.findAll()) {
+            List<CursoAsignado> cursos = cursoAsignadoRepository.findByDocenteId(d.getId());
+            String cursosTexto = cursos.stream()
+                .map(c -> c.getAreaCurricular() + " – " + c.getAula().getDescripcion())
+                .collect(Collectors.joining("; "));
+
+            filas.add(new Object[]{
+                d.getCodigoDocente(),
+                d.getDni(),
+                d.getApellidoPaterno(),
+                d.getApellidoMaterno(),
+                d.getNombres(),
+                d.getEspecialidad(),
+                d.getCondicion() != null ? d.getCondicion().name() : "",
+                d.getEmailInstitucional(),
+                d.getCelular(),
+                cursosTexto
+            });
+        }
+
+        return excelReportService.construirLibro("Docentes", columnas, filas);
     }
 
     // ── Helpers privados ─────────────────────────────────────────────────────
 
     private DocenteResponseDTO toDTO(Docente d) {
         DocenteResponseDTO dto = DocenteResponseDTO.fromEntity(d);
-        // Calcular estado curricular dinámicamente
-        dto.setEstadoCurricular(calcularEstadoCurricular(d));
+        long evidencias = evidenciaRepository.countByDocenteId(d.getId());
+        dto.setCantidadEvidencias((int) evidencias);
+        dto.setEstadoCurricular(calcularEstadoCurricular(evidencias));
+        dto.setCantidadCursosAsignados(cursoAsignadoRepository.findByDocenteId(d.getId()).size());
         return dto;
     }
 
-    /**
-     * Lógica del Semáforo Curricular (RN-04).
-     * Se expande en Sprint 5 con la tabla de programaciones.
-     * Por ahora: determina estado desde la cantidad de evidencias del docente.
-     */
-    private String calcularEstadoCurricular(Docente d) {
-        // Placeholder: Se reemplaza por consulta real a tabla de programaciones en Sprint 5
-        // La lógica real: verificar subida de programación anual + unidades didácticas
-        return "PENDIENTE"; // valor por defecto hasta integrar tabla de programaciones
+    /** Lógica del Semáforo Curricular (RN-04) — ver umbral en {@link #UMBRAL_APROBADO}. */
+    private String calcularEstadoCurricular(long evidencias) {
+        if (evidencias == 0) return "RETRASADO";
+        if (evidencias < UMBRAL_APROBADO) return "PENDIENTE";
+        return "APROBADO";
     }
 }

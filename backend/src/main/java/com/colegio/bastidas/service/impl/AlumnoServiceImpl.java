@@ -1,12 +1,17 @@
 package com.colegio.bastidas.service.impl;
 
+import com.colegio.bastidas.dto.alumno.AlumnoCreadoResponseDTO;
 import com.colegio.bastidas.dto.alumno.AlumnoRequestDTO;
 import com.colegio.bastidas.dto.alumno.AlumnoResponseDTO;
 import com.colegio.bastidas.model.Alumno;
 import com.colegio.bastidas.model.Aula;
+import com.colegio.bastidas.model.Usuario;
 import com.colegio.bastidas.repository.AlumnoRepository;
 import com.colegio.bastidas.repository.AsistenciaRepository;
+import com.colegio.bastidas.repository.DocenteRepository;
 import com.colegio.bastidas.service.AlumnoService;
+import com.colegio.bastidas.util.CodigosGenerator;
+import com.colegio.bastidas.util.CredencialesGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,6 +31,8 @@ public class AlumnoServiceImpl implements AlumnoService {
 
     private final AlumnoRepository alumnoRepository;
     private final AsistenciaRepository asistenciaRepository;
+    private final UsuarioProvisioningHelper usuarioProvisioningHelper;
+    private final DocenteRepository docenteRepository;
 
     @Override
     public List<AlumnoResponseDTO> listarActivosPorAnio(Integer anio) {
@@ -69,13 +76,17 @@ public class AlumnoServiceImpl implements AlumnoService {
 
     @Override
     @Transactional
-    public AlumnoResponseDTO crear(AlumnoRequestDTO dto) {
+    public AlumnoCreadoResponseDTO crear(AlumnoRequestDTO dto) {
         if (alumnoRepository.existsByDni(dto.getDni())) {
             throw new IllegalArgumentException("Ya existe un alumno con DNI: " + dto.getDni());
         }
 
+        Usuario usuario = usuarioProvisioningHelper.crearUsuario(
+            dto.getDni(), dto.getApellidoPaterno(), Usuario.Rol.ALUMNO);
+
         Alumno.AlumnoBuilder builder = Alumno.builder()
-            .codigoEstudiante(dto.getCodigoEstudiante())
+            .usuario(usuario)
+            .codigoEstudiante(CodigosGenerator.generarCodigoEstudiante(dto.getDni(), dto.getAnioAcademico()))
             .dni(dto.getDni())
             .apellidoPaterno(dto.getApellidoPaterno())
             .apellidoMaterno(dto.getApellidoMaterno())
@@ -102,7 +113,12 @@ public class AlumnoServiceImpl implements AlumnoService {
 
         Alumno guardado = alumnoRepository.save(builder.build());
         log.info("Alumno creado: {} (DNI: {})", guardado.getNombreCompleto(), guardado.getDni());
-        return AlumnoResponseDTO.fromEntity(guardado);
+
+        return AlumnoCreadoResponseDTO.builder()
+            .alumno(AlumnoResponseDTO.fromEntity(guardado))
+            .usernameGenerado(usuario.getUsername())
+            .passwordInicial(CredencialesGenerator.generarPasswordInicial(dto.getDni(), dto.getApellidoPaterno()))
+            .build();
     }
 
     @Override
@@ -120,6 +136,30 @@ public class AlumnoServiceImpl implements AlumnoService {
         alumno.setTienePermisoAcademia(Boolean.TRUE.equals(dto.getTienePermisoAcademia()));
         alumno.setHoraEntradaAcademia(dto.getHoraEntradaAcademia());
 
+        if (dto.getTutorId() != null) {
+            com.colegio.bastidas.model.Docente tutor = docenteRepository.findById(dto.getTutorId())
+                .orElseThrow(() -> new IllegalArgumentException("Docente no encontrado con ID: " + dto.getTutorId()));
+            alumno.setTutor(tutor);
+        }
+
+        return AlumnoResponseDTO.fromEntity(alumnoRepository.save(alumno));
+    }
+
+    @Override
+    @Transactional
+    public AlumnoResponseDTO actualizarEstado(Long id, String estado) {
+        Alumno alumno = alumnoRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Alumno no encontrado con ID: " + id));
+
+        Alumno.EstadoMatricula nuevoEstado;
+        try {
+            nuevoEstado = Alumno.EstadoMatricula.valueOf(estado);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Estado inválido: " + estado);
+        }
+
+        alumno.setEstadoMatricula(nuevoEstado);
+        log.info("Alumno {} cambió su estado de matrícula a {}", alumno.getNombreCompleto(), nuevoEstado);
         return AlumnoResponseDTO.fromEntity(alumnoRepository.save(alumno));
     }
 

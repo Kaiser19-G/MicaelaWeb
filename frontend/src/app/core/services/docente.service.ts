@@ -17,12 +17,31 @@ export interface DocenteResponse {
   celular: string;
   estadoCurricular: 'APROBADO' | 'PENDIENTE' | 'RETRASADO';
   cantidadEvidencias: number;
+  cantidadCursosAsignados: number;
+  activo: boolean;
 }
 
 export interface SemaforoConteo {
   aprobados: number;
   pendientes: number;
   retrasados: number;
+}
+
+export interface DocenteRequestDTO {
+  dni: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  nombres: string;
+  especialidad?: string;
+  condicion?: 'NOMBRADO' | 'CONTRATADO';
+  emailInstitucional?: string;
+  celular?: string;
+}
+
+export interface DocenteCreadoResponse {
+  docente: DocenteResponse;
+  usernameGenerado: string;
+  passwordInicial: string;
 }
 
 export interface CursoAsignado {
@@ -84,5 +103,25 @@ export class DocenteService {
   /** Obtiene los cursos asignados a un docente */
   obtenerCursos(id: number): Observable<CursoAsignado[]> {
     return this.http.get<CursoAsignado[]>(`${this.BASE}/${id}/cursos`);
+  }
+
+  /** Registra un nuevo docente; el backend crea su cuenta de usuario automáticamente. */
+  crear(dto: DocenteRequestDTO): Observable<DocenteCreadoResponse> {
+    return this.http.post<DocenteCreadoResponse>(this.BASE, dto);
+  }
+
+  /** Actualiza los datos de un docente existente (no cambia DNI). */
+  actualizar(id: number, dto: DocenteRequestDTO): Observable<DocenteResponse> {
+    return this.http.put<DocenteResponse>(`${this.BASE}/${id}`, dto);
+  }
+
+  /** Da de baja (o reactiva) al docente: desactiva su cuenta, ya no puede iniciar sesión. */
+  actualizarEstado(id: number, activo: boolean): Observable<DocenteResponse> {
+    return this.http.patch<DocenteResponse>(`${this.BASE}/${id}/estado`, {}, { params: { activo: String(activo) } });
+  }
+
+  /** Descarga la lista de docentes con sus cursos asignados en Excel. */
+  exportar(): Observable<Blob> {
+    return this.http.get(`${this.BASE}/exportar`, { responseType: 'blob' });
   }
 }

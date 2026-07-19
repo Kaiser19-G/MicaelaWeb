@@ -14,4 +14,7 @@ public interface CursoAsignadoRepository extends JpaRepository<CursoAsignado, Lo
     
     @Query("SELECT c FROM CursoAsignado c JOIN FETCH c.aula JOIN FETCH c.docente WHERE c.aula.id = :aulaId")
     List<CursoAsignado> findByAulaId(@Param("aulaId") Long aulaId);
+
+    boolean existsByAulaIdAndAreaCurricularAndAnioAcademico(
+        Long aulaId, String areaCurricular, Integer anioAcademico);
 }

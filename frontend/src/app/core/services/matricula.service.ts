@@ -8,8 +8,9 @@ export interface MatriculaDto {
   alumnoId: number;
   nombreAlumno?: string;
   codigoAlumno?: string;
-  grado: string;
-  seccion: string;
+  aulaId: number;
+  grado?: string;   // Solo lectura (derivado del aula)
+  seccion?: string; // Solo lectura (derivado del aula)
   anioEscolar: number;
   estado?: 'ACTIVO' | 'RETIRADO' | 'TRASLADADO';
 }
@@ -35,5 +36,15 @@ export class MatriculaService {
 
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /** Descarga el consolidado de matrícula en Excel (formato SIAGIE). */
+  exportarSiagie(anio: number, aulaId?: number): Observable<Blob> {
+    const params: Record<string, string> = { anio: String(anio) };
+    if (aulaId) params['aulaId'] = String(aulaId);
+    return this.http.get(`${environment.apiUrl}/matriculas/exportar/siagie`, {
+      params,
+      responseType: 'blob'
+    });
   }
 }

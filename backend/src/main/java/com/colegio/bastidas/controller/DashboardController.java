@@ -7,8 +7,12 @@ import com.colegio.bastidas.repository.AsistenciaRepository;
 import com.colegio.bastidas.repository.DocenteRepository;
 import com.colegio.bastidas.service.AulaService;
 import com.colegio.bastidas.service.DocenteService;
+import com.colegio.bastidas.service.ExcelReportService;
+import com.colegio.bastidas.service.MatriculaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +43,8 @@ public class DashboardController {
     private final AsistenciaRepository asistenciaRepository;
     private final DocenteService docenteService;
     private final AulaService aulaService;
+    private final MatriculaService matriculaService;
+    private final ExcelReportService excelReportService;
 
     /**
      * GET /dashboard/kpis?anio=2026
@@ -48,7 +54,43 @@ public class DashboardController {
     @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
     public ResponseEntity<DashboardKpiDTO> obtenerKpis(
             @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio) {
+        return ResponseEntity.ok(construirKpis(anio));
+    }
 
+    /**
+     * GET /dashboard/exportar?anio=2026
+     * Descarga un resumen de los KPIs del panel en Excel.
+     * Acceso: DIRECTOR, ADMIN
+     */
+    @GetMapping("/exportar")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
+    public ResponseEntity<byte[]> exportar(
+            @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio) {
+
+        DashboardKpiDTO kpis = construirKpis(anio);
+        String[] columnas = {"INDICADOR", "VALOR"};
+        List<Object[]> filas = List.of(
+            new Object[]{"Año académico", anio},
+            new Object[]{"Alumnos totales", kpis.getAlumnosTotales()},
+            new Object[]{"Docentes totales", kpis.getDocentesTotales()},
+            new Object[]{"Aulas totales", kpis.getAulasTotales()},
+            new Object[]{"Alumnos presentes hoy", kpis.getAlumnosPresentesHoy()},
+            new Object[]{"Alumnos con falta hoy", kpis.getAlumnosFaltasHoy()},
+            new Object[]{"Docentes aprobados (semáforo)", kpis.getDocentesAprobados()},
+            new Object[]{"Docentes pendientes (semáforo)", kpis.getDocentesPendientes()},
+            new Object[]{"Docentes retrasados (semáforo)", kpis.getDocentesRetrasados()},
+            new Object[]{"Alumnos matriculados (expediente completo)", kpis.getAlumnosMatriculadosCompletos()},
+            new Object[]{"Alumnos con matrícula provisional", kpis.getAlumnosMatriculaProvisional()}
+        );
+
+        byte[] excel = excelReportService.construirLibro("Resumen Dashboard", columnas, filas);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", String.format("dashboard_resumen_%d.xlsx", anio));
+        return ResponseEntity.ok().headers(headers).body(excel);
+    }
+
+    private DashboardKpiDTO construirKpis(Integer anio) {
         LocalDate hoy = LocalDate.now();
         int anioActual = anio != null ? anio : Year.now().getValue();
 
@@ -71,7 +113,10 @@ public class DashboardController {
         // ── Asistencia semanal (últimos 5 días hábiles) ───────────────────────
         List<DashboardKpiDTO.AsistenciaDiaDTO> semanal = construirAsistenciaSemanal(hoy);
 
-        DashboardKpiDTO kpis = DashboardKpiDTO.builder()
+        // ── Expedientes incompletos (matrícula "provisional") ─────────────────
+        long expedientesIncompletos = matriculaService.contarConExpedienteIncompleto(anioActual);
+
+        return DashboardKpiDTO.builder()
             .alumnosTotales(alumnosTotales)
             .docentesTotales(docentesTotales)
             .aulasTotales(aulasTotales)
@@ -81,27 +126,28 @@ public class DashboardController {
             .docentesAprobados(aprobados)
             .docentesPendientes(pendientes)
             .docentesRetrasados(retrasados)
-            .alumnosMatriculadosCompletos(alumnosTotales)
-            .alumnosMatriculaProvisional(0L)
+            .alumnosMatriculadosCompletos(alumnosTotales - expedientesIncompletos)
+            .alumnosMatriculaProvisional(expedientesIncompletos)
             .asistenciaSemanal(semanal)
             .build();
-
-        return ResponseEntity.ok(kpis);
     }
 
     /**
-     * GET /dashboard/alertas
-     * Retorna las alertas activas (servicios básicos, documentos faltantes, etc.)
+     * GET /dashboard/alertas?anio=2026
+     * Retorna las alertas activas (documentos faltantes, matrículas provisionales, etc.)
      */
     @GetMapping("/alertas")
     @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
-    public ResponseEntity<List<Map<String, Object>>> obtenerAlertas() {
-        // En Sprint 5 se conectará con tabla de alertas reales
+    public ResponseEntity<List<Map<String, Object>>> obtenerAlertas(
+            @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio) {
+
+        long expedientesIncompletos = matriculaService.contarConExpedienteIncompleto(anio);
+
         List<Map<String, Object>> alertas = List.of(
             Map.of("tipo", "DOCUMENTOS", "titulo", "Documentos Faltantes",
-                   "subtitulo", "DNI/Partidas sin entregar", "cantidad", 0),
+                   "subtitulo", "DNI/Partidas sin entregar", "cantidad", expedientesIncompletos),
             Map.of("tipo", "MATRICULA", "titulo", "Matrículas Provisionales",
-                   "subtitulo", "Pendientes de documentación completa", "cantidad", 0)
+                   "subtitulo", "Pendientes de documentación completa", "cantidad", expedientesIncompletos)
         );
         return ResponseEntity.ok(alertas);
     }

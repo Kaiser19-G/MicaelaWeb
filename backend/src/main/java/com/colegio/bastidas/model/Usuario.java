@@ -45,6 +45,14 @@ public class Usuario implements UserDetails {
     @Email
     private String email;
 
+    /** Nombre completo editable por el propio usuario en "Mi Perfil" (roles sin entidad de perfil propia, ej. DIRECTOR). */
+    @Column(name = "nombre_completo", length = 150)
+    private String nombreCompleto;
+
+    /** Número de WhatsApp/celular editable por el propio usuario en "Mi Perfil". */
+    @Column(length = 15)
+    private String celular;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @NotNull

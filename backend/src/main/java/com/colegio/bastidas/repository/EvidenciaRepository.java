@@ -20,5 +20,7 @@ public interface EvidenciaRepository extends JpaRepository<Evidencia, Long> {
 
     List<Evidencia> findByAlumnoIdAndPeriodoAcademico(Long alumnoId, String periodo);
 
+    long countByDocenteId(Long docenteId);
+
     void deleteByNotaId(Long notaId);
 }

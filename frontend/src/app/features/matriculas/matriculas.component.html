@@ -5,7 +5,7 @@
       <p class="page-subtitle">Periodo Escolar {{ anioActual }}</p>
     </div>
     <button class="btn-primary" (click)="abrirModalNuevo()">
-      + Nueva Matrícula
+      + Nueva Matrícula / Reinscripción
     </button>
   </div>
 
@@ -56,41 +56,48 @@
 <div class="modal-backdrop" *ngIf="showModal()">
   <div class="modal-dialog">
     <div class="modal-header">
-      <h2>{{ isEdit() ? 'Editar Matrícula' : 'Nueva Matrícula' }}</h2>
+      <h2>{{ isEdit() ? 'Editar Matrícula' : 'Nueva Matrícula / Reinscripción' }}</h2>
       <button class="btn-close" (click)="cerrarModal()">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-group" *ngIf="!isEdit()">
-        <label>ID Alumno (Backend ID)</label>
-        <input type="number" class="form-control" [(ngModel)]="formMatricula.alumnoId" placeholder="Ej: 1">
-        <small class="form-hint">En un sistema real se usaría un buscador con autocompletado.</small>
+        <label>DNI del Alumno</label>
+        <div class="search-row">
+          <input type="text" class="form-control" maxlength="8" [(ngModel)]="dniBusqueda"
+                 placeholder="8 dígitos" (keyup.enter)="buscarAlumnoPorDni()">
+          <button type="button" class="btn-secondary" [disabled]="buscandoAlumno()" (click)="buscarAlumnoPorDni()">
+            {{ buscandoAlumno() ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+        <small class="form-hint">
+          Si el alumno es nuevo, primero regístrelo en "+ Nuevo Alumno" desde el Panel de Dirección.
+          Si ya fue alumno de la institución (reinscripción de año), búsquelo aquí por su DNI.
+        </small>
+        <div class="error-msg" *ngIf="errorBusquedaAlumno()">{{ errorBusquedaAlumno() }}</div>
+        <div class="alumno-encontrado" *ngIf="alumnoEncontrado() as a">
+          <strong>{{ a.nombreCompleto }}</strong> — Código {{ a.codigoEstudiante }}
+          <ng-container *ngIf="a.aulaDescripcion">
+            <br>Matrícula anterior: {{ a.aulaDescripcion }} ({{ a.anioAcademico }})
+          </ng-container>
+        </div>
       </div>
       <div class="form-group" *ngIf="isEdit()">
         <label>Alumno</label>
         <input type="text" class="form-control" [value]="formMatricula.nombreAlumno" disabled>
       </div>
-      
-      <div class="form-row">
-        <div class="form-group col-6">
-          <label>Grado</label>
-          <select class="form-control" [(ngModel)]="formMatricula.grado">
-            <option value="">Seleccione...</option>
-            <option value="1ro Secundaria">1ro Secundaria</option>
-            <option value="2do Secundaria">2do Secundaria</option>
-            <option value="3ro Secundaria">3ro Secundaria</option>
-            <option value="4to Secundaria">4to Secundaria</option>
-            <option value="5to Secundaria">5to Secundaria</option>
-          </select>
-        </div>
-        <div class="form-group col-6">
-          <label>Sección</label>
-          <select class="form-control" [(ngModel)]="formMatricula.seccion">
-            <option value="">Seleccione...</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-          </select>
-        </div>
+
+      <div class="form-group">
+        <label>Aula</label>
+        <select class="form-control" [(ngModel)]="formMatricula.aulaId"
+                [disabled]="!isEdit() && !alumnoEncontrado()">
+          <option [ngValue]="0">Seleccione...</option>
+          <option *ngFor="let a of aulas()" [ngValue]="a.id" [disabled]="a.vacantesDisponibles <= 0">
+            {{ a.descripcion }} — {{ a.vacantesDisponibles }} vacante(s)
+          </option>
+        </select>
+        <small class="form-hint" *ngIf="vacantesAulaSeleccionada !== null">
+          Vacantes disponibles: {{ vacantesAulaSeleccionada }}
+        </small>
       </div>
 
       <div class="form-group">
@@ -101,10 +108,12 @@
           <option value="TRASLADADO">Trasladado</option>
         </select>
       </div>
+
+      <div class="error-msg" *ngIf="error()">{{ error() }}</div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
-      <button class="btn-primary" (click)="guardar()">Guardar</button>
+      <button class="btn-primary" [disabled]="!isEdit() && !alumnoEncontrado()" (click)="guardar()">Guardar</button>
     </div>
   </div>
 </div>

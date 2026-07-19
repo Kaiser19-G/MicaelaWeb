@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     username         VARCHAR(50)  NOT NULL UNIQUE,
     password         VARCHAR(255) NOT NULL,
     email            VARCHAR(100) UNIQUE,
+    nombre_completo  VARCHAR(150),
+    celular          VARCHAR(15),
     rol              VARCHAR(20)  NOT NULL CHECK (rol IN ('DIRECTOR','DOCENTE','ALUMNO','ADMIN')),
     activo           BOOLEAN      NOT NULL DEFAULT TRUE,
     primer_login     BOOLEAN      NOT NULL DEFAULT TRUE,
@@ -257,7 +259,37 @@ CREATE TABLE IF NOT EXISTS calificaciones_diarias (
 CREATE INDEX IF NOT EXISTS idx_calif_diaria_alumno ON calificaciones_diarias(alumno_id);
 CREATE INDEX IF NOT EXISTS idx_calif_diaria_semana ON calificaciones_diarias(curso_asignado_id, semana);
 
--- ── 15. USUARIO ADMIN INICIAL (para poder hacer login) ────────────────────────
+-- ── 15. REUNIONES (agenda con apoderados; el envío es un link wa.me manual) ───
+CREATE TABLE IF NOT EXISTS reuniones (
+    id                 BIGSERIAL PRIMARY KEY,
+    alumno_id          BIGINT NOT NULL REFERENCES alumnos(id),
+    aula_id            BIGINT NOT NULL REFERENCES aulas(id),
+    convocada_por_id   BIGINT NOT NULL REFERENCES usuarios(id),
+    fecha              DATE        NOT NULL,
+    hora_inicio        VARCHAR(5)  NOT NULL,
+    hora_fin           VARCHAR(5)  NOT NULL,
+    motivo             VARCHAR(300) NOT NULL,
+    estado             VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE'
+                           CHECK (estado IN ('PENDIENTE','CONFIRMADA','REALIZADA','CANCELADA')),
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reunion_fecha ON reuniones(fecha);
+CREATE INDEX IF NOT EXISTS idx_reunion_aula ON reuniones(aula_id);
+
+-- ── 16. CIRCULARES (comunicados internos del Director) ────────────────────────
+CREATE TABLE IF NOT EXISTS circulares (
+    id                 BIGSERIAL PRIMARY KEY,
+    titulo             VARCHAR(200) NOT NULL,
+    contenido          TEXT        NOT NULL,
+    dirigido_a         VARCHAR(20) NOT NULL CHECK (dirigido_a IN ('TODOS','DOCENTES','ALUMNOS')),
+    publicada          BOOLEAN     NOT NULL DEFAULT FALSE,
+    fecha_publicacion  TIMESTAMPTZ,
+    publicada_por_id   BIGINT NOT NULL REFERENCES usuarios(id),
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ── 17. USUARIO ADMIN INICIAL (para poder hacer login) ────────────────────────
 -- Contraseña: admin123  (BCrypt hash — cámbiala en producción)
 INSERT INTO usuarios (username, password, email, rol, activo, primer_login)
 VALUES (

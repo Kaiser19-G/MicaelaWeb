@@ -57,10 +57,10 @@ public class DatabaseSeeder implements CommandLineRunner {
         usuarioRepository.save(director);
 
         // 2. Crear Aulas (5to Secundaria A, B, C, D)
-        Aula aula5toA = Aula.builder().grado("5").seccion("A").nivel(Aula.Nivel.SECUNDARIA).anioAcademico(2026).build();
-        Aula aula5toB = Aula.builder().grado("5").seccion("B").nivel(Aula.Nivel.SECUNDARIA).anioAcademico(2026).build();
-        Aula aula5toC = Aula.builder().grado("5").seccion("C").nivel(Aula.Nivel.SECUNDARIA).anioAcademico(2026).build();
-        Aula aula5toD = Aula.builder().grado("5").seccion("D").nivel(Aula.Nivel.SECUNDARIA).anioAcademico(2026).build();
+        Aula aula5toA = Aula.builder().grado("5").seccion("A").nivel(Aula.Nivel.SECUNDARIA).anioAcademico(2026).capacidad(30).build();
+        Aula aula5toB = Aula.builder().grado("5").seccion("B").nivel(Aula.Nivel.SECUNDARIA).anioAcademico(2026).capacidad(30).build();
+        Aula aula5toC = Aula.builder().grado("5").seccion("C").nivel(Aula.Nivel.SECUNDARIA).anioAcademico(2026).capacidad(30).build();
+        Aula aula5toD = Aula.builder().grado("5").seccion("D").nivel(Aula.Nivel.SECUNDARIA).anioAcademico(2026).capacidad(30).build();
         aula5toA = aulaRepository.save(aula5toA);
         aula5toB = aulaRepository.save(aula5toB);
         aula5toC = aulaRepository.save(aula5toC);
