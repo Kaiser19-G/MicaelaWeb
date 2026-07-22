@@ -20,6 +20,8 @@ import java.util.Map;
  *
  * Agrega todos los KPIs e indicadores estratégicos en un solo endpoint
  * para minimizar las llamadas HTTP desde el frontend (< 2.5 seg RNF-03).
+ * Las métricas de asistencia (presentes/faltas/gráfico) respetan el período
+ * elegido por el Director en el panel: SEMANA (actual), MES o ANIO.
  */
 @RestController
 @RequestMapping("/dashboard")
@@ -31,59 +33,55 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     /**
-     * GET /dashboard/kpis?anio=2026
+     * GET /dashboard/kpis?anio=2026&periodo=SEMANA|MES|ANIO&mes=3
      * Retorna todos los KPIs del Panel del Director en una sola llamada.
      */
     @GetMapping("/kpis")
     @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
     public ResponseEntity<DashboardKpiDTO> obtenerKpis(
-            @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio) {
-        return ResponseEntity.ok(dashboardService.obtenerKpis(anio));
-    }
-
-    /**
-     * GET /dashboard/asistencia?periodo=SEMANA|MES|ANIO&anio=&mes=
-     * Resumen de asistencia para el gráfico de barras del panel, según el período elegido.
-     */
-    @GetMapping("/asistencia")
-    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
-    public ResponseEntity<List<DashboardKpiDTO.AsistenciaDiaDTO>> obtenerAsistencia(
+            @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio,
             @RequestParam(defaultValue = "SEMANA") String periodo,
-            @RequestParam(required = false) Integer anio,
             @RequestParam(required = false) Integer mes) {
-        PeriodoResumen tipo = PeriodoResumen.valueOf(periodo.toUpperCase());
-        return ResponseEntity.ok(dashboardService.obtenerAsistenciaPorPeriodo(tipo, anio, mes));
+        return ResponseEntity.ok(dashboardService.obtenerKpis(anio, PeriodoResumen.valueOf(periodo.toUpperCase()), mes));
     }
 
     /**
-     * GET /dashboard/exportar?anio=2026
-     * Descarga un resumen de los KPIs del panel en Excel.
+     * GET /dashboard/exportar?anio=2026&periodo=SEMANA|MES|ANIO&mes=3
+     * Descarga en Excel el mismo resumen que ve el Director, filtrado por el período elegido.
      * Acceso: DIRECTOR, ADMIN
      */
     @GetMapping("/exportar")
     @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
     public ResponseEntity<byte[]> exportar(
-            @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio) {
-        byte[] excel = dashboardService.exportarResumenExcel(anio);
+            @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio,
+            @RequestParam(defaultValue = "SEMANA") String periodo,
+            @RequestParam(required = false) Integer mes) {
+        PeriodoResumen tipo = PeriodoResumen.valueOf(periodo.toUpperCase());
+        byte[] excel = dashboardService.exportarResumenExcel(anio, tipo, mes);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", String.format("dashboard_resumen_%d.xlsx", anio));
+        headers.setContentDispositionFormData("attachment",
+            String.format("dashboard_resumen_%s.xlsx", nombreArchivoPeriodo(tipo, anio, mes)));
         return ResponseEntity.ok().headers(headers).body(excel);
     }
 
     /**
-     * GET /dashboard/exportar/pdf?anio=2026
-     * Descarga un resumen de los KPIs del panel en PDF.
+     * GET /dashboard/exportar/pdf?anio=2026&periodo=SEMANA|MES|ANIO&mes=3
+     * Descarga en PDF el mismo resumen que ve el Director, filtrado por el período elegido.
      * Acceso: DIRECTOR, ADMIN
      */
     @GetMapping("/exportar/pdf")
     @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
     public ResponseEntity<byte[]> exportarPdf(
-            @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio) {
-        byte[] pdf = dashboardService.exportarResumenPdf(anio);
+            @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio,
+            @RequestParam(defaultValue = "SEMANA") String periodo,
+            @RequestParam(required = false) Integer mes) {
+        PeriodoResumen tipo = PeriodoResumen.valueOf(periodo.toUpperCase());
+        byte[] pdf = dashboardService.exportarResumenPdf(anio, tipo, mes);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", String.format("dashboard_resumen_%d.pdf", anio));
+        headers.setContentDispositionFormData("attachment",
+            String.format("dashboard_resumen_%s.pdf", nombreArchivoPeriodo(tipo, anio, mes)));
         return ResponseEntity.ok().headers(headers).body(pdf);
     }
 
@@ -96,5 +94,13 @@ public class DashboardController {
     public ResponseEntity<List<Map<String, Object>>> obtenerAlertas(
             @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") Integer anio) {
         return ResponseEntity.ok(dashboardService.obtenerAlertas(anio));
+    }
+
+    private String nombreArchivoPeriodo(PeriodoResumen tipo, Integer anio, Integer mes) {
+        return switch (tipo) {
+            case MES -> String.format("mes_%02d_%d", mes != null ? mes : 1, anio);
+            case ANIO -> String.format("anio_%d", anio);
+            default -> "semana_actual";
+        };
     }
 }

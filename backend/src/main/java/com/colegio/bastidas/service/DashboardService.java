@@ -11,14 +11,18 @@ import java.util.Map;
  */
 public interface DashboardService {
 
-    DashboardKpiDTO obtenerKpis(Integer anio);
-
-    /** Resumen de asistencia (alumnos ASISTIO) agrupado según el período elegido: SEMANA/MES/ANIO. */
-    List<DashboardKpiDTO.AsistenciaDiaDTO> obtenerAsistenciaPorPeriodo(PeriodoResumen periodo, Integer anio, Integer mes);
+    /**
+     * KPIs del Panel del Director. {@code anio} sigue acotando lo estructural (alumnos/docentes/
+     * aulas matriculados ese año académico); {@code periodo}/{@code mes} determinan sobre qué rango
+     * de fechas se calculan las métricas de asistencia (presentes/faltas/gráfico) — SEMANA (actual),
+     * MES (elegido) o ANIO (elegido).
+     */
+    DashboardKpiDTO obtenerKpis(Integer anio, PeriodoResumen periodo, Integer mes);
 
     List<Map<String, Object>> obtenerAlertas(Integer anio);
 
-    byte[] exportarResumenExcel(Integer anio);
+    /** Exporta el mismo resumen que ve el Director, ya filtrado por el período elegido. */
+    byte[] exportarResumenExcel(Integer anio, PeriodoResumen periodo, Integer mes);
 
-    byte[] exportarResumenPdf(Integer anio);
+    byte[] exportarResumenPdf(Integer anio, PeriodoResumen periodo, Integer mes);
 }

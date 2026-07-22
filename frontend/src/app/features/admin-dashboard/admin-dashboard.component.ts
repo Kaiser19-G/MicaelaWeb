@@ -167,8 +167,8 @@ export class AdminDashboardComponent implements OnInit {
     docentes: 0,
     aulas: 0,
     alertasActivas: 0,
-    presentesHoy: 0,
-    faltasHoy: 0,
+    presentesPeriodo: 0,
+    faltasPeriodo: 0,
   });
 
   // ── Alertas: alumnos con +3 faltas consecutivas (todas las aulas) ─────────
@@ -195,6 +195,14 @@ export class AdminDashboardComponent implements OnInit {
   readonly maxAlumnos = computed(() =>
     Math.max(1, ...this.asistenciaGrafico().map(d => d.alumnos))
   );
+
+  readonly descripcionPeriodo = computed(() => {
+    switch (this.periodoGrafico()) {
+      case 'MES': return `${this.mesesDelAnio.find(m => m.valor === this.mesGrafico)?.nombre} ${this.anioGrafico}`;
+      case 'ANIO': return `Año ${this.anioGrafico}`;
+      default: return 'Esta semana';
+    }
+  });
 
   // ── Alertas Centro (desde GET /dashboard/alertas) ────────────────
   readonly alertasCentro = signal<AlertaDashboard[]>([]);
@@ -887,16 +895,35 @@ export class AdminDashboardComponent implements OnInit {
 
   cambiarPeriodoGrafico(periodo: 'SEMANA' | 'MES' | 'ANIO'): void {
     this.periodoGrafico.set(periodo);
-    this.cargarAsistenciaGrafico();
+    this.cargarKpisYAsistencia();
   }
 
-  cargarAsistenciaGrafico(): void {
-    this.dashboardService
-      .obtenerAsistenciaPorPeriodo(this.periodoGrafico(), this.anioGrafico, this.mesGrafico)
-      .subscribe({
-        next: (dias) => this.asistenciaGrafico.set(dias),
-        error: (err) => console.error('Error al cargar asistencia del gráfico:', err)
-      });
+  /** Recarga KPIs + gráfico juntos: ambos deben reflejar siempre el mismo período elegido. */
+  cargarKpisYAsistencia(): void {
+    this.dashboardService.obtenerKpis(this.anioGrafico, this.periodoGrafico(), this.mesGrafico).subscribe({
+      next: (kpi) => {
+        this.kpis.set({
+          alumnosTotales:  kpi.alumnosTotales,
+          docentes:        kpi.docentesTotales,
+          aulas:           kpi.aulasTotales,
+          alertasActivas:  kpi.alumnosMatriculaProvisional,
+          presentesPeriodo: kpi.alumnosPresentesPeriodo,
+          faltasPeriodo:    kpi.alumnosFaltasPeriodo,
+        });
+        this.asistenciaGrafico.set(kpi.asistenciaPeriodo);
+        this.kpisDocentes.set({
+          aprobados:  kpi.docentesAprobados,
+          pendientes: kpi.docentesPendientes,
+          retrasados: kpi.docentesRetrasados,
+        });
+        this.cargando.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar KPIs del dashboard:', err);
+        this.errorConexion.set(true);
+        this.cargando.set(false);
+      }
+    });
   }
 
   alturaBarraDocente(docentes: number): number {
@@ -932,9 +959,18 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  /** Nombre de archivo que refleja el período elegido en el panel (semana/mes/año). */
+  private sufijoArchivoPeriodo(): string {
+    switch (this.periodoGrafico()) {
+      case 'MES': return `mes_${String(this.mesGrafico).padStart(2, '0')}_${this.anioGrafico}`;
+      case 'ANIO': return `anio_${this.anioGrafico}`;
+      default: return 'semana_actual';
+    }
+  }
+
   exportarResumenDashboard(): void {
-    this.dashboardService.exportar(this.anioActual).subscribe({
-      next: (blob) => this.descargarBlob(blob, `dashboard_resumen_${this.anioActual}.xlsx`),
+    this.dashboardService.exportar(this.anioGrafico, this.periodoGrafico(), this.mesGrafico).subscribe({
+      next: (blob) => this.descargarBlob(blob, `dashboard_resumen_${this.sufijoArchivoPeriodo()}.xlsx`),
       error: (err) => {
         console.error('Error al exportar resumen', err);
         alert('No se pudo generar el archivo. Intente nuevamente.');
@@ -943,8 +979,8 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   exportarResumenDashboardPdf(): void {
-    this.dashboardService.exportarPdf(this.anioActual).subscribe({
-      next: (blob) => this.descargarBlob(blob, `dashboard_resumen_${this.anioActual}.pdf`),
+    this.dashboardService.exportarPdf(this.anioGrafico, this.periodoGrafico(), this.mesGrafico).subscribe({
+      next: (blob) => this.descargarBlob(blob, `dashboard_resumen_${this.sufijoArchivoPeriodo()}.pdf`),
       error: (err) => {
         console.error('Error al exportar resumen (PDF)', err);
         alert('No se pudo generar el archivo. Intente nuevamente.');
@@ -1017,33 +1053,8 @@ export class AdminDashboardComponent implements OnInit {
     this.cargando.set(true);
     this.errorConexion.set(false);
 
-    // ─ 1. KPIs principales del Dashboard ────────────────────────────────────
-    // NOTA: Los datos simulados (expedientes, circulares, reuniones, alertasFaltas)
-    // ya están declarados arriba como arrays constantes.
-    // Se reemplazarán por llamadas HTTP cuando el backend esté disponible.
-    this.dashboardService.obtenerKpis().subscribe({
-      next: (kpi) => {
-        this.kpis.set({
-          alumnosTotales: kpi.alumnosTotales,
-          docentes:       kpi.docentesTotales,
-          aulas:          kpi.aulasTotales,
-          alertasActivas: kpi.alumnosMatriculaProvisional,
-          presentesHoy:   kpi.alumnosPresentesHoy,
-          faltasHoy:      kpi.alumnosFaltasHoy,
-        });
-        this.kpisDocentes.set({
-          aprobados:  kpi.docentesAprobados,
-          pendientes: kpi.docentesPendientes,
-          retrasados: kpi.docentesRetrasados,
-        });
-        this.cargando.set(false);
-      },
-      error: (err) => {
-        console.error('Error al cargar KPIs del dashboard:', err);
-        this.errorConexion.set(true);
-        this.cargando.set(false);
-      }
-    });
+    // ─ 1. KPIs principales del Dashboard + gráfico de asistencia (período elegido) ─
+    this.cargarKpisYAsistencia();
 
     // ─ 2. Semáforo Curricular (lista de docentes) ────────────────────────────
     this.docenteService.obtenerSemaforo().subscribe({
@@ -1101,13 +1112,10 @@ export class AdminDashboardComponent implements OnInit {
     // ─ 9. Circulares (comunicados internos) ───────────────────────────────
     this.cargarCirculares();
 
-    // ─ 10. Gráfico de asistencia del panel (según período elegido) ───────
-    this.cargarAsistenciaGrafico();
-
-    // ─ 11. Aulas (para el tab "Aulas" y el selector "Asignar Curso") ──────
+    // ─ 10. Aulas (para el tab "Aulas" y el selector "Asignar Curso") ──────
     this.cargarAulas();
 
-    // ─ 12. Alumnos con permiso de academia (Control de Ingresos Especiales) ─
+    // ─ 11. Alumnos con permiso de academia (Control de Ingresos Especiales) ─
     this.cargarAlumnosConPermiso();
   }
 

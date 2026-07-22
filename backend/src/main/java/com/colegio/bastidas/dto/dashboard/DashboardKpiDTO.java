@@ -20,10 +20,12 @@ public class DashboardKpiDTO {
     /** Total de aulas registradas en el año actual */
     private long aulasTotales;
 
-    // ── Asistencia del Día ────────────────────────────────────────────────────
-    private long alumnosPresentesHoy;
-    private long alumnosFaltasHoy;
+    // ── Asistencia del período elegido (semana/mes/año) ───────────────────────
+    private long alumnosPresentesPeriodo;
+    private long alumnosFaltasPeriodo;
     private long alumnosConPermisoAcademia;
+    /** Período que se aplicó a las métricas de asistencia de este DTO: SEMANA | MES | ANIO. */
+    private String tipoPeriodo;
 
     // ── Semáforo Curricular ───────────────────────────────────────────────────
     private long docentesAprobados;
@@ -34,8 +36,8 @@ public class DashboardKpiDTO {
     private long alumnosMatriculadosCompletos;
     private long alumnosMatriculaProvisional; // Faltan documentos
 
-    // ── Asistencia Semanal (para el gráfico de barras) ───────────────────────
-    private List<AsistenciaDiaDTO> asistenciaSemanal;
+    // ── Asistencia del período (para el gráfico de barras) ───────────────────
+    private List<AsistenciaDiaDTO> asistenciaPeriodo;
 
     @Data
     @Builder

@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export type PeriodoDashboard = 'SEMANA' | 'MES' | 'ANIO';
+
 export interface AsistenciaDia {
   dia: string;
   alumnos: number;
@@ -13,15 +15,16 @@ export interface DashboardKpi {
   alumnosTotales: number;
   docentesTotales: number;
   aulasTotales: number;
-  alumnosPresentesHoy: number;
-  alumnosFaltasHoy: number;
+  alumnosPresentesPeriodo: number;
+  alumnosFaltasPeriodo: number;
+  tipoPeriodo: PeriodoDashboard;
   alumnosConPermisoAcademia: number;
   docentesAprobados: number;
   docentesPendientes: number;
   docentesRetrasados: number;
   alumnosMatriculadosCompletos: number;
   alumnosMatriculaProvisional: number;
-  asistenciaSemanal: AsistenciaDia[];
+  asistenciaPeriodo: AsistenciaDia[];
 }
 
 export interface AlertaDashboard {
@@ -46,12 +49,14 @@ export class DashboardService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Obtiene todos los KPIs del Director en una sola llamada.
+   * Obtiene todos los KPIs del Director en una sola llamada. Las métricas de
+   * asistencia (presentes/faltas/gráfico) se calculan sobre el período elegido.
    * Cumple con RNF-03: tiempo de respuesta < 2.5s.
    */
-  obtenerKpis(anio?: number): Observable<DashboardKpi> {
-    let params = new HttpParams();
+  obtenerKpis(anio?: number, periodo: PeriodoDashboard = 'SEMANA', mes?: number): Observable<DashboardKpi> {
+    let params = new HttpParams().set('periodo', periodo);
     if (anio) params = params.set('anio', anio);
+    if (mes) params = params.set('mes', mes);
     return this.http.get<DashboardKpi>(`${this.BASE}/kpis`, { params });
   }
 
@@ -60,25 +65,19 @@ export class DashboardService {
     return this.http.get<AlertaDashboard[]>(`${this.BASE}/alertas`);
   }
 
-  /** Descarga un resumen de los KPIs del panel en Excel. */
-  exportar(anio?: number): Observable<Blob> {
-    let params = new HttpParams();
-    if (anio) params = params.set('anio', anio);
-    return this.http.get(`${this.BASE}/exportar`, { params, responseType: 'blob' });
-  }
-
-  /** Descarga un resumen de los KPIs del panel en PDF. */
-  exportarPdf(anio?: number): Observable<Blob> {
-    let params = new HttpParams();
-    if (anio) params = params.set('anio', anio);
-    return this.http.get(`${this.BASE}/exportar/pdf`, { params, responseType: 'blob' });
-  }
-
-  /** Resumen de asistencia para el gráfico del panel, según el período elegido. */
-  obtenerAsistenciaPorPeriodo(periodo: 'SEMANA' | 'MES' | 'ANIO', anio?: number, mes?: number): Observable<AsistenciaDia[]> {
+  /** Descarga en Excel el mismo resumen que ve el Director, filtrado por el período elegido. */
+  exportar(anio?: number, periodo: PeriodoDashboard = 'SEMANA', mes?: number): Observable<Blob> {
     let params = new HttpParams().set('periodo', periodo);
     if (anio) params = params.set('anio', anio);
     if (mes) params = params.set('mes', mes);
-    return this.http.get<AsistenciaDia[]>(`${this.BASE}/asistencia`, { params });
+    return this.http.get(`${this.BASE}/exportar`, { params, responseType: 'blob' });
+  }
+
+  /** Descarga en PDF el mismo resumen que ve el Director, filtrado por el período elegido. */
+  exportarPdf(anio?: number, periodo: PeriodoDashboard = 'SEMANA', mes?: number): Observable<Blob> {
+    let params = new HttpParams().set('periodo', periodo);
+    if (anio) params = params.set('anio', anio);
+    if (mes) params = params.set('mes', mes);
+    return this.http.get(`${this.BASE}/exportar/pdf`, { params, responseType: 'blob' });
   }
 }

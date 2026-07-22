@@ -37,53 +37,52 @@ public class DashboardServiceImpl implements DashboardService {
     private final PdfReportService pdfReportService;
 
     @Override
-    public DashboardKpiDTO obtenerKpis(Integer anio) {
+    public DashboardKpiDTO obtenerKpis(Integer anio, PeriodoResumen periodo, Integer mes) {
         LocalDate hoy = LocalDate.now();
         int anioActual = anio != null ? anio : Year.now().getValue();
+        PeriodoResumen tipo = periodo != null ? periodo : PeriodoResumen.SEMANA;
 
+        // ── Estructural: alumnos/docentes/aulas matriculados en el año académico ──
         long alumnosTotales  = alumnoRepository.contarAlumnosActivosPorAnio(anioActual);
         long docentesTotales = docenteRepository.count();
         long aulasTotales    = aulaService.contarPorAnio(anioActual);
 
-        long presentesHoy = asistenciaRepository.countByFechaAndEstado(hoy, Asistencia.EstadoAsistencia.ASISTIO);
-        long faltasHoy = asistenciaRepository.countByFechaAndEstado(hoy, Asistencia.EstadoAsistencia.FALTA);
+        // ── Asistencia del período elegido (semana actual / mes elegido / año elegido) ──
+        List<PeriodoBucketHelper.Bucket> buckets = PeriodoBucketHelper.construirBuckets(tipo, hoy, anio, mes);
+        LocalDate inicioPeriodo = buckets.get(0).inicio();
+        LocalDate finPeriodo = buckets.get(buckets.size() - 1).fin();
 
+        long presentesPeriodo = asistenciaRepository.countByEstadoAndFechaBetween(
+            Asistencia.EstadoAsistencia.ASISTIO, inicioPeriodo, finPeriodo);
+        long faltasPeriodo = asistenciaRepository.countByEstadoAndFechaBetween(
+            Asistencia.EstadoAsistencia.FALTA, inicioPeriodo, finPeriodo);
+
+        List<Object[]> filasFecha = asistenciaRepository.countAsistioPorFechaEntre(null, inicioPeriodo, finPeriodo);
+        List<DashboardKpiDTO.AsistenciaDiaDTO> asistenciaPeriodo = PeriodoBucketHelper.aplicarConteos(buckets, filasFecha);
+
+        // ── Semáforo curricular ────────────────────────────────────────────────
         long aprobados  = docenteService.contarPorEstadoCurricular("APROBADO");
         long pendientes = docenteService.contarPorEstadoCurricular("PENDIENTE");
         long retrasados = docenteService.contarPorEstadoCurricular("RETRASADO");
 
-        List<DashboardKpiDTO.AsistenciaDiaDTO> semanal =
-            obtenerAsistenciaPorPeriodo(PeriodoResumen.SEMANA, anioActual, null);
-
+        // ── Expedientes incompletos (matrícula "provisional") ─────────────────
         long expedientesIncompletos = matriculaService.contarConExpedienteIncompleto(anioActual);
 
         return DashboardKpiDTO.builder()
             .alumnosTotales(alumnosTotales)
             .docentesTotales(docentesTotales)
             .aulasTotales(aulasTotales)
-            .alumnosPresentesHoy(presentesHoy)
-            .alumnosFaltasHoy(faltasHoy)
+            .alumnosPresentesPeriodo(presentesPeriodo)
+            .alumnosFaltasPeriodo(faltasPeriodo)
+            .tipoPeriodo(tipo.name())
             .alumnosConPermisoAcademia(0L) // se calcula en Sprint 5
             .docentesAprobados(aprobados)
             .docentesPendientes(pendientes)
             .docentesRetrasados(retrasados)
             .alumnosMatriculadosCompletos(alumnosTotales - expedientesIncompletos)
             .alumnosMatriculaProvisional(expedientesIncompletos)
-            .asistenciaSemanal(semanal)
+            .asistenciaPeriodo(asistenciaPeriodo)
             .build();
-    }
-
-    @Override
-    public List<DashboardKpiDTO.AsistenciaDiaDTO> obtenerAsistenciaPorPeriodo(PeriodoResumen periodo, Integer anio, Integer mes) {
-        LocalDate hoy = LocalDate.now();
-        PeriodoResumen tipo = periodo != null ? periodo : PeriodoResumen.SEMANA;
-        List<PeriodoBucketHelper.Bucket> buckets = PeriodoBucketHelper.construirBuckets(tipo, hoy, anio, mes);
-
-        LocalDate inicio = buckets.get(0).inicio();
-        LocalDate fin = buckets.get(buckets.size() - 1).fin();
-        List<Object[]> filas = asistenciaRepository.countAsistioPorFechaEntre(null, inicio, fin);
-
-        return PeriodoBucketHelper.aplicarConteos(buckets, filas);
     }
 
     @Override
@@ -100,33 +99,43 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public byte[] exportarResumenExcel(Integer anio) {
+    public byte[] exportarResumenExcel(Integer anio, PeriodoResumen periodo, Integer mes) {
+        DashboardKpiDTO kpis = obtenerKpis(anio, periodo, mes);
         int anioActual = anio != null ? anio : Year.now().getValue();
         return excelReportService.construirLibro("Resumen Dashboard",
-            new String[]{"INDICADOR", "VALOR"}, construirFilasResumen(anioActual));
+            new String[]{"INDICADOR", "VALOR"}, construirFilasResumen(kpis, anioActual));
     }
 
     @Override
-    public byte[] exportarResumenPdf(Integer anio) {
+    public byte[] exportarResumenPdf(Integer anio, PeriodoResumen periodo, Integer mes) {
+        DashboardKpiDTO kpis = obtenerKpis(anio, periodo, mes);
         int anioActual = anio != null ? anio : Year.now().getValue();
         return pdfReportService.construirDocumento("Resumen Dashboard - " + anioActual,
-            new String[]{"INDICADOR", "VALOR"}, construirFilasResumen(anioActual));
+            new String[]{"INDICADOR", "VALOR"}, construirFilasResumen(kpis, anioActual));
     }
 
-    private List<Object[]> construirFilasResumen(int anio) {
-        DashboardKpiDTO kpis = obtenerKpis(anio);
+    private List<Object[]> construirFilasResumen(DashboardKpiDTO kpis, int anio) {
         return List.of(
             new Object[]{"Año académico", anio},
+            new Object[]{"Período de asistencia", describirPeriodo(kpis.getTipoPeriodo())},
             new Object[]{"Alumnos totales", kpis.getAlumnosTotales()},
             new Object[]{"Docentes totales", kpis.getDocentesTotales()},
             new Object[]{"Aulas totales", kpis.getAulasTotales()},
-            new Object[]{"Alumnos presentes hoy", kpis.getAlumnosPresentesHoy()},
-            new Object[]{"Alumnos con falta hoy", kpis.getAlumnosFaltasHoy()},
+            new Object[]{"Alumnos presentes en el período", kpis.getAlumnosPresentesPeriodo()},
+            new Object[]{"Alumnos con falta en el período", kpis.getAlumnosFaltasPeriodo()},
             new Object[]{"Docentes aprobados (semáforo)", kpis.getDocentesAprobados()},
             new Object[]{"Docentes pendientes (semáforo)", kpis.getDocentesPendientes()},
             new Object[]{"Docentes retrasados (semáforo)", kpis.getDocentesRetrasados()},
             new Object[]{"Alumnos matriculados (expediente completo)", kpis.getAlumnosMatriculadosCompletos()},
             new Object[]{"Alumnos con matrícula provisional", kpis.getAlumnosMatriculaProvisional()}
         );
+    }
+
+    private String describirPeriodo(String tipoPeriodo) {
+        return switch (tipoPeriodo) {
+            case "MES" -> "Mensual";
+            case "ANIO" -> "Anual";
+            default -> "Semanal";
+        };
     }
 }

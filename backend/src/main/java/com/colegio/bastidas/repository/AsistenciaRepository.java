@@ -85,6 +85,9 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     /** Conteo por fecha y estado (usado por DashboardController para KPIs diarios). */
     long countByFechaAndEstado(LocalDate fecha, Asistencia.EstadoAsistencia estado);
 
+    /** Conteo global (todas las aulas) por estado dentro de un rango de fechas — KPIs del período elegido. */
+    long countByEstadoAndFechaBetween(Asistencia.EstadoAsistencia estado, LocalDate inicio, LocalDate fin);
+
     boolean existsByAlumnoIdAndFecha(Long alumnoId, LocalDate fecha);
 
     /**

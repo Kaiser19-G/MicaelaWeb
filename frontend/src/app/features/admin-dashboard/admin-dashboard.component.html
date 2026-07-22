@@ -146,6 +146,31 @@
           </svg>
         </div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Presentes · {{ descripcionPeriodo() }}</span>
+          <span class="kpi-value" style="color:#16a34a;">{{ kpis().presentesPeriodo }}</span>
+        </div>
+        <div class="kpi-icon" style="background:#dcfce7; color:#16a34a;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="9 11 12 14 22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-content">
+          <span class="kpi-label">Faltas · {{ descripcionPeriodo() }}</span>
+          <span class="kpi-value" style="color:#dc2626;">{{ kpis().faltasPeriodo }}</span>
+        </div>
+        <div class="kpi-icon" style="background:#fee2e2; color:#dc2626;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+      </div>
     </div>
 
     <!-- Charts + Alertas -->
@@ -159,14 +184,14 @@
             <button class="periodo-pill" [class.active]="periodoGrafico() === 'MES'" (click)="cambiarPeriodoGrafico('MES')">Mes</button>
             <button class="periodo-pill" [class.active]="periodoGrafico() === 'ANIO'" (click)="cambiarPeriodoGrafico('ANIO')">Año</button>
             @if (periodoGrafico() === 'MES') {
-              <select [(ngModel)]="mesGrafico" (change)="cargarAsistenciaGrafico()" class="periodo-select">
+              <select [(ngModel)]="mesGrafico" (change)="cargarKpisYAsistencia()" class="periodo-select">
                 @for (m of mesesDelAnio; track m.valor) {
                   <option [value]="m.valor">{{ m.nombre }}</option>
                 }
               </select>
             }
             @if (periodoGrafico() === 'MES' || periodoGrafico() === 'ANIO') {
-              <input type="number" [(ngModel)]="anioGrafico" (change)="cargarAsistenciaGrafico()" class="periodo-input-anio">
+              <input type="number" [(ngModel)]="anioGrafico" (change)="cargarKpisYAsistencia()" class="periodo-input-anio">
             }
           </div>
         </div>
