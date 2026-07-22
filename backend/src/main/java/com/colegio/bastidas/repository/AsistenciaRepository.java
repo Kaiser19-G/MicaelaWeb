@@ -86,4 +86,22 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     long countByFechaAndEstado(LocalDate fecha, Asistencia.EstadoAsistencia estado);
 
     boolean existsByAlumnoIdAndFecha(Long alumnoId, LocalDate fecha);
+
+    /**
+     * Conteo de alumnos que ASISTIO, agrupado por fecha, dentro de un rango.
+     * {@code aulaId} es opcional: null = global (Dashboard del Director),
+     * con valor = acotado a una sola aula (módulo Aulas).
+     */
+    @Query("""
+        SELECT a.fecha, COUNT(a)
+        FROM Asistencia a
+        WHERE a.fecha BETWEEN :inicio AND :fin
+        AND a.estado = com.colegio.bastidas.model.Asistencia.EstadoAsistencia.ASISTIO
+        AND (:aulaId IS NULL OR a.aula.id = :aulaId)
+        GROUP BY a.fecha
+    """)
+    List<Object[]> countAsistioPorFechaEntre(
+        @Param("aulaId") Long aulaId,
+        @Param("inicio") LocalDate inicio,
+        @Param("fin") LocalDate fin);
 }

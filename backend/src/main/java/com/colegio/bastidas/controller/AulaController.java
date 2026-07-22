@@ -2,6 +2,8 @@ package com.colegio.bastidas.controller;
 
 import com.colegio.bastidas.dto.aula.AulaRequestDTO;
 import com.colegio.bastidas.dto.aula.AulaResponseDTO;
+import com.colegio.bastidas.dto.aula.AulaResumenAsistenciaDTO;
+import com.colegio.bastidas.dto.dashboard.PeriodoResumen;
 import com.colegio.bastidas.service.AulaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +77,21 @@ public class AulaController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         aulaService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET /aulas/{id}/resumen-asistencia?periodo=DIA|SEMANA|MES|ANIO&anio=&mes=
+     * Métricas de asistencia de una sola aula para su dashboard dedicado.
+     */
+    @GetMapping("/{id}/resumen-asistencia")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN','DOCENTE')")
+    public ResponseEntity<AulaResumenAsistenciaDTO> obtenerResumenAsistencia(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "SEMANA") String periodo,
+            @RequestParam(required = false) Integer anio,
+            @RequestParam(required = false) Integer mes) {
+        PeriodoResumen tipo = PeriodoResumen.valueOf(periodo.toUpperCase());
+        return ResponseEntity.ok(aulaService.obtenerResumenAsistencia(id, tipo, anio, mes));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { DashboardService, DashboardKpi, AlertaDashboard } from '../../core/services/dashboard.service';
+import { DashboardService, DashboardKpi, AlertaDashboard, AsistenciaDia } from '../../core/services/dashboard.service';
 import { DocenteService, DocenteResponse, DocenteRequestDTO } from '../../core/services/docente.service';
+import { DocenteDocumentoService, DocenteDocumentoResponse } from '../../core/services/docente-documento.service';
 import { AsistenciaService, AlertaFalta } from '../../core/services/asistencia.service';
 import { AlumnoService, AlumnoRequestDTO, AlumnoResponse } from '../../core/services/alumno.service';
 import { AulaService, AulaResponseDTO } from '../../core/services/aula.service';
@@ -20,7 +21,7 @@ import { CircularService, Circular, CircularRequestDTO } from '../../core/servic
 import { forkJoin } from 'rxjs';
 
 // ── Tipos prueba ──────────────────────────────────────────────────────────────────
-export type TabDirector = 'panel' | 'administracion' | 'docentes' | 'calidad' | 'mensajes';
+export type TabDirector = 'panel' | 'administracion' | 'docentes' | 'calidad' | 'mensajes' | 'aulas';
 
 export interface DocenteSupervision {
   id: number;
@@ -58,6 +59,7 @@ export class AdminDashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private dashboardService = inject(DashboardService);
   private docenteService = inject(DocenteService);
+  private docenteDocumentoService = inject(DocenteDocumentoService);
   private asistenciaService = inject(AsistenciaService);
   private alumnoService = inject(AlumnoService);
   private aulaService = inject(AulaService);
@@ -88,6 +90,12 @@ export class AdminDashboardComponent implements OnInit {
   readonly guardandoDocente = signal(false);
   readonly errorDocente = signal('');
   nuevoDocente: DocenteRequestDTO = this.formDocenteVacio();
+
+  // ── Documento de certificación docente (opcional) ──────────────────────
+  readonly archivoCertificacionNuevoDocente = signal<File | null>(null);
+  readonly errorCertificacion = signal('');
+  readonly documentoCertificacionEditando = signal<DocenteDocumentoResponse | null>(null);
+  readonly subiendoCertificacion = signal(false);
 
   // ── Editar Alumno ──────────────────────────────────────────────────────
   readonly modalEditarAlumnoVisible = signal(false);
@@ -166,16 +174,26 @@ export class AdminDashboardComponent implements OnInit {
   // ── Alertas: alumnos con +3 faltas consecutivas (todas las aulas) ─────────
   readonly alertasFaltas = signal<AlertaFalta[]>([]);
 
-  readonly asistenciaSemanal: { dia: string; alumnos: number; docentes: number }[] = [
+  readonly asistenciaGrafico = signal<AsistenciaDia[]>([
     { dia: 'Lun', alumnos: 0, docentes: 0 },
     { dia: 'Mar', alumnos: 0, docentes: 0 },
     { dia: 'Mié', alumnos: 0, docentes: 0 },
     { dia: 'Jue', alumnos: 0, docentes: 0 },
     { dia: 'Vie', alumnos: 0, docentes: 0 },
+  ]);
+
+  readonly periodoGrafico = signal<'SEMANA' | 'MES' | 'ANIO'>('SEMANA');
+  mesGrafico = new Date().getMonth() + 1;
+  anioGrafico = this.anioActual;
+  readonly mesesDelAnio = [
+    { valor: 1, nombre: 'Enero' }, { valor: 2, nombre: 'Febrero' }, { valor: 3, nombre: 'Marzo' },
+    { valor: 4, nombre: 'Abril' }, { valor: 5, nombre: 'Mayo' }, { valor: 6, nombre: 'Junio' },
+    { valor: 7, nombre: 'Julio' }, { valor: 8, nombre: 'Agosto' }, { valor: 9, nombre: 'Septiembre' },
+    { valor: 10, nombre: 'Octubre' }, { valor: 11, nombre: 'Noviembre' }, { valor: 12, nombre: 'Diciembre' },
   ];
 
   readonly maxAlumnos = computed(() =>
-    Math.max(1, ...this.asistenciaSemanal.map(d => d.alumnos))
+    Math.max(1, ...this.asistenciaGrafico().map(d => d.alumnos))
   );
 
   // ── Alertas Centro (desde GET /dashboard/alertas) ────────────────
@@ -249,6 +267,23 @@ export class AdminDashboardComponent implements OnInit {
   readonly alumnoReunionEncontrado = signal<AlumnoResponse | null>(null);
   readonly buscandoAlumnoReunion = signal(false);
 
+  // ── Control de Ingresos Especiales: alumnos con permiso de academia ───────
+  readonly modalPermisosVisible = signal(false);
+  readonly alumnosConPermiso = signal<AlumnoResponse[]>([]);
+  dniBusquedaPermiso = '';
+  readonly buscandoAlumnoPermiso = signal(false);
+  readonly alumnoEncontradoPermiso = signal<AlumnoResponse | null>(null);
+  readonly errorBusquedaPermiso = signal('');
+  horaAgregarPermiso = '13:30';
+  readonly permisosTurno1330 = computed(() =>
+    this.alumnosConPermiso().filter(a => a.horaEntradaAcademia === '13:30').length
+  );
+
+  // ── Módulo Aulas (cards) ────────────────────────────────────────────────
+  irADashboardAula(aula: AulaResponseDTO): void {
+    this.router.navigate(['/aulas', aula.id]);
+  }
+
   // ── Ciclo de vida ────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.cargarDatos();
@@ -298,11 +333,26 @@ export class AdminDashboardComponent implements OnInit {
   abrirModalCrearDocente(): void {
     this.nuevoDocente = this.formDocenteVacio();
     this.errorDocente.set('');
+    this.errorCertificacion.set('');
+    this.archivoCertificacionNuevoDocente.set(null);
     this.modalCrearDocenteVisible.set(true);
   }
 
   cerrarModalCrearDocente(): void {
     this.modalCrearDocenteVisible.set(false);
+  }
+
+  /** Valida el PDF de certificación y lo guarda en memoria (el docente aún no tiene ID). */
+  seleccionarCertificacionNuevoDocente(input: HTMLInputElement): void {
+    const archivo = input.files?.[0];
+    input.value = '';
+    if (!archivo) return;
+    if (archivo.type !== 'application/pdf') {
+      this.errorCertificacion.set('Solo se admiten archivos en formato PDF.');
+      return;
+    }
+    this.errorCertificacion.set('');
+    this.archivoCertificacionNuevoDocente.set(archivo);
   }
 
   guardarDocente(): void {
@@ -316,6 +366,21 @@ export class AdminDashboardComponent implements OnInit {
           next: (docentes) => { this.docentesSupervision = docentes; },
           error: () => {}
         });
+
+        // Sube la certificación en segundo plano; si falla, no bloquea el flujo de credenciales.
+        const archivoCertificacion = this.archivoCertificacionNuevoDocente();
+        if (archivoCertificacion) {
+          this.docenteDocumentoService.subir(res.docente.id, archivoCertificacion).subscribe({
+            next: () => {
+              this.docenteService.obtenerSemaforo().subscribe({
+                next: (docentes) => { this.docentesSupervision = docentes; },
+                error: () => {}
+              });
+            },
+            error: (err) => console.error('Error al subir la certificación docente:', err)
+          });
+        }
+
         this.credencialesGeneradas.set({
           tipo: 'Docente',
           username: res.usernameGenerado,
@@ -410,11 +475,57 @@ export class AdminDashboardComponent implements OnInit {
       celular: docente.celular
     };
     this.activoEditandoDocente = docente.activo;
+    this.documentoCertificacionEditando.set(null);
+    this.errorCertificacion.set('');
+    this.docenteDocumentoService.obtener(docente.id).subscribe({
+      next: (doc) => this.documentoCertificacionEditando.set(doc),
+      error: () => {}
+    });
     this.modalEditarDocenteVisible.set(true);
   }
 
   cerrarModalEditarDocente(): void {
     this.modalEditarDocenteVisible.set(false);
+  }
+
+  /** En "Editar Docente" el docente ya tiene ID, así que la certificación se sube de inmediato. */
+  seleccionarCertificacionEditarDocente(input: HTMLInputElement): void {
+    const archivo = input.files?.[0];
+    input.value = '';
+    if (!archivo) return;
+    if (archivo.type !== 'application/pdf') {
+      this.errorCertificacion.set('Solo se admiten archivos en formato PDF.');
+      return;
+    }
+    const id = this.docenteEditandoId();
+    if (!id) return;
+
+    this.errorCertificacion.set('');
+    this.subiendoCertificacion.set(true);
+    this.docenteDocumentoService.subir(id, archivo).subscribe({
+      next: () => {
+        this.subiendoCertificacion.set(false);
+        this.docenteDocumentoService.obtener(id).subscribe({
+          next: (doc) => this.documentoCertificacionEditando.set(doc),
+          error: () => {}
+        });
+      },
+      error: (err) => {
+        this.subiendoCertificacion.set(false);
+        this.errorCertificacion.set(err?.error?.error || 'Error al subir el documento.');
+      }
+    });
+  }
+
+  eliminarCertificacionDocente(): void {
+    const id = this.docenteEditandoId();
+    if (!id) return;
+    if (!confirm('¿Eliminar el documento de certificación docente?')) return;
+
+    this.docenteDocumentoService.eliminar(id).subscribe({
+      next: () => this.documentoCertificacionEditando.set(null),
+      error: (err) => this.errorCertificacion.set(err?.error?.error || 'Error al eliminar el documento.')
+    });
   }
 
   guardarEditarDocente(): void {
@@ -705,10 +816,87 @@ export class AdminDashboardComponent implements OnInit {
     return ReunionService.generarLinkWhatsApp(reunion);
   }
 
+  // ── Control de Ingresos Especiales: alumnos con permiso de academia ───────
+  abrirModalPermisos(): void {
+    this.dniBusquedaPermiso = '';
+    this.alumnoEncontradoPermiso.set(null);
+    this.errorBusquedaPermiso.set('');
+    this.modalPermisosVisible.set(true);
+    this.cargarAlumnosConPermiso();
+  }
+
+  cerrarModalPermisos(): void {
+    this.modalPermisosVisible.set(false);
+  }
+
+  private cargarAlumnosConPermiso(): void {
+    this.alumnoService.listarConPermisoAcademia(this.anioActual).subscribe({
+      next: (lista) => this.alumnosConPermiso.set(lista),
+      error: (err) => console.error('Error al cargar alumnos con permiso de academia:', err)
+    });
+  }
+
+  buscarAlumnoParaPermiso(): void {
+    const dni = this.dniBusquedaPermiso.trim();
+    if (dni.length !== 8) {
+      this.errorBusquedaPermiso.set('Ingrese un DNI válido de 8 dígitos.');
+      return;
+    }
+    this.errorBusquedaPermiso.set('');
+    this.buscandoAlumnoPermiso.set(true);
+    this.alumnoEncontradoPermiso.set(null);
+    this.alumnoService.buscarPorDni(dni).subscribe({
+      next: (alumno) => {
+        this.buscandoAlumnoPermiso.set(false);
+        this.alumnoEncontradoPermiso.set(alumno);
+      },
+      error: () => {
+        this.buscandoAlumnoPermiso.set(false);
+        this.errorBusquedaPermiso.set('No se encontró ningún alumno con ese DNI.');
+      }
+    });
+  }
+
+  agregarPermiso(): void {
+    const alumno = this.alumnoEncontradoPermiso();
+    if (!alumno) return;
+
+    this.matriculaService.actualizarPermisoAcademia(alumno.id, true, this.horaAgregarPermiso).subscribe({
+      next: () => {
+        this.cargarAlumnosConPermiso();
+        this.alumnoEncontradoPermiso.set(null);
+        this.dniBusquedaPermiso = '';
+      },
+      error: (err) => this.errorBusquedaPermiso.set(err?.error?.error || 'Error al agregar el permiso.')
+    });
+  }
+
+  quitarPermiso(alumno: AlumnoResponse): void {
+    if (!confirm(`¿Quitar el permiso de academia a ${alumno.nombreCompleto}?`)) return;
+    this.matriculaService.actualizarPermisoAcademia(alumno.id, false).subscribe({
+      next: () => this.cargarAlumnosConPermiso(),
+      error: (err) => console.error('Error al quitar el permiso:', err)
+    });
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────
   alturaBarraAlumno(alumnos: number): number {
-    const max = Math.max(1, ...this.asistenciaSemanal.map(d => d.alumnos));
+    const max = Math.max(1, ...this.asistenciaGrafico().map(d => d.alumnos));
     return Math.round((alumnos / max) * 160);
+  }
+
+  cambiarPeriodoGrafico(periodo: 'SEMANA' | 'MES' | 'ANIO'): void {
+    this.periodoGrafico.set(periodo);
+    this.cargarAsistenciaGrafico();
+  }
+
+  cargarAsistenciaGrafico(): void {
+    this.dashboardService
+      .obtenerAsistenciaPorPeriodo(this.periodoGrafico(), this.anioGrafico, this.mesGrafico)
+      .subscribe({
+        next: (dias) => this.asistenciaGrafico.set(dias),
+        error: (err) => console.error('Error al cargar asistencia del gráfico:', err)
+      });
   }
 
   alturaBarraDocente(docentes: number): number {
@@ -734,6 +922,16 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  exportarDocentesPdf(): void {
+    this.docenteService.exportarPdf().subscribe({
+      next: (blob) => this.descargarBlob(blob, 'docentes.pdf'),
+      error: (err) => {
+        console.error('Error al exportar docentes (PDF)', err);
+        alert('No se pudo generar el archivo. Intente nuevamente.');
+      }
+    });
+  }
+
   exportarResumenDashboard(): void {
     this.dashboardService.exportar(this.anioActual).subscribe({
       next: (blob) => this.descargarBlob(blob, `dashboard_resumen_${this.anioActual}.xlsx`),
@@ -744,11 +942,31 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  exportarResumenDashboardPdf(): void {
+    this.dashboardService.exportarPdf(this.anioActual).subscribe({
+      next: (blob) => this.descargarBlob(blob, `dashboard_resumen_${this.anioActual}.pdf`),
+      error: (err) => {
+        console.error('Error al exportar resumen (PDF)', err);
+        alert('No se pudo generar el archivo. Intente nuevamente.');
+      }
+    });
+  }
+
   exportarSiagie(): void {
     this.matriculaService.exportarSiagie(this.anioActual).subscribe({
       next: (blob) => this.descargarBlob(blob, `matricula_siagie_${this.anioActual}.xlsx`),
       error: (err) => {
         console.error('Error al exportar SIAGIE', err);
+        alert('No se pudo generar el archivo. Intente nuevamente.');
+      }
+    });
+  }
+
+  exportarSiagiePdf(): void {
+    this.matriculaService.exportarSiagiePdf(this.anioActual).subscribe({
+      next: (blob) => this.descargarBlob(blob, `matricula_siagie_${this.anioActual}.pdf`),
+      error: (err) => {
+        console.error('Error al exportar SIAGIE (PDF)', err);
         alert('No se pudo generar el archivo. Intente nuevamente.');
       }
     });
@@ -813,15 +1031,6 @@ export class AdminDashboardComponent implements OnInit {
           presentesHoy:   kpi.alumnosPresentesHoy,
           faltasHoy:      kpi.alumnosFaltasHoy,
         });
-        // Actualizar gráfico de barras con datos reales de la semana
-        if (kpi.asistenciaSemanal?.length) {
-          kpi.asistenciaSemanal.forEach((d, i) => {
-            if (this.asistenciaSemanal[i]) {
-              this.asistenciaSemanal[i].alumnos  = d.alumnos;
-              this.asistenciaSemanal[i].docentes = d.docentes;
-            }
-          });
-        }
         this.kpisDocentes.set({
           aprobados:  kpi.docentesAprobados,
           pendientes: kpi.docentesPendientes,
@@ -891,6 +1100,15 @@ export class AdminDashboardComponent implements OnInit {
 
     // ─ 9. Circulares (comunicados internos) ───────────────────────────────
     this.cargarCirculares();
+
+    // ─ 10. Gráfico de asistencia del panel (según período elegido) ───────
+    this.cargarAsistenciaGrafico();
+
+    // ─ 11. Aulas (para el tab "Aulas" y el selector "Asignar Curso") ──────
+    this.cargarAulas();
+
+    // ─ 12. Alumnos con permiso de academia (Control de Ingresos Especiales) ─
+    this.cargarAlumnosConPermiso();
   }
 
   // ── Expediente Digital: ver / subir / borrar documentos ───────────────────

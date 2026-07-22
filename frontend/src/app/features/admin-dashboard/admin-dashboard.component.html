@@ -39,6 +39,14 @@
         <span>Docentes</span>
       </button>
 
+      <button class="nav-item" [class.active]="tabActiva() === 'aulas'" (click)="setTab('aulas')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>Aulas</span>
+      </button>
+
       <button class="nav-item" [class.active]="tabActiva() === 'calidad'" (click)="setTab('calidad')">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <polyline points="9 11 12 14 22 4" />
@@ -81,7 +89,10 @@
         <h1 class="tab-title">Panel de Control</h1>
         <p class="tab-subtitle">Vista estratégica del colegio – Gestión sin papel</p>
       </div>
-      <button class="btn-outline" (click)="exportarResumenDashboard()">⬇ Exportar Resumen (Excel)</button>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn-outline" (click)="exportarResumenDashboard()">⬇ Excel</button>
+        <button class="btn-outline" (click)="exportarResumenDashboardPdf()">⬇ PDF</button>
+      </div>
     </div>
 
     <!-- KPIs -->
@@ -141,13 +152,30 @@
     <div class="panel-row">
       <!-- Chart Asistencia -->
       <div class="card chart-card">
-        <h3 class="card-title">Asistencia Semanal</h3>
+        <div class="periodo-selector">
+          <h3 class="card-title">Asistencia</h3>
+          <div class="periodo-pills">
+            <button class="periodo-pill" [class.active]="periodoGrafico() === 'SEMANA'" (click)="cambiarPeriodoGrafico('SEMANA')">Semana</button>
+            <button class="periodo-pill" [class.active]="periodoGrafico() === 'MES'" (click)="cambiarPeriodoGrafico('MES')">Mes</button>
+            <button class="periodo-pill" [class.active]="periodoGrafico() === 'ANIO'" (click)="cambiarPeriodoGrafico('ANIO')">Año</button>
+            @if (periodoGrafico() === 'MES') {
+              <select [(ngModel)]="mesGrafico" (change)="cargarAsistenciaGrafico()" class="periodo-select">
+                @for (m of mesesDelAnio; track m.valor) {
+                  <option [value]="m.valor">{{ m.nombre }}</option>
+                }
+              </select>
+            }
+            @if (periodoGrafico() === 'MES' || periodoGrafico() === 'ANIO') {
+              <input type="number" [(ngModel)]="anioGrafico" (change)="cargarAsistenciaGrafico()" class="periodo-input-anio">
+            }
+          </div>
+        </div>
         <div class="chart-container">
           <div class="chart-y-labels">
             <span>600</span><span>450</span><span>300</span><span>150</span><span>0</span>
           </div>
           <div class="chart-bars">
-            @for (d of asistenciaSemanal; track d.dia) {
+            @for (d of asistenciaGrafico(); track d.dia) {
             <div class="chart-day">
               <div class="bar-group">
                 <div class="bar bar-alumno" [style.height.px]="alturaBarraAlumno(d.alumnos)"
@@ -330,15 +358,15 @@
         <p class="card-sub">Alumnos con permiso de academia – Entrada 13:30 / 14:30</p>
         <div class="mini-stats">
           <div class="mini-stat">
-            <span class="mini-num info-text">23</span>
+            <span class="mini-num info-text">{{ alumnosConPermiso().length }}</span>
             <span class="mini-label">Con permiso</span>
           </div>
           <div class="mini-stat">
-            <span class="mini-num success-text">21</span>
-            <span class="mini-label">Activos hoy</span>
+            <span class="mini-num success-text">{{ permisosTurno1330() }}</span>
+            <span class="mini-label">Turno 13:30</span>
           </div>
         </div>
-        <button class="btn-outline" style="margin-top: 1rem; width: 100%;">Ver Permisos</button>
+        <button class="btn-outline" style="margin-top: 1rem; width: 100%;" (click)="abrirModalPermisos()">Ver Permisos</button>
       </div>
     </div>
     }
@@ -351,7 +379,8 @@
         <p class="tab-subtitle">Monitoreo de planificación y evidencias – 68 docentes</p>
       </div>
       <div style="display:flex; gap: 0.75rem;">
-        <button class="btn-outline" (click)="exportarDocentes()">⬇ Exportar (Excel)</button>
+        <button class="btn-outline" (click)="exportarDocentes()">⬇ Excel</button>
+        <button class="btn-outline" (click)="exportarDocentesPdf()">⬇ PDF</button>
         <button class="btn-primary" (click)="abrirModalCrearDocente()">+ Nuevo Docente</button>
       </div>
     </div>
@@ -399,6 +428,7 @@
             <span class="docente-card-nombre">
               {{ doc.nombreCompleto }}
               <span class="badge badge-danger" *ngIf="!doc.activo">Inactivo</span>
+              <span class="badge badge-active" *ngIf="doc.tieneCertificacionDocencia" title="Cuenta con certificación docente">📄 Certificado</span>
             </span>
             <span class="docente-estado-icon" [class]="'estado-' + doc.estadoCurricular.toLowerCase()">
               @if (doc.estadoCurricular === 'APROBADO') { ✓ }
@@ -622,14 +652,17 @@
           Corrija los errores detectados antes de exportar
         </p>
       </div>
-      <button class="btn-siagie" (click)="exportarSiagie()">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <polyline points="8 17 12 21 16 17" />
-          <line x1="12" y1="12" x2="12" y2="21" />
-          <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.36" />
-        </svg>
-        Exportar al SIAGIE
-      </button>
+      <div style="display:flex; flex-direction:column; gap:0.5rem;">
+        <button class="btn-siagie" (click)="exportarSiagie()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="8 17 12 21 16 17" />
+            <line x1="12" y1="12" x2="12" y2="21" />
+            <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.36" />
+          </svg>
+          Exportar al SIAGIE (Excel)
+        </button>
+        <button class="btn-outline" (click)="exportarSiagiePdf()">⬇ Exportar al SIAGIE (PDF)</button>
+      </div>
     </div>
     }
 
@@ -777,7 +810,107 @@
     </div>
     }
 
+    <!-- ══ TAB: AULAS ═══════════════════════════════════════════════════════ -->
+    @if (tabActiva() === 'aulas') {
+    <div class="tab-header">
+      <div>
+        <h1 class="tab-title">Aulas</h1>
+        <p class="tab-subtitle">Selecciona un aula para ver su asistencia, horario y mensajería con apoderados</p>
+      </div>
+    </div>
+
+    <div class="aulas-grid">
+      @for (aula of aulasDisponibles(); track aula.id) {
+        <div class="aula-card" (click)="irADashboardAula(aula)">
+          <div class="aula-card-header">
+            <span class="aula-card-titulo">{{ aula.descripcion }}</span>
+            <span class="badge" [class.badge-active]="aula.nivel === 'PRIMARIA'" [class.badge-warning]="aula.nivel === 'SECUNDARIA'">
+              {{ aula.nivel | titlecase }}
+            </span>
+          </div>
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <span class="mini-num info-text">{{ aula.totalAlumnos }}</span>
+              <span class="mini-label">Alumnos</span>
+            </div>
+            <div class="mini-stat">
+              <span class="mini-num" [class.success-text]="aula.vacantesDisponibles > 0" [class.danger-text]="aula.vacantesDisponibles === 0">{{ aula.vacantesDisponibles }}</span>
+              <span class="mini-label">Vacantes</span>
+            </div>
+          </div>
+          <p class="card-sub" style="margin-top: 0.5rem;">
+            {{ aula.docentePrincipalNombre || 'Sin docente tutor asignado' }}
+          </p>
+        </div>
+      }
+      @if (aulasDisponibles().length === 0) {
+        <p class="card-sub">No hay aulas registradas para {{ anioActual }}.</p>
+      }
+    </div>
+    }
+
   </main>
+</div>
+
+<!-- ══ MODAL: Ver Permisos (Control de Ingresos Especiales) ═══════════════ -->
+<div class="modal-backdrop" *ngIf="modalPermisosVisible()">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2>Alumnos con Permiso de Academia</h2>
+      <button class="btn-close" (click)="cerrarModalPermisos()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Buscar alumno por DNI para agregar</label>
+          <input type="text" class="form-control" [(ngModel)]="dniBusquedaPermiso" maxlength="8" placeholder="8 dígitos">
+        </div>
+        <div class="form-group col-6" style="display:flex; align-items:flex-end;">
+          <button class="btn-outline" style="width:100%;" [disabled]="buscandoAlumnoPermiso()" (click)="buscarAlumnoParaPermiso()">
+            {{ buscandoAlumnoPermiso() ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+      </div>
+
+      @if (alumnoEncontradoPermiso()) {
+        <div class="credenciales-box">
+          <div class="credencial-row">
+            <span>{{ alumnoEncontradoPermiso()!.nombreCompleto }}</span>
+            <select [(ngModel)]="horaAgregarPermiso" class="form-control" style="width:auto;">
+              <option value="13:30">1:30 PM</option>
+              <option value="14:30">2:30 PM</option>
+            </select>
+          </div>
+          <button class="btn-primary btn-sm" style="margin-top:0.5rem;" (click)="agregarPermiso()">+ Agregar Permiso</button>
+        </div>
+      }
+      <div class="error-msg" *ngIf="errorBusquedaPermiso()">{{ errorBusquedaPermiso() }}</div>
+
+      <div class="table-responsive" style="margin-top: 1rem;">
+        <table class="data-table">
+          <thead>
+            <tr><th>Alumno</th><th>Aula</th><th>Hora de entrada</th><th></th></tr>
+          </thead>
+          <tbody>
+            @for (a of alumnosConPermiso(); track a.id) {
+              <tr>
+                <td>{{ a.nombreCompleto }}</td>
+                <td>{{ a.aulaDescripcion || '—' }}</td>
+                <td>{{ a.horaEntradaAcademia || '—' }}</td>
+                <td><button class="btn-icon text-danger" (click)="quitarPermiso(a)" title="Quitar permiso">🗑️</button></td>
+              </tr>
+            }
+            @if (alumnosConPermiso().length === 0) {
+              <tr><td colspan="4" class="text-center empty-state">Ningún alumno tiene permiso de academia registrado.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalPermisos()">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ MODAL: Matricular Alumno ═══════════════════════════════════════════ -->
@@ -903,6 +1036,22 @@
         </div>
       </div>
       <small class="form-hint">Se creará automáticamente una cuenta de usuario (usuario = DNI).</small>
+
+      <div class="form-group" style="margin-top: 0.75rem;">
+        <label>Certificación de docencia <span class="form-hint">(opcional, pero importante)</span></label>
+        <p class="card-sub" style="margin-bottom: 0.4rem;">PDF que certifique que el docente tiene o está cursando docencia.</p>
+        @if (archivoCertificacionNuevoDocente()) {
+          <div class="mini-stat" style="justify-content:flex-start; gap:0.5rem;">
+            📄 {{ archivoCertificacionNuevoDocente()!.name }}
+          </div>
+        } @else {
+          <label class="btn-outline btn-sm">
+            Subir PDF
+            <input type="file" accept="application/pdf" hidden (change)="seleccionarCertificacionNuevoDocente($any($event.target))">
+          </label>
+        }
+      </div>
+      <div class="error-msg" *ngIf="errorCertificacion()">{{ errorCertificacion() }}</div>
       <div class="error-msg" *ngIf="errorDocente()">{{ errorDocente() }}</div>
     </div>
     <div class="modal-footer">
@@ -1060,6 +1209,25 @@
           Al desmarcar, el docente queda dado de baja: no podrá iniciar sesión. Su historial (cursos, notas) se conserva.
         </small>
       </div>
+
+      <div class="form-group">
+        <label>Certificación de docencia <span class="form-hint">(opcional, pero importante)</span></label>
+        @if (documentoCertificacionEditando()) {
+          <div class="mini-stat" style="justify-content:flex-start; gap:0.75rem;">
+            <a [href]="documentoCertificacionEditando()!.urlPublica" target="_blank">📄 {{ documentoCertificacionEditando()!.nombreArchivo }}</a>
+            <button class="btn-icon text-danger" (click)="eliminarCertificacionDocente()" title="Eliminar">🗑️</button>
+          </div>
+        } @else {
+          <label class="btn-outline btn-sm" [class.btn-disabled]="subiendoCertificacion()">
+            {{ subiendoCertificacion() ? 'Subiendo...' : 'Subir PDF' }}
+            <input type="file" accept="application/pdf" hidden
+              [disabled]="subiendoCertificacion()"
+              (change)="seleccionarCertificacionEditarDocente($any($event.target))">
+          </label>
+        }
+      </div>
+      <div class="error-msg" *ngIf="errorCertificacion()">{{ errorCertificacion() }}</div>
+
       <div class="error-msg" *ngIf="errorEditarDocente()">{{ errorEditarDocente() }}</div>
     </div>
     <div class="modal-footer">

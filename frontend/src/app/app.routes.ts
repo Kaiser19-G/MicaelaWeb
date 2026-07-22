@@ -70,6 +70,18 @@ export const routes: Routes = [
     title: 'Matrícula Digital – I.E. Micaela Bastidas'
   },
 
+  // ── Dashboard de una Aula ───────────────────────────────────────────
+  {
+    path: 'aulas/:id',
+    loadComponent: () =>
+      import('./features/aula-dashboard/aula-dashboard.component').then(
+        m => m.AulaDashboardComponent
+      ),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['DIRECTOR', 'ADMIN'] },
+    title: 'Dashboard de Aula – I.E. Micaela Bastidas'
+  },
+
   // ── Fallback 404 ───────────────────────────────────────────────────
   {
     path: '**',

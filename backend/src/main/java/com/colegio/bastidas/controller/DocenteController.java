@@ -1,6 +1,7 @@
 package com.colegio.bastidas.controller;
 
 import com.colegio.bastidas.dto.docente.DocenteCreadoResponseDTO;
+import com.colegio.bastidas.dto.docente.DocenteDocumentoResponseDTO;
 import com.colegio.bastidas.dto.docente.DocenteRequestDTO;
 import com.colegio.bastidas.dto.docente.DocenteResponseDTO;
 import com.colegio.bastidas.service.DocenteService;
@@ -13,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -152,6 +154,56 @@ public class DocenteController {
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDispositionFormData("attachment", "docentes.xlsx");
         return ResponseEntity.ok().headers(headers).body(excel);
+    }
+
+    /**
+     * GET /docentes/exportar/pdf
+     * Descarga la lista de docentes con sus cursos asignados en PDF.
+     * Acceso: DIRECTOR, ADMIN
+     */
+    @GetMapping("/exportar/pdf")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
+    public ResponseEntity<byte[]> exportarPdf() {
+        byte[] pdf = docenteService.exportarListaConCursosPdf();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "docentes.pdf");
+        return ResponseEntity.ok().headers(headers).body(pdf);
+    }
+
+    /**
+     * POST /docentes/{id}/documentos
+     * Sube (o reemplaza) el documento opcional de certificación docente (PDF).
+     */
+    @PostMapping("/{id}/documentos")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
+    public ResponseEntity<Map<String, String>> subirCertificacion(
+            @PathVariable Long id, @RequestParam("archivo") MultipartFile archivo) {
+        String url = docenteService.cargarDocumentoCertificacion(id, archivo);
+        return ResponseEntity.ok(Map.of("urlDocumento", url));
+    }
+
+    /**
+     * GET /docentes/{id}/documentos
+     * Retorna el documento de certificación docente, si existe.
+     */
+    @GetMapping("/{id}/documentos")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN','DOCENTE')")
+    public ResponseEntity<DocenteDocumentoResponseDTO> obtenerCertificacion(@PathVariable Long id) {
+        return docenteService.obtenerDocumentoCertificacion(id)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    /**
+     * DELETE /docentes/{id}/documentos
+     * Elimina el documento de certificación docente, si existe.
+     */
+    @DeleteMapping("/{id}/documentos")
+    @PreAuthorize("hasAnyRole('DIRECTOR','ADMIN')")
+    public ResponseEntity<Void> eliminarCertificacion(@PathVariable Long id) {
+        docenteService.eliminarDocumentoCertificacion(id);
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

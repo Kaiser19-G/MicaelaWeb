@@ -36,6 +36,9 @@ public class DocenteResponseDTO {
     /** Si es falso, el docente fue dado de baja: su cuenta no puede iniciar sesión. */
     private Boolean activo;
 
+    /** Si tiene subido un documento que certifica que cursa o cursó docencia (opcional). */
+    private Boolean tieneCertificacionDocencia;
+
     public static DocenteResponseDTO fromEntity(Docente d) {
         return DocenteResponseDTO.builder()
             .id(d.getId())

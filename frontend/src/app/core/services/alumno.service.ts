@@ -100,4 +100,9 @@ export class AlumnoService {
   actualizarEstado(id: number, estado: string): Observable<AlumnoResponse> {
     return this.http.patch<AlumnoResponse>(`${this.BASE}/${id}/estado`, {}, { params: { estado } });
   }
+
+  /** Lista los alumnos con permiso de academia pro-universitaria (Control de Ingresos Especiales). */
+  listarConPermisoAcademia(anio: number): Observable<AlumnoResponse[]> {
+    return this.http.get<AlumnoResponse[]>(`${this.BASE}/academia`, { params: { anio: String(anio) } });
+  }
 }

@@ -150,6 +150,28 @@ public class MatriculaController {
     }
 
     /**
+     * GET /matriculas/exportar/siagie/pdf?anio=...&aulaId=...
+     * Exporta el consolidado de matrícula en formato PDF para SIAGIE.
+     * Acceso: DIRECTOR
+     */
+    @GetMapping("/exportar/siagie/pdf")
+    @PreAuthorize("hasRole('DIRECTOR')")
+    public ResponseEntity<byte[]> exportarSiagiePdf(
+            @RequestParam Integer anio,
+            @RequestParam(required = false) Long aulaId) {
+
+        log.info("GET /matriculas/exportar/siagie/pdf - año={}, aula={}", anio, aulaId);
+        byte[] pdf = matriculaService.exportarConsolidadoMatriculaSiagiePdf(aulaId, anio);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment",
+            String.format("matricula_siagie_%d.pdf", anio));
+
+        return ResponseEntity.ok().headers(headers).body(pdf);
+    }
+
+    /**
      * PATCH /matriculas/{alumnoId}/permiso-academia
      * Actualiza el permiso de academia del alumno.
      */

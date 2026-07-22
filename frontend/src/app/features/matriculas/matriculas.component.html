@@ -4,9 +4,13 @@
       <h1 class="page-title">Gestión de Matrículas</h1>
       <p class="page-subtitle">Periodo Escolar {{ anioActual }}</p>
     </div>
-    <button class="btn-primary" (click)="abrirModalNuevo()">
-      + Nueva Matrícula / Reinscripción
-    </button>
+    <div style="display:flex; gap:0.75rem;">
+      <button class="btn-primary" (click)="abrirModalNuevo()">
+        + Nueva Matrícula / Reinscripción
+      </button>
+      <button class="btn-secondary" (click)="cerrar()">← Cerrar</button>
+      <button class="btn-secondary" (click)="logout()">Cerrar sesión</button>
+    </div>
   </div>
 
   <div class="card">

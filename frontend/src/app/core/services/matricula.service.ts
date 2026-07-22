@@ -47,4 +47,21 @@ export class MatriculaService {
       responseType: 'blob'
     });
   }
+
+  /** Descarga el consolidado de matrícula en PDF (formato SIAGIE). */
+  exportarSiagiePdf(anio: number, aulaId?: number): Observable<Blob> {
+    const params: Record<string, string> = { anio: String(anio) };
+    if (aulaId) params['aulaId'] = String(aulaId);
+    return this.http.get(`${environment.apiUrl}/matriculas/exportar/siagie/pdf`, {
+      params,
+      responseType: 'blob'
+    });
+  }
+
+  /** Agrega o quita el permiso de academia de un alumno (Control de Ingresos Especiales). */
+  actualizarPermisoAcademia(alumnoId: number, tienePermiso: boolean, horaEntrada?: string): Observable<unknown> {
+    const params: Record<string, string> = { tienePermiso: String(tienePermiso) };
+    if (horaEntrada) params['horaEntrada'] = horaEntrada;
+    return this.http.patch(`${environment.apiUrl}/matriculas/${alumnoId}/permiso-academia`, {}, { params });
+  }
 }

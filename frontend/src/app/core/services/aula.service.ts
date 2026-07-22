@@ -18,6 +18,17 @@ export interface AulaResponseDTO {
   vacantesDisponibles: number;
 }
 
+export interface AulaResumenAsistencia {
+  aulaId: number;
+  aulaDescripcion: string;
+  tipoPeriodo: string;
+  totalAlumnos: number;
+  presentesEnPeriodo: number;
+  faltasEnPeriodo: number;
+  tardanzasEnPeriodo: number;
+  buckets: { dia: string; alumnos: number; docentes: number }[];
+}
+
 export interface AulaRequestDTO {
   grado: string;
   seccion: string;
@@ -54,5 +65,15 @@ export class AulaService {
   /** Solo permitido si el aula no tiene alumnos activos ni cursos asignados. */
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/${id}`);
+  }
+
+  /** Métricas de asistencia de una sola aula (día/semana/mes/año) para su dashboard dedicado. */
+  obtenerResumenAsistencia(
+    aulaId: number, periodo: 'DIA' | 'SEMANA' | 'MES' | 'ANIO', anio?: number, mes?: number
+  ): Observable<AulaResumenAsistencia> {
+    const params: Record<string, string> = { periodo };
+    if (anio) params['anio'] = String(anio);
+    if (mes) params['mes'] = String(mes);
+    return this.http.get<AulaResumenAsistencia>(`${this.BASE}/${aulaId}/resumen-asistencia`, { params });
   }
 }

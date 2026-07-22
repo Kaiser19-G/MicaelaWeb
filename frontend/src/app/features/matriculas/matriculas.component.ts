@@ -1,9 +1,11 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatriculaService, MatriculaDto } from '../../core/services/matricula.service';
 import { AulaService, AulaResponseDTO } from '../../core/services/aula.service';
 import { AlumnoService, AlumnoResponse } from '../../core/services/alumno.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-matriculas',
@@ -16,6 +18,8 @@ export class MatriculasComponent implements OnInit {
   private matriculaService = inject(MatriculaService);
   private aulaService = inject(AulaService);
   private alumnoService = inject(AlumnoService);
+  private router = inject(Router);
+  private authService = inject(AuthService);
 
   anioActual = new Date().getFullYear();
   matriculas = signal<MatriculaDto[]>([]);
@@ -144,6 +148,14 @@ export class MatriculasComponent implements OnInit {
         error: (err) => console.error(err)
       });
     }
+  }
+
+  cerrar(): void {
+    this.router.navigate(['/admin-dashboard']);
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 
   private getEmptyForm(): MatriculaDto {

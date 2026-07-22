@@ -1,26 +1,34 @@
 package com.colegio.bastidas.service.impl;
 
 import com.colegio.bastidas.dto.docente.DocenteCreadoResponseDTO;
+import com.colegio.bastidas.dto.docente.DocenteDocumentoResponseDTO;
 import com.colegio.bastidas.dto.docente.DocenteRequestDTO;
 import com.colegio.bastidas.dto.docente.DocenteResponseDTO;
 import com.colegio.bastidas.model.CursoAsignado;
 import com.colegio.bastidas.model.Docente;
+import com.colegio.bastidas.model.DocenteDocumento;
 import com.colegio.bastidas.model.Usuario;
 import com.colegio.bastidas.repository.CursoAsignadoRepository;
+import com.colegio.bastidas.repository.DocenteDocumentoRepository;
 import com.colegio.bastidas.repository.DocenteRepository;
 import com.colegio.bastidas.repository.EvidenciaRepository;
 import com.colegio.bastidas.repository.UsuarioRepository;
 import com.colegio.bastidas.service.DocenteService;
 import com.colegio.bastidas.service.ExcelReportService;
+import com.colegio.bastidas.service.PdfReportService;
+import com.colegio.bastidas.service.SupabaseStorageService;
 import com.colegio.bastidas.util.CodigosGenerator;
 import com.colegio.bastidas.util.CredencialesGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +59,9 @@ public class DocenteServiceImpl implements DocenteService {
     private final EvidenciaRepository evidenciaRepository;
     private final UsuarioRepository usuarioRepository;
     private final ExcelReportService excelReportService;
+    private final PdfReportService pdfReportService;
+    private final DocenteDocumentoRepository docenteDocumentoRepository;
+    private final SupabaseStorageService storageService;
 
     @Override
     public List<DocenteResponseDTO> listarTodos() {
@@ -161,11 +172,67 @@ public class DocenteServiceImpl implements DocenteService {
     @Override
     @Transactional(readOnly = true)
     public byte[] exportarListaConCursos() {
-        String[] columnas = {
-            "CÓDIGO", "DNI", "APELLIDO PATERNO", "APELLIDO MATERNO", "NOMBRES",
-            "ESPECIALIDAD", "CONDICIÓN", "EMAIL INSTITUCIONAL", "CELULAR", "CURSOS ASIGNADOS"
-        };
+        return excelReportService.construirLibro("Docentes", COLUMNAS_EXPORTACION, construirFilasDocentes());
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportarListaConCursosPdf() {
+        return pdfReportService.construirDocumento("Docentes", COLUMNAS_EXPORTACION, construirFilasDocentes());
+    }
+
+    @Override
+    @Transactional
+    public String cargarDocumentoCertificacion(Long docenteId, MultipartFile archivo) {
+        if (!"application/pdf".equalsIgnoreCase(archivo.getContentType())) {
+            throw new IllegalArgumentException("Solo se admiten archivos en formato PDF.");
+        }
+
+        Docente docente = docenteRepository.findById(docenteId)
+            .orElseThrow(() -> new IllegalArgumentException("Docente no encontrado con ID: " + docenteId));
+
+        String extension = FilenameUtils.getExtension(archivo.getOriginalFilename());
+        String ruta = String.format("docentes/%d/certificacion_%d.%s",
+            docenteId, System.currentTimeMillis(), extension);
+        String urlPublica = storageService.subirArchivo(archivo, ruta);
+
+        DocenteDocumento documento = docenteDocumentoRepository.findFirstByDocenteId(docenteId)
+            .orElseGet(() -> DocenteDocumento.builder().docente(docente).build());
+
+        documento.setNombreArchivo(archivo.getOriginalFilename());
+        documento.setRutaStorage(ruta);
+        documento.setUrlPublica(urlPublica);
+        documento.setTipoContenido(archivo.getContentType());
+        documento.setTamanoBytes(archivo.getSize());
+        docenteDocumentoRepository.save(documento);
+
+        log.info("Documento de certificación cargado: docente={}, url={}", docenteId, urlPublica);
+        return urlPublica;
+    }
+
+    @Override
+    public Optional<DocenteDocumentoResponseDTO> obtenerDocumentoCertificacion(Long docenteId) {
+        return docenteDocumentoRepository.findFirstByDocenteId(docenteId)
+            .map(DocenteDocumentoResponseDTO::fromEntity);
+    }
+
+    @Override
+    @Transactional
+    public void eliminarDocumentoCertificacion(Long docenteId) {
+        docenteDocumentoRepository.findFirstByDocenteId(docenteId).ifPresent(doc -> {
+            storageService.eliminarArchivo(doc.getRutaStorage());
+            docenteDocumentoRepository.delete(doc);
+        });
+    }
+
+    // ── Helpers privados ─────────────────────────────────────────────────────
+
+    private static final String[] COLUMNAS_EXPORTACION = {
+        "CÓDIGO", "DNI", "APELLIDO PATERNO", "APELLIDO MATERNO", "NOMBRES",
+        "ESPECIALIDAD", "CONDICIÓN", "EMAIL INSTITUCIONAL", "CELULAR", "CURSOS ASIGNADOS"
+    };
+
+    private List<Object[]> construirFilasDocentes() {
         List<Object[]> filas = new ArrayList<>();
         for (Docente d : docenteRepository.findAll()) {
             List<CursoAsignado> cursos = cursoAsignadoRepository.findByDocenteId(d.getId());
@@ -186,11 +253,8 @@ public class DocenteServiceImpl implements DocenteService {
                 cursosTexto
             });
         }
-
-        return excelReportService.construirLibro("Docentes", columnas, filas);
+        return filas;
     }
-
-    // ── Helpers privados ─────────────────────────────────────────────────────
 
     private DocenteResponseDTO toDTO(Docente d) {
         DocenteResponseDTO dto = DocenteResponseDTO.fromEntity(d);
@@ -198,6 +262,7 @@ public class DocenteServiceImpl implements DocenteService {
         dto.setCantidadEvidencias((int) evidencias);
         dto.setEstadoCurricular(calcularEstadoCurricular(evidencias));
         dto.setCantidadCursosAsignados(cursoAsignadoRepository.findByDocenteId(d.getId()).size());
+        dto.setTieneCertificacionDocencia(docenteDocumentoRepository.existsByDocenteId(d.getId()));
         return dto;
     }
 

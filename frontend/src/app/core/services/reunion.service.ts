@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { generarLinkWhatsApp } from '../utils/whatsapp.util';
 
 export interface ReunionRequestDTO {
   alumnoId?: number;
@@ -49,13 +50,10 @@ export class ReunionService {
 
   /** Construye el link wa.me para enviar el mensaje al apoderado manualmente. */
   static generarLinkWhatsApp(reunion: Reunion): string | null {
-    if (!reunion.celularApoderado) return null;
-    const numero = reunion.celularApoderado.replace(/[^\d]/g, '');
-    const numeroConPrefijo = numero.startsWith('51') ? numero : `51${numero}`;
     const mensaje =
       `Estimado(a) ${reunion.nombreApoderado || 'apoderado'}, le escribimos de la I.E. Micaela Bastidas ` +
       `para invitarlo a una reunión sobre ${reunion.nombreAlumno} el ${reunion.fecha} ` +
       `de ${reunion.horaInicio} a ${reunion.horaFin}. Motivo: ${reunion.motivo}.`;
-    return `https://wa.me/${numeroConPrefijo}?text=${encodeURIComponent(mensaje)}`;
+    return generarLinkWhatsApp(reunion.celularApoderado, mensaje);
   }
 }

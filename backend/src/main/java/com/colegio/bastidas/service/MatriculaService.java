@@ -75,6 +75,9 @@ public interface MatriculaService {
      */
     byte[] exportarConsolidadoMatriculaSiagie(Long aulaId, Integer anioAcademico);
 
+    /** Igual que {@link #exportarConsolidadoMatriculaSiagie} pero en formato PDF. */
+    byte[] exportarConsolidadoMatriculaSiagiePdf(Long aulaId, Integer anioAcademico);
+
     Optional<Alumno> buscarPorDni(String dni);
 
     List<Alumno> buscarPorNombreODni(String termino);

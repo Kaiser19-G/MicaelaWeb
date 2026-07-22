@@ -2,6 +2,8 @@ package com.colegio.bastidas.service;
 
 import com.colegio.bastidas.dto.aula.AulaRequestDTO;
 import com.colegio.bastidas.dto.aula.AulaResponseDTO;
+import com.colegio.bastidas.dto.aula.AulaResumenAsistenciaDTO;
+import com.colegio.bastidas.dto.dashboard.PeriodoResumen;
 import java.util.List;
 
 /**
@@ -33,4 +35,7 @@ public interface AulaService {
      * "cerrar" un aula con historial real.
      */
     void eliminar(Long id);
+
+    /** Resumen de asistencia de una sola aula (día/semana/mes/año) para su dashboard dedicado. */
+    AulaResumenAsistenciaDTO obtenerResumenAsistencia(Long aulaId, PeriodoResumen periodo, Integer anio, Integer mes);
 }

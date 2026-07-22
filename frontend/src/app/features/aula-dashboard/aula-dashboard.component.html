@@ -1,0 +1,126 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ aula()?.descripcion || 'Dashboard de Aula' }}</h1>
+      <p class="page-subtitle" *ngIf="aula()">
+        {{ aula()!.totalAlumnos }} alumnos · {{ aula()!.vacantesDisponibles }} vacantes ·
+        Tutor: {{ aula()!.docentePrincipalNombre || 'sin asignar' }}
+      </p>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+      <button class="btn-secondary" (click)="volverAlPanel()">← Volver al Panel</button>
+      <button class="btn-secondary" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="error-msg" *ngIf="errorMsg()">{{ errorMsg() }}</div>
+
+  <ng-container *ngIf="!cargando(); else loader">
+
+    <!-- ── Asistencia por período ─────────────────────────────────────── -->
+    <div class="card" style="padding:1.25rem; margin-bottom:1rem;">
+      <div class="periodo-selector">
+        <h3 class="card-title">Asistencia</h3>
+        <div class="periodo-pills">
+          <button class="periodo-pill" [class.active]="periodo() === 'DIA'" (click)="cambiarPeriodo('DIA')">Día</button>
+          <button class="periodo-pill" [class.active]="periodo() === 'SEMANA'" (click)="cambiarPeriodo('SEMANA')">Semana</button>
+          <button class="periodo-pill" [class.active]="periodo() === 'MES'" (click)="cambiarPeriodo('MES')">Mes</button>
+          <button class="periodo-pill" [class.active]="periodo() === 'ANIO'" (click)="cambiarPeriodo('ANIO')">Año</button>
+          <select *ngIf="periodo() === 'MES'" [(ngModel)]="mes" (change)="cargarResumen()" class="periodo-select">
+            <option *ngFor="let m of mesesDelAnio" [value]="m.valor">{{ m.nombre }}</option>
+          </select>
+          <input *ngIf="periodo() === 'MES' || periodo() === 'ANIO'" type="number" [(ngModel)]="anio" (change)="cargarResumen()" class="periodo-input-anio">
+        </div>
+      </div>
+
+      <div class="mini-stats" *ngIf="resumen() as r">
+        <div class="mini-stat">
+          <span class="mini-num success-text">{{ r.presentesEnPeriodo }}</span>
+          <span class="mini-label">Presentes</span>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-num danger-text">{{ r.faltasEnPeriodo }}</span>
+          <span class="mini-label">Faltas</span>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-num warning-text">{{ r.tardanzasEnPeriodo }}</span>
+          <span class="mini-label">Tardanzas</span>
+        </div>
+      </div>
+
+      <div class="chart-bars" *ngIf="resumen() as r">
+        <div class="chart-day" *ngFor="let b of r.buckets">
+          <div class="bar-group">
+            <div class="bar bar-alumno" [style.height.px]="alturaBarra(b.alumnos)" title="Asistencias: {{ b.alumnos }}"></div>
+          </div>
+          <span class="bar-label">{{ b.dia }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Horario ──────────────────────────────────────────────────────── -->
+    <div class="card" style="padding:1.25rem; margin-bottom:1rem;">
+      <h3 class="card-title">Horario del Aula</h3>
+      <p class="card-sub">Docente, área curricular y horario de clases</p>
+
+      <div class="table-responsive" *ngIf="horarioConHora().length">
+        <table class="data-table">
+          <thead>
+            <tr><th>Día</th><th>Hora</th><th>Área</th><th>Docente</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of horarioConHora()">
+              <td>{{ diaLabel[c.diaSemana!] }}</td>
+              <td>{{ c.horaInicio }} – {{ c.horaFin }}</td>
+              <td>{{ c.areaCurricular }}</td>
+              <td>{{ c.docente?.nombreCompleto }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="error-msg" *ngIf="errorHorario()">{{ errorHorario() }}</div>
+
+      <div *ngIf="horarioSinHora().length" style="margin-top:1rem;">
+        <p class="card-sub"><strong>Sin horario definido</strong> — asigne día y hora para cada curso:</p>
+        <div class="horario-pendiente-row" *ngFor="let c of horarioSinHora()">
+          <span class="horario-pendiente-info">{{ c.areaCurricular }} — {{ c.docente?.nombreCompleto }}</span>
+          <select [(ngModel)]="edicion(c.id).diaSemana" class="form-control">
+            <option *ngFor="let d of diasSemana" [value]="d">{{ diaLabel[d] }}</option>
+          </select>
+          <input type="time" [(ngModel)]="edicion(c.id).horaInicio" class="form-control">
+          <input type="time" [(ngModel)]="edicion(c.id).horaFin" class="form-control">
+          <button class="btn-primary btn-sm" [disabled]="guardandoHorarioId() === c.id" (click)="guardarHorario(c)">
+            {{ guardandoHorarioId() === c.id ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+
+      <p class="card-sub" *ngIf="!horario().length">Esta aula no tiene cursos asignados todavía.</p>
+    </div>
+
+    <!-- ── Mensajería a apoderados ─────────────────────────────────────── -->
+    <div class="card" style="padding:1.25rem;">
+      <h3 class="card-title">Enviar mensaje a los apoderados</h3>
+      <p class="card-sub">
+        Cada link abre WhatsApp con el apoderado correspondiente — no existe un envío masivo real,
+        hay que enviarlos uno por uno.
+      </p>
+      <textarea class="form-control" rows="2" [(ngModel)]="mensajeApoderados" style="margin-bottom:0.75rem;"></textarea>
+
+      <div class="apoderados-list">
+        <div class="apoderado-row" *ngFor="let a of alumnos()">
+          <span>{{ a.nombreCompleto }} — {{ a.nombreApoderado || 'sin apoderado registrado' }}</span>
+          <a *ngIf="linkWhatsApp(a) as link" [href]="link" target="_blank" class="btn-outline btn-sm">Enviar WhatsApp</a>
+          <span *ngIf="!linkWhatsApp(a)" class="card-sub">Sin celular registrado</span>
+        </div>
+        <p class="card-sub" *ngIf="!alumnos().length">No hay alumnos matriculados en esta aula.</p>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <ng-template #loader>
+    <div class="card" style="padding:2rem; text-align:center;">Cargando...</div>
+  </ng-template>
+</div>

@@ -1819,3 +1819,81 @@ $bg-content: #f8fafc;
     strong { font-family: monospace; color: #166534; }
   }
 }
+
+// ── Selector de período (Dashboard / Aula) ──────────────────────────────────
+.periodo-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.periodo-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.periodo-pill {
+  border: 1px solid $border;
+  background: #fff;
+  color: $text-sec;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover { border-color: $primary; color: $primary; }
+  &.active { background: $primary; border-color: $primary; color: #fff; }
+}
+
+.periodo-select,
+.periodo-input-anio {
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  color: $text-primary;
+}
+
+.periodo-input-anio { width: 80px; }
+
+// ── Módulo Aulas ─────────────────────────────────────────────────────────
+.aulas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.aula-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    border-color: $primary;
+  }
+}
+
+.aula-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.aula-card-titulo {
+  font-weight: 700;
+  color: $text-primary;
+  font-size: 1rem;
+}

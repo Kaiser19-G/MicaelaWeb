@@ -66,4 +66,19 @@ export class DashboardService {
     if (anio) params = params.set('anio', anio);
     return this.http.get(`${this.BASE}/exportar`, { params, responseType: 'blob' });
   }
+
+  /** Descarga un resumen de los KPIs del panel en PDF. */
+  exportarPdf(anio?: number): Observable<Blob> {
+    let params = new HttpParams();
+    if (anio) params = params.set('anio', anio);
+    return this.http.get(`${this.BASE}/exportar/pdf`, { params, responseType: 'blob' });
+  }
+
+  /** Resumen de asistencia para el gráfico del panel, según el período elegido. */
+  obtenerAsistenciaPorPeriodo(periodo: 'SEMANA' | 'MES' | 'ANIO', anio?: number, mes?: number): Observable<AsistenciaDia[]> {
+    let params = new HttpParams().set('periodo', periodo);
+    if (anio) params = params.set('anio', anio);
+    if (mes) params = params.set('mes', mes);
+    return this.http.get<AsistenciaDia[]>(`${this.BASE}/asistencia`, { params });
+  }
 }

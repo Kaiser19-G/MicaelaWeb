@@ -9,6 +9,15 @@ export interface CursoAsignadoRequestDTO {
   aulaId: number;
   areaCurricular: string;
   anioAcademico: number;
+  diaSemana?: string;
+  horaInicio?: string;
+  horaFin?: string;
+}
+
+export interface HorarioRequestDTO {
+  diaSemana: string;
+  horaInicio: string;
+  horaFin: string;
 }
 
 @Injectable({
@@ -24,5 +33,15 @@ export class CursoAsignadoService {
 
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/${id}`);
+  }
+
+  /** Lista las asignaciones (con horario, si ya fue definido) de una aula. */
+  listarPorAula(aulaId: number): Observable<CursoAsignado[]> {
+    return this.http.get<CursoAsignado[]>(`${this.BASE}/aula/${aulaId}`);
+  }
+
+  /** Fija o actualiza el horario (día + hora) de una asignación ya creada. */
+  actualizarHorario(id: number, dto: HorarioRequestDTO): Observable<CursoAsignado> {
+    return this.http.patch<CursoAsignado>(`${this.BASE}/${id}/horario`, dto);
   }
 }

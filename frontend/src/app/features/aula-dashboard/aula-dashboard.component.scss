@@ -1,0 +1,246 @@
+$primary: #2563eb;
+$border: #e5e7eb;
+$text-primary: #1e293b;
+$text-sec: #64748b;
+
+.page-container {
+  padding: 2rem;
+  background-color: #f8fafc;
+  min-height: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+
+  .page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .page-subtitle {
+    color: $text-sec;
+    margin: 0;
+  }
+}
+
+.card {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: $text-primary;
+  margin: 0 0 0.25rem 0;
+}
+
+.card-sub {
+  color: $text-sec;
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.error-msg {
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  border-left: 3px solid #ef4444;
+}
+
+// ── Botones ──────────────────────────────────────────────────────────────
+.btn-primary {
+  background: $primary;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  &:hover:not(:disabled) { background: #1d4ed8; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.btn-secondary,
+.btn-outline {
+  background: white;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  &:hover { background: #f8fafc; }
+}
+
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+
+// ── Período ──────────────────────────────────────────────────────────────
+.periodo-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.periodo-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.periodo-pill {
+  border: 1px solid $border;
+  background: #fff;
+  color: $text-sec;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { border-color: $primary; color: $primary; }
+  &.active { background: $primary; border-color: $primary; color: #fff; }
+}
+
+.periodo-select,
+.periodo-input-anio {
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.periodo-input-anio { width: 80px; }
+
+// ── Mini stats ───────────────────────────────────────────────────────────
+.mini-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.mini-num { font-size: 1.4rem; font-weight: 700; }
+.mini-label { font-size: 0.75rem; color: $text-sec; }
+.success-text { color: #16a34a; }
+.danger-text { color: #dc2626; }
+.warning-text { color: #d97706; }
+.info-text { color: #0891b2; }
+
+// ── Gráfico de barras ────────────────────────────────────────────────────
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  height: 150px;
+  padding-top: 1rem;
+  overflow-x: auto;
+}
+
+.chart-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 32px;
+}
+
+.bar-group {
+  display: flex;
+  align-items: flex-end;
+  height: 120px;
+}
+
+.bar {
+  width: 16px;
+  border-radius: 4px 4px 0 0;
+}
+
+.bar-alumno { background: $primary; }
+.bar-label { font-size: 0.7rem; color: $text-sec; }
+
+// ── Tabla ────────────────────────────────────────────────────────────────
+.table-responsive { width: 100%; overflow-x: auto; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    background: #f1f5f9;
+    padding: 0.75rem;
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+  }
+}
+
+// ── Horario pendiente ────────────────────────────────────────────────────
+.horario-pendiente-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  flex-wrap: wrap;
+
+  .horario-pendiente-info {
+    flex: 1;
+    min-width: 200px;
+    font-size: 0.85rem;
+    color: $text-primary;
+  }
+}
+
+.form-control {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.4rem;
+  font-size: 0.85rem;
+}
+
+textarea.form-control { width: 100%; resize: vertical; }
+
+// ── Apoderados ───────────────────────────────────────────────────────────
+.apoderados-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.apoderado-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.85rem;
+}

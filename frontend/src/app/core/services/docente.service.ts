@@ -19,6 +19,7 @@ export interface DocenteResponse {
   cantidadEvidencias: number;
   cantidadCursosAsignados: number;
   activo: boolean;
+  tieneCertificacionDocencia: boolean;
 }
 
 export interface SemaforoConteo {
@@ -60,6 +61,9 @@ export interface CursoAsignado {
     apellidoMaterno: string;
     nombreCompleto: string;
   };
+  diaSemana?: 'LUNES' | 'MARTES' | 'MIERCOLES' | 'JUEVES' | 'VIERNES';
+  horaInicio?: string; // "HH:mm:ss"
+  horaFin?: string;
 }
 
 /**
@@ -123,5 +127,10 @@ export class DocenteService {
   /** Descarga la lista de docentes con sus cursos asignados en Excel. */
   exportar(): Observable<Blob> {
     return this.http.get(`${this.BASE}/exportar`, { responseType: 'blob' });
+  }
+
+  /** Descarga la lista de docentes con sus cursos asignados en PDF. */
+  exportarPdf(): Observable<Blob> {
+    return this.http.get(`${this.BASE}/exportar/pdf`, { responseType: 'blob' });
   }
 }

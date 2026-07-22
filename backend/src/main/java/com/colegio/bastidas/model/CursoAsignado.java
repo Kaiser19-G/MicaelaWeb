@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 /**
  * Entidad intermedia que vincula a un Docente con un Aula para impartir una materia específica
@@ -16,7 +17,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "cursos_asignados", indexes = {
     @Index(name = "idx_curso_docente", columnList = "docente_id"),
-    @Index(name = "idx_curso_aula", columnList = "aula_id")
+    @Index(name = "idx_curso_aula", columnList = "aula_id"),
+    @Index(name = "idx_curso_aula_dia", columnList = "aula_id,dia_semana"),
+    @Index(name = "idx_curso_docente_dia", columnList = "docente_id,dia_semana")
 })
 @Data
 @Builder
@@ -47,6 +50,18 @@ public class CursoAsignado {
     @NotNull
     private Integer anioAcademico; // Ej: 2026
 
+    // ── Horario (opcional: se completa después de crear la asignación,
+    //    p. ej. el flujo de tutor de Primaria crea varias filas de golpe sin horario individual) ──
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dia_semana", length = 12)
+    private DiaSemana diaSemana;
+
+    @Column(name = "hora_inicio")
+    private LocalTime horaInicio;
+
+    @Column(name = "hora_fin")
+    private LocalTime horaFin;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -54,4 +69,8 @@ public class CursoAsignado {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public enum DiaSemana {
+        LUNES, MARTES, MIERCOLES, JUEVES, VIERNES
+    }
 }

@@ -2,19 +2,26 @@ package com.colegio.bastidas.service.impl;
 
 import com.colegio.bastidas.dto.aula.AulaRequestDTO;
 import com.colegio.bastidas.dto.aula.AulaResponseDTO;
+import com.colegio.bastidas.dto.aula.AulaResumenAsistenciaDTO;
+import com.colegio.bastidas.dto.dashboard.DashboardKpiDTO;
+import com.colegio.bastidas.dto.dashboard.PeriodoResumen;
 import com.colegio.bastidas.model.Alumno;
+import com.colegio.bastidas.model.Asistencia;
 import com.colegio.bastidas.model.Aula;
 import com.colegio.bastidas.model.Docente;
 import com.colegio.bastidas.repository.AlumnoRepository;
+import com.colegio.bastidas.repository.AsistenciaRepository;
 import com.colegio.bastidas.repository.AulaRepository;
 import com.colegio.bastidas.repository.CursoAsignadoRepository;
 import com.colegio.bastidas.repository.DocenteRepository;
 import com.colegio.bastidas.service.AulaService;
+import com.colegio.bastidas.service.support.PeriodoBucketHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -30,6 +37,7 @@ public class AulaServiceImpl implements AulaService {
     private final AlumnoRepository alumnoRepository;
     private final DocenteRepository docenteRepository;
     private final CursoAsignadoRepository cursoAsignadoRepository;
+    private final AsistenciaRepository asistenciaRepository;
 
     @Override
     public List<AulaResponseDTO> listarPorAnio(Integer anio) {
@@ -126,5 +134,45 @@ public class AulaServiceImpl implements AulaService {
     private AulaResponseDTO toDto(Aula aula) {
         long activos = alumnoRepository.countByAulaIdAndEstadoMatricula(aula.getId(), Alumno.EstadoMatricula.ACTIVO);
         return AulaResponseDTO.fromEntity(aula, (int) activos);
+    }
+
+    @Override
+    public AulaResumenAsistenciaDTO obtenerResumenAsistencia(Long aulaId, PeriodoResumen periodo, Integer anio, Integer mes) {
+        Aula aula = aulaRepository.findById(aulaId)
+            .orElseThrow(() -> new IllegalArgumentException("Aula no encontrada con ID: " + aulaId));
+
+        LocalDate hoy = LocalDate.now();
+        PeriodoResumen tipo = periodo != null ? periodo : PeriodoResumen.SEMANA;
+        List<PeriodoBucketHelper.Bucket> buckets = PeriodoBucketHelper.construirBuckets(tipo, hoy, anio, mes);
+        LocalDate inicio = buckets.get(0).inicio();
+        LocalDate fin = buckets.get(buckets.size() - 1).fin();
+
+        List<Object[]> filasPorFecha = asistenciaRepository.countAsistioPorFechaEntre(aulaId, inicio, fin);
+        List<DashboardKpiDTO.AsistenciaDiaDTO> serie = PeriodoBucketHelper.aplicarConteos(buckets, filasPorFecha);
+
+        long presentes = 0, faltas = 0, tardanzas = 0;
+        for (Object[] fila : asistenciaRepository.resumenAsistenciaPorAula(aulaId, inicio, fin)) {
+            Asistencia.EstadoAsistencia estado = (Asistencia.EstadoAsistencia) fila[0];
+            long cantidad = (Long) fila[1];
+            switch (estado) {
+                case ASISTIO -> presentes += cantidad;
+                case FALTA -> faltas += cantidad;
+                case TARDANZA, TARDANZA_JUSTIFICADA -> tardanzas += cantidad;
+                default -> { /* LICENCIA u otros estados no se resumen aquí */ }
+            }
+        }
+
+        long totalAlumnos = alumnoRepository.countByAulaIdAndEstadoMatricula(aulaId, Alumno.EstadoMatricula.ACTIVO);
+
+        return AulaResumenAsistenciaDTO.builder()
+            .aulaId(aula.getId())
+            .aulaDescripcion(aula.getDescripcion())
+            .tipoPeriodo(tipo.name())
+            .totalAlumnos(totalAlumnos)
+            .presentesEnPeriodo(presentes)
+            .faltasEnPeriodo(faltas)
+            .tardanzasEnPeriodo(tardanzas)
+            .buckets(serie)
+            .build();
     }
 }

@@ -10,6 +10,7 @@ import com.colegio.bastidas.repository.ExpedienteDocumentoRepository;
 import com.colegio.bastidas.service.AulaService;
 import com.colegio.bastidas.service.ExcelReportService;
 import com.colegio.bastidas.service.MatriculaService;
+import com.colegio.bastidas.service.PdfReportService;
 import com.colegio.bastidas.service.SupabaseStorageService;
 import com.colegio.bastidas.util.CodigosGenerator;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class MatriculaServiceImpl implements MatriculaService {
     private final UsuarioProvisioningHelper usuarioProvisioningHelper;
     private final ExpedienteDocumentoRepository expedienteDocumentoRepository;
     private final ExcelReportService excelReportService;
+    private final PdfReportService pdfReportService;
 
     // ── matricularAlumno (legado) ──────────────────────────────────────────
     /**
@@ -184,21 +186,16 @@ public class MatriculaServiceImpl implements MatriculaService {
         return Math.max(0, activos - completos);
     }
 
-    // ── exportarConsolidadoMatriculaSiagie ─────────────────────────────────
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] exportarConsolidadoMatriculaSiagie(Long aulaId, Integer anioAcademico) {
-        log.info("Exportando consolidado SIAGIE: aula={}, año={}", aulaId, anioAcademico);
+    private static final String[] COLUMNAS_SIAGIE = {
+        "N°", "CÓDIGO ESTUDIANTE", "DNI", "APELLIDO PATERNO",
+        "APELLIDO MATERNO", "NOMBRES", "FECHA NACIMIENTO",
+        "SEXO", "AULA", "ESTADO MATRÍCULA", "APODERADO", "CELULAR APODERADO"
+    };
 
+    private List<Object[]> construirFilasSiagie(Long aulaId, Integer anioAcademico) {
         List<Alumno> alumnos = aulaId != null
             ? alumnoRepository.findByAulaIdAndEstadoMatricula(aulaId, Alumno.EstadoMatricula.ACTIVO)
             : alumnoRepository.findByAnioAcademicoAndEstadoMatricula(anioAcademico, Alumno.EstadoMatricula.ACTIVO);
-
-        String[] columnas = {
-            "N°", "CÓDIGO ESTUDIANTE", "DNI", "APELLIDO PATERNO",
-            "APELLIDO MATERNO", "NOMBRES", "FECHA NACIMIENTO",
-            "SEXO", "AULA", "ESTADO MATRÍCULA", "APODERADO", "CELULAR APODERADO"
-        };
 
         List<Object[]> filas = new java.util.ArrayList<>();
         int n = 1;
@@ -218,10 +215,29 @@ public class MatriculaServiceImpl implements MatriculaService {
                 a.getCelularApoderado() != null ? a.getCelularApoderado() : ""
             });
         }
+        return filas;
+    }
 
-        byte[] excel = excelReportService.construirLibro("Nómina de Matrícula", columnas, filas);
-        log.info("Consolidado SIAGIE generado: {} alumnos", alumnos.size());
+    // ── exportarConsolidadoMatriculaSiagie ─────────────────────────────────
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportarConsolidadoMatriculaSiagie(Long aulaId, Integer anioAcademico) {
+        log.info("Exportando consolidado SIAGIE (Excel): aula={}, año={}", aulaId, anioAcademico);
+        List<Object[]> filas = construirFilasSiagie(aulaId, anioAcademico);
+        byte[] excel = excelReportService.construirLibro("Nómina de Matrícula", COLUMNAS_SIAGIE, filas);
+        log.info("Consolidado SIAGIE generado: {} alumnos", filas.size());
         return excel;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportarConsolidadoMatriculaSiagiePdf(Long aulaId, Integer anioAcademico) {
+        log.info("Exportando consolidado SIAGIE (PDF): aula={}, año={}", aulaId, anioAcademico);
+        List<Object[]> filas = construirFilasSiagie(aulaId, anioAcademico);
+        byte[] pdf = pdfReportService.construirDocumento(
+            "Nómina de Matrícula - " + anioAcademico, COLUMNAS_SIAGIE, filas);
+        log.info("Consolidado SIAGIE (PDF) generado: {} alumnos", filas.size());
+        return pdf;
     }
 
     @Override
